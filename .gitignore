@@ -1,0 +1,6 @@
+htmlcov
+.tox
+.coverage
+coverage.xml
+.cache
+*.egg-info

@@ -1,0 +1,25 @@
+language: python
+python: 3.5
+sudo: false
+cache: pip
+env:
+  - TOXENV=flake8-py27
+  - TOXENV=flake8-py35
+  - TOXENV=readme-py27
+  - TOXENV=py27-dj18
+  - TOXENV=py27-dj19
+  - TOXENV=py27-dj110
+  - TOXENV=py34-dj18
+  - TOXENV=py34-dj19
+  - TOXENV=py34-dj110
+  - TOXENV=py35-dj18
+  - TOXENV=py35-dj19
+  - TOXENV=py35-dj110
+  - TOXENV=pypy-dj18
+  - TOXENV=pypy-dj19
+  - TOXENV=pypy-dj110
+install:
+  - pip install tox
+script: tox -v
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

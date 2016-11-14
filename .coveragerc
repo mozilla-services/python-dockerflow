@@ -1,0 +1,7 @@
+[run]
+source = dockerflow
+branch = True
+
+[report]
+omit =
+    tests/*
