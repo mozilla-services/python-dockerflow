@@ -5,7 +5,7 @@ setup(
     version='2016.11.0',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
-    description='A Python package to implement Mozilla Dockerflow requirements',
+    description="Python tools and helpers for Mozilla's Dockerflow",
     author='Mozilla Foundation',
     author_email='dev-webdev@lists.mozilla.org',
     url='https://github.com/mozilla-services/python-dockerflow',
@@ -21,8 +21,8 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         'Topic :: Internet :: WWW/HTTP',
-        'Topic :: Scientific/Engineering :: Information Analysis'
     ],
     zip_safe=False,
 )
