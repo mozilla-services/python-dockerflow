@@ -4,10 +4,17 @@
 import json
 import os
 
+__all__ = ['get_version']
+
 
 def get_version(root):
     """
-    Load and return the contents of version.json
+    Load and return the contents of version.json.
+
+    :param root: The root path that the ``version.json`` file will be opened
+    :type root: str
+    :returns: Content of ``version.json`` or None
+    :rtype: dict or None
     """
     version_json = os.path.join(root, 'version.json')
     if os.path.exists(version_json):

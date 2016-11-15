@@ -19,7 +19,7 @@ version_callback = getattr(
 
 def version(request):
     """
-    Returns the contents of version.json or a 404
+    Returns the contents of version.json or a 404.
     """
     version_json = import_string(version_callback)(settings.BASE_DIR)
     if version_json is None:
@@ -37,6 +37,13 @@ def lbheartbeat(request):
 
 
 def heartbeat(request):
+    """
+    Runs all the Django checks and returns a JsonResponse with either
+    a status code of 200 or 500 depending on the results of the checks.
+
+    Any check that returns a warning or worse (error, critical) will
+    return a 500 response.
+    """
     all_checks = checks.registry.registry.get_checks(
         include_deployment_checks=not settings.DEBUG,
     )

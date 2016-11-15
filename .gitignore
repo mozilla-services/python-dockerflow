@@ -4,3 +4,4 @@ htmlcov
 coverage.xml
 .cache
 *.egg-info
+docs/_build
