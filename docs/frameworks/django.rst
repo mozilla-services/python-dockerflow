@@ -33,22 +33,22 @@ in your Django projet:
 
 #. Set your ``STATIC_ROOT`` setting::
 
-   STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+       STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 #. Add the middleware to your ``MIDDLEWARE`` (or ``MIDDLEWARE_CLASSES``) setting::
 
-   MIDDLEWARE_CLASSES = [
-       # 'django.middleware.security.SecurityMiddleware',
-       'whitenoise.middleware.WhiteNoiseMiddleware',
-       # ...
-   ]
+       MIDDLEWARE_CLASSES = [
+           # 'django.middleware.security.SecurityMiddleware',
+           'whitenoise.middleware.WhiteNoiseMiddleware',
+           # ...
+       ]
 
    Make sure to follow the SecurityMiddleware.
 
 #. Enable the staticfiles_ storage that is able to compress files during
    collection and ship them with far-future headers::
 
-   STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+       STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 .. _Whitenoise: https://whitenoise.readthedocs.io/
 
