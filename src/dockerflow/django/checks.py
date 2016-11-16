@@ -9,8 +9,6 @@ from django.db.utils import OperationalError, ProgrammingError
 from django.utils.module_loading import import_string
 
 
-import redis
-
 INFO_CANT_CHECK_MIGRATIONS = 'dockerflow.health.I001'
 WARNING_UNAPPLIED_MIGRATION = 'dockerflow.health.W001'
 ERROR_CANNOT_CONNECT_DATABASE = 'dockerflow.health.E001'
@@ -70,14 +68,13 @@ def check_migrations_applied(app_configs, **kwargs):
     except (ImproperlyConfigured, ProgrammingError, OperationalError):
         msg = "Can't connect to database to check migrations"
         return [checks.Info(msg, id=INFO_CANT_CHECK_MIGRATIONS)]
-    graph = loader.graph
 
     if app_configs:
         app_labels = [app.label for app in app_configs]
     else:
         app_labels = loader.migrated_apps
 
-    for node, migration in graph.nodes.items():
+    for node, migration in loader.graph.nodes.items():
         if migration.app_label not in app_labels:
             continue
         if node not in loader.applied_migrations:
@@ -95,6 +92,7 @@ def check_redis_connected(app_configs, **kwargs):
     using ``django_redis.get_redis_connection`` and see if Redis
     responds to a ``PING`` command.
     """
+    import redis
     from django_redis import get_redis_connection
     errors = []
 
