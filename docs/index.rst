@@ -13,7 +13,7 @@ requirements:
 .. _`mozlog`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md
 .. _`request.summary`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md#application-request-summary-type-requestsummary
 
-- Provide views for health monitoring:
+- Provides views for health monitoring:
 
   - ``/__version__`` - Serves a ``version.json`` file
 
@@ -21,6 +21,8 @@ requirements:
     in the ``DOCKERFLOW_CHECKS`` setting
 
   - ``/__lbheartbeat__`` - Retuns a HTTP 200 response
+
+- Provides a generic way to fetch ``version.json`` files.
 
 See the following framework/toolset specific configuration docs:
 
@@ -37,7 +39,6 @@ Contents:
    authors
    changelog
    api
-
 
 Indices and tables
 ==================
