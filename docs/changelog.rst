@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-2016.11.0 (unreleased)
+2016.11.0 (2016-11-18)
 ^^^^^^^^^^^^^^^^^^^^^^
 
 - Added initial implementation for Django health checks based on Normandy
