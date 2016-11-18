@@ -15,7 +15,7 @@ Changelog
 
 - Added documentation:
 
-    https://python-docker.readthedocs.io/
+    https://python-dockerflow.readthedocs.io/
 
 - Added Travis continous testing:
 
