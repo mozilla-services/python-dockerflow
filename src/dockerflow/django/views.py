@@ -3,7 +3,7 @@
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 from django.conf import settings
 from django.core import checks
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
 from django.utils.module_loading import import_string
 
 from .checks import level_to_text
@@ -23,8 +23,9 @@ def version(request):
     """
     version_json = import_string(version_callback)(settings.BASE_DIR)
     if version_json is None:
-        raise Http404('version.json not found')
-    return JsonResponse(version_json)
+        return HttpResponseNotFound('version.json not found')
+    else:
+        return JsonResponse(version_json)
 
 
 def lbheartbeat(request):

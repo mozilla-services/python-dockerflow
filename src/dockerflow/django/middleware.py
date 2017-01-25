@@ -1,23 +1,37 @@
 import datetime
 import logging
+import re
 import uuid
 
 try:
     from django.utils.deprecation import MiddlewareMixin
-except ImportError:
-    class MiddlewareMixin(object):
-        pass
+except ImportError:  # pragma: no cover
+    MiddlewareMixin = object
+
+from . import views
 
 
-class RequestSummaryMiddleware(MiddlewareMixin):
-    """Emit a request.summary type log entry for every request.
+class DockerflowMiddleware(MiddlewareMixin):
+    """
+
+    Emit a request.summary type log entry for every request.
     https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md
     """
+    viewpatterns = [
+        (re.compile(r'/__version__$'), views.version),
+        (re.compile(r'/__heartbeat__$'), views.heartbeat),
+        (re.compile(r'/__lbheartbeat__$'), views.lbheartbeat),
+    ]
+
     def __init__(self, *args, **kwargs):
-        super(RequestSummaryMiddleware, self).__init__(*args, **kwargs)
-        self.logger = logging.getLogger('request.summary')
+        super(DockerflowMiddleware, self).__init__(*args, **kwargs)
+        self.summary_logger = logging.getLogger('request.summary')
 
     def process_request(self, request):
+        for pattern, view in self.viewpatterns:
+            if pattern.match(request.path_info):
+                return view(request)
+
         request._id = str(uuid.uuid4())
         request._logging_start_dt = datetime.datetime.utcnow()
         return None
@@ -47,11 +61,11 @@ class RequestSummaryMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         extra = self._build_extra_meta(request)
-        self.logger.info('', extra=extra)
+        self.summary_logger.info('', extra=extra)
         return response
 
     def process_exception(self, request, exception):
         extra = self._build_extra_meta(request)
         extra['errno'] = 500
-        self.logger.error(str(exception), extra=extra)
+        self.summary_logger.error(str(exception), extra=extra)
         return None

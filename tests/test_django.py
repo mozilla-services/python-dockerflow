@@ -1,6 +1,8 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
+from datetime import datetime
+import logging
 import json
 import redis
 from django.core.exceptions import ImproperlyConfigured
@@ -9,6 +11,7 @@ from django.db.utils import OperationalError, ProgrammingError
 from django.test.utils import CaptureQueriesContext
 
 from dockerflow.django import checks
+from dockerflow.django.middleware import DockerflowMiddleware
 import pytest
 
 
@@ -21,22 +24,30 @@ version_content = {
 }
 
 
-def test_version_exists(client, mocker):
+@pytest.fixture
+def dockerflow_middleware():
+    return DockerflowMiddleware()
+
+
+def test_version_exists(dockerflow_middleware, mocker, rf):
     mocker.patch('dockerflow.version.get_version', return_value=version_content)
-    response = client.get('/__version__')
+    request = rf.get('/__version__')
+    response = dockerflow_middleware.process_request(request)
     assert response.status_code == 200
     assert json.loads(response.content.decode()) == version_content
 
 
-def test_version_missing(client, mocker):
+def test_version_missing(dockerflow_middleware, mocker, rf):
     mocker.patch('dockerflow.version.get_version', return_value=None)
-    response = client.get('/__version__')
+    request = rf.get('/__version__')
+    response = dockerflow_middleware.process_request(request)
     assert response.status_code == 404
 
 
 @pytest.mark.django_db
-def test_heartbeat(client, reset_checks, settings):
-    response = client.get('/__heartbeat__')
+def test_heartbeat(dockerflow_middleware, reset_checks, rf, settings):
+    request = rf.get('/__heartbeat__')
+    response = dockerflow_middleware.process_request(request)
     assert response.status_code == 200
 
     settings.DOCKERFLOW_CHECKS = [
@@ -44,27 +55,103 @@ def test_heartbeat(client, reset_checks, settings):
         'tests.checks.error',
     ]
     checks.register()
-    response = client.get('/__heartbeat__')
+    response = dockerflow_middleware.process_request(request)
     assert response.status_code == 500
 
 
 @pytest.mark.django_db
-def test_lbheartbeat_makes_no_db_queries(client):
+def test_lbheartbeat_makes_no_db_queries(dockerflow_middleware, rf):
     queries = CaptureQueriesContext(connection)
+    request = rf.get('/__lbheartbeat__')
     with queries:
-        res = client.get('/__lbheartbeat__')
-        assert res.status_code == 200
+        response = dockerflow_middleware.process_request(request)
+        assert response.status_code == 200
     assert len(queries) == 0
 
 
 @pytest.mark.django_db
-def test_redis_check(client, reset_checks, settings):
+def test_redis_check(dockerflow_middleware, reset_checks, rf, settings):
     settings.DOCKERFLOW_CHECKS = [
         'dockerflow.django.checks.check_redis_connected',
     ]
     checks.register()
-    response = client.get('/__heartbeat__')
+    request = rf.get('/__heartbeat__')
+    response = dockerflow_middleware.process_request(request)
     assert response.status_code == 200
+
+
+def assert_log_record(request, record, errno=0, level=logging.INFO):
+    assert record.levelno == level
+    assert record.errno == errno
+    assert record.agent == 'dockerflow/tests'
+    assert record.lang == 'tlh'
+    assert record.method == 'GET'
+    assert record.path == '/'
+    assert record.rid == request._id
+    assert isinstance(record.t, int)
+
+
+@pytest.fixture
+def dockerflow_request(rf):
+    return rf.get(
+        '/',
+        HTTP_USER_AGENT='dockerflow/tests',
+        HTTP_ACCEPT_LANGUAGE='tlh',
+    )
+
+
+def test_request_summary(admin_user, caplog,
+                         dockerflow_middleware, dockerflow_request):
+    response = dockerflow_middleware.process_request(dockerflow_request)
+    assert getattr(dockerflow_request, '_id') is not None
+    assert isinstance(getattr(dockerflow_request, '_logging_start_dt'), datetime)
+
+    response = dockerflow_middleware.process_response(dockerflow_request, response)
+    assert len(caplog.records) == 1
+    for record in caplog.records:
+        assert_log_record(dockerflow_request, record)
+        assert getattr(dockerflow_request, 'uid', None) is None
+
+
+def test_request_summary_admin_user(admin_user, caplog,
+                                    dockerflow_middleware, dockerflow_request):
+    dockerflow_request.user = admin_user
+    response = dockerflow_middleware.process_request(dockerflow_request)
+    dockerflow_middleware.process_response(dockerflow_request, response)
+    assert len(caplog.records) == 1
+    for record in caplog.records:
+        assert_log_record(dockerflow_request, record)
+        assert record.uid == admin_user.pk
+
+
+def test_request_summary_exception(admin_user, caplog,
+                                   dockerflow_middleware, dockerflow_request):
+    exception = ValueError('exception message')
+    dockerflow_middleware.process_request(dockerflow_request)
+    dockerflow_middleware.process_exception(dockerflow_request, exception)
+    assert len(caplog.records) == 1
+    for record in caplog.records:
+        assert_log_record(dockerflow_request, record, level=logging.ERROR, errno=500)
+        assert record.getMessage() == 'exception message'
+
+
+def test_request_summary_failed_request(caplog,
+                                        dockerflow_middleware, dockerflow_request):
+    dockerflow_middleware.process_request(dockerflow_request)
+
+    class HostileMiddleware(object):
+        def process_request(self, request):
+            # simulating resetting request changes
+            delattr(dockerflow_request, '_id')
+            delattr(dockerflow_request, '_logging_start_dt')
+            return None
+
+    response = HostileMiddleware().process_request(dockerflow_request)
+    dockerflow_middleware.process_response(dockerflow_request, response)
+    assert len(caplog.records) == 1
+    for record in caplog.records:
+        assert getattr(record, 'rid', None) is None
+        assert getattr(record, 't', None) is None
 
 
 def test_check_database_connected_cannot_connect(mocker):

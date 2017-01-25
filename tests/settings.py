@@ -20,7 +20,13 @@ CACHES = {
     }
 }
 
+MIDDLEWARE = [
+    'dockerflow.django.middleware.DockerflowMiddleware',
+]
+
 INSTALLED_APPS = [
+    'django.contrib.contenttypes',
+    'django.contrib.auth',
     'dockerflow.django',
 ]
 
@@ -38,3 +44,39 @@ SILENCED_SYSTEM_CHECKS = [
     'security.W016',
     'security.W017',
 ]
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'OPTIONS': {
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ],
+        }
+    },
+]
+
+
+LOGGING = {
+    'version': 1,
+    'formatters': {
+        'json': {
+            '()': 'dockerflow.logging.JsonLogFormatter',
+            'logger_name': 'tests'
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'json'
+        },
+    },
+    'loggers': {
+        'request.summary': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    }
+}
