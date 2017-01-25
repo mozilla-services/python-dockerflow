@@ -1,6 +1,17 @@
 Changelog
 ---------
 
+2017.1.0 (2017-01-25)
+^^^^^^^^^^^^^^^^^^^^^
+
+- Replaced custom URL patterns in the Django support with new
+  DockerflowMiddleware that also takes care of the "request.summary"
+  logging.
+
+- Added Python 3.6 to test harness.
+
+- Fixed Flake8 tests.
+
 2016.11.0 (2016-11-18)
 ^^^^^^^^^^^^^^^^^^^^^^
 
