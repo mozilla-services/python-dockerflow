@@ -6,3 +6,5 @@ coverage.xml
 *.eggs
 *.egg-info
 docs/_build
+build
+dist
