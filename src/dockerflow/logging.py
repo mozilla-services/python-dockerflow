@@ -8,6 +8,11 @@ import socket
 import traceback
 
 
+class SafeJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        return repr(o)
+
+
 class JsonLogFormatter(logging.Formatter):
     """Log formatter that outputs machine-readable json.
 
@@ -85,7 +90,7 @@ class JsonLogFormatter(logging.Formatter):
 
         out['Fields'] = fields
 
-        return json.dumps(out)
+        return json.dumps(out, cls=SafeJSONEncoder)
 
 
 def safer_format_traceback(exc_typ, exc_val, exc_tb):
