@@ -48,6 +48,20 @@ def test_custom_paramters(caplog):
     assert details['Fields']['more'] == 'stuff'
 
 
+def test_non_json_serializable_parameters_are_converted(caplog):
+    """Ensure log formatter doesn't fail with non json-serializable params."""
+    foo = object()
+    foo_repr = repr(foo)
+    logger = logging.getLogger('dockerflow.test.test_logging')
+    logger.warning('custom test %s', 'hello', extra={'foo': foo})
+    details = assert_records(caplog.records)
+
+    assert details['Type'] == 'dockerflow.test.test_logging'
+    assert details['Severity'] == 4
+    assert details['Fields']['message'] == 'custom test hello'
+    assert details['Fields']['foo'] == foo_repr
+
+
 def test_logging_error_tracebacks(caplog):
     """Ensure log formatter includes exception traceback information"""
     try:
