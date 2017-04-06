@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+2017.4.0 (2017-04-09)
+^^^^^^^^^^^^^^^^^^^^^
+
+- Ensure log formatter doesn't fail with non json-serializable parameters. Thanks @diox!
+
 2017.1.1 (2017-01-25)
 ^^^^^^^^^^^^^^^^^^^^^
 
