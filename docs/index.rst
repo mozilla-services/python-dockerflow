@@ -48,7 +48,11 @@ Features
 
    logging
 
-      Send text logs to ``stdout`` or ``stderr``. See: :ref:`Django <django-logging>`
+      Send text logs to ``stdout`` or ``stderr``.
+
+      See: :ref:`Logging <logging>` for logging
+
+      See: :ref:`Django <django-logging>` for logging with Django
 
    static content
 
@@ -62,6 +66,7 @@ Contents
 
    authors
    changelog
+   logging
    django
    api
 
