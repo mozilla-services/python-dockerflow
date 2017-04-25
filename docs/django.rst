@@ -279,7 +279,35 @@ TODO
 Logging
 -------
 
-TODO
+Dockerflow provides a :py:class:`dockerflow.logging.JsonLogFormatter` Python
+logging formatter class.
+
+To use it, put something like this in your Django ``settings`` file::
+
+    LOGGING = {
+        'version': 1,
+        'formatters': {
+            'mozlog': {
+                '()': 'dockerflow.logging.JsonLogFormatter',
+                'logger_name': 'MyServiceName'
+            }
+        },
+        'handlers': {
+            'console': {
+                'level': 'DEBUG',
+                'class': 'logging.StreamHandler',
+                'formatter': 'mozlog'
+            },
+        },
+        'loggers': {
+            'myservice': {
+                'handlers': ['console'],
+                'level': 'DEBUG',
+            },
+        }
+    }
+
+
 
 .. _django-static:
 
