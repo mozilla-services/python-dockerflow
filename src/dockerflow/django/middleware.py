@@ -54,7 +54,7 @@ class DockerflowMiddleware(MiddlewareMixin):
         if hasattr(request, '_id'):
             out['rid'] = request._id
         if hasattr(request, '_logging_start_timestamp'):
-            # timestamp it took, in milliseconds
+            # Duration of request, in milliseconds.
             out['t'] = int(
                 1000 * (time.time() - request._logging_start_timestamp)
             )
