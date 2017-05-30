@@ -3,12 +3,22 @@ import logging
 import re
 import uuid
 
+from django import VERSION
 try:
     from django.utils.deprecation import MiddlewareMixin
 except ImportError:  # pragma: no cover
     MiddlewareMixin = object
 
 from . import views
+
+
+def is_authenticated(user):
+    """Check if the user is authenticated but do it in a way that
+    it doesnt' cause a DeprecationWarning in Django >=1.10"""
+    is_authenticated = user.is_authenticated
+    if VERSION < (1, 10):
+        is_authenticated = is_authenticated()
+    return is_authenticated
 
 
 class DockerflowMiddleware(MiddlewareMixin):
@@ -49,8 +59,10 @@ class DockerflowMiddleware(MiddlewareMixin):
         # modified earlier, so be sure to check for existence of these
         # attributes before trying to use them.
         if hasattr(request, 'user'):
-            out['uid'] = (request.user.is_authenticated() and
-                          request.user.pk or '')
+            out['uid'] = (
+                is_authenticated(request.user) and
+                request.user.pk or ''
+            )
         if hasattr(request, '_id'):
             out['rid'] = request._id
         if hasattr(request, '_logging_start_dt'):
