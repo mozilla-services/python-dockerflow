@@ -1,6 +1,6 @@
-import datetime
 import logging
 import re
+import time
 import uuid
 
 try:
@@ -33,7 +33,7 @@ class DockerflowMiddleware(MiddlewareMixin):
                 return view(request)
 
         request._id = str(uuid.uuid4())
-        request._logging_start_dt = datetime.datetime.utcnow()
+        request._logging_start_timestamp = time.time()
         return None
 
     def _build_extra_meta(self, request):
@@ -53,9 +53,11 @@ class DockerflowMiddleware(MiddlewareMixin):
                           request.user.pk or '')
         if hasattr(request, '_id'):
             out['rid'] = request._id
-        if hasattr(request, '_logging_start_dt'):
-            td = datetime.datetime.utcnow() - request._logging_start_dt
-            out['t'] = int(td.total_seconds() * 1000)  # in ms
+        if hasattr(request, '_logging_start_timestamp'):
+            # timestamp it took, in milliseconds
+            out['t'] = int(
+                1000 * (time.time() - request._logging_start_timestamp)
+            )
 
         return out
 

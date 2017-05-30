@@ -104,7 +104,7 @@ def test_request_summary(admin_user, caplog,
                          dockerflow_middleware, dockerflow_request):
     response = dockerflow_middleware.process_request(dockerflow_request)
     assert getattr(dockerflow_request, '_id') is not None
-    assert isinstance(getattr(dockerflow_request, '_logging_start_dt'), datetime)
+    assert isinstance(getattr(dockerflow_request, '_logging_start_timestamp'), float)
 
     response = dockerflow_middleware.process_response(dockerflow_request, response)
     assert len(caplog.records) == 1
@@ -143,7 +143,7 @@ def test_request_summary_failed_request(caplog,
         def process_request(self, request):
             # simulating resetting request changes
             delattr(dockerflow_request, '_id')
-            delattr(dockerflow_request, '_logging_start_dt')
+            delattr(dockerflow_request, '_logging_start_timestamp')
             return None
 
     response = HostileMiddleware().process_request(dockerflow_request)
