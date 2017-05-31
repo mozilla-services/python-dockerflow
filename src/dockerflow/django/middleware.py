@@ -11,12 +11,15 @@ except ImportError:  # pragma: no cover
 
 from . import views
 
+# Computed once, reused in every request
+_less_than_django_1_10 = VERSION < (1, 10)
+
 
 def is_authenticated(user):
     """Check if the user is authenticated but do it in a way that
     it doesnt' cause a DeprecationWarning in Django >=1.10"""
     is_authenticated = user.is_authenticated
-    if VERSION < (1, 10):
+    if _less_than_django_1_10:
         is_authenticated = is_authenticated()
     return is_authenticated
 
