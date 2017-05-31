@@ -15,7 +15,7 @@ from . import views
 _less_than_django_1_10 = VERSION < (1, 10)
 
 
-def is_authenticated(user):
+def is_authenticated(user):  # pragma: no cover
     """Check if the user is authenticated but do it in a way that
     it doesnt' cause a DeprecationWarning in Django >=1.10"""
     if _less_than_django_1_10:
