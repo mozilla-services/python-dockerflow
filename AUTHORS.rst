@@ -1,4 +1,6 @@
+- Peter Bengtsson (@peterbe)
 - Mike Cooper (@mythmon)
+- Will Kahn-Greene (@willkg)
 - Michael Kelly (@Osmose)
 - Jannis Leidel (@jezdez)
 - Les Orchard (@lmorchard)
