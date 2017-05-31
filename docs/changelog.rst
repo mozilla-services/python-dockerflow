@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+2017.5.0 (2017-05-31)
+^^^^^^^^^^^^^^^^^^^^^
+
+- Improve logging documentation, thanks @willkg.
+
+- Speed up timestamp calculation, thanks @peterbe.
+
+- Make user id calculation compatible with
+  Django >= 1.10.
+
 2017.4.0 (2017-04-09)
 ^^^^^^^^^^^^^^^^^^^^^
 
