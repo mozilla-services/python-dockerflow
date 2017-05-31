@@ -1,14 +1,27 @@
-import datetime
 import logging
 import re
+import time
 import uuid
 
+from django import VERSION
 try:
     from django.utils.deprecation import MiddlewareMixin
 except ImportError:  # pragma: no cover
     MiddlewareMixin = object
 
 from . import views
+
+# Computed once, reused in every request
+_less_than_django_1_10 = VERSION < (1, 10)
+
+
+def is_authenticated(user):
+    """Check if the user is authenticated but do it in a way that
+    it doesnt' cause a DeprecationWarning in Django >=1.10"""
+    if _less_than_django_1_10:
+        # Prior to Django 1.10, user.is_authenticated was a method
+        return user.is_authenticated()
+    return user.is_authenticated
 
 
 class DockerflowMiddleware(MiddlewareMixin):
@@ -33,7 +46,7 @@ class DockerflowMiddleware(MiddlewareMixin):
                 return view(request)
 
         request._id = str(uuid.uuid4())
-        request._logging_start_dt = datetime.datetime.utcnow()
+        request._logging_start_timestamp = time.time()
         return None
 
     def _build_extra_meta(self, request):
@@ -49,13 +62,17 @@ class DockerflowMiddleware(MiddlewareMixin):
         # modified earlier, so be sure to check for existence of these
         # attributes before trying to use them.
         if hasattr(request, 'user'):
-            out['uid'] = (request.user.is_authenticated() and
-                          request.user.pk or '')
+            out['uid'] = (
+                is_authenticated(request.user) and
+                request.user.pk or ''
+            )
         if hasattr(request, '_id'):
             out['rid'] = request._id
-        if hasattr(request, '_logging_start_dt'):
-            td = datetime.datetime.utcnow() - request._logging_start_dt
-            out['t'] = int(td.total_seconds() * 1000)  # in ms
+        if hasattr(request, '_logging_start_timestamp'):
+            # Duration of request, in milliseconds.
+            out['t'] = int(
+                1000 * (time.time() - request._logging_start_timestamp)
+            )
 
         return out
 
