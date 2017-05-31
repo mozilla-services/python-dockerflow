@@ -18,10 +18,10 @@ _less_than_django_1_10 = VERSION < (1, 10)
 def is_authenticated(user):
     """Check if the user is authenticated but do it in a way that
     it doesnt' cause a DeprecationWarning in Django >=1.10"""
-    is_authenticated = user.is_authenticated
     if _less_than_django_1_10:
-        is_authenticated = is_authenticated()
-    return is_authenticated
+        # Prior to Django 1.10, user.is_authenticated was a method
+        return user.is_authenticated()
+    return user.is_authenticated
 
 
 class DockerflowMiddleware(MiddlewareMixin):
