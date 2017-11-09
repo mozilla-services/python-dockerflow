@@ -7,7 +7,6 @@ Django projects that want to follow the Dockerflow specs:
 - A Python logging formatter following the `mozlog`_ format to be used in
   the ``LOGGING`` setting.
 
-
 - A middleware to emit `request.summary`_ log records based on request specific
   data.
 

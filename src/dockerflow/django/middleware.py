@@ -46,7 +46,7 @@ class DockerflowMiddleware(MiddlewareMixin):
                 return view(request)
 
         request._id = str(uuid.uuid4())
-        request._logging_start_timestamp = time.time()
+        request._start_timestamp = time.time()
         return None
 
     def _build_extra_meta(self, request):
@@ -68,11 +68,9 @@ class DockerflowMiddleware(MiddlewareMixin):
             )
         if hasattr(request, '_id'):
             out['rid'] = request._id
-        if hasattr(request, '_logging_start_timestamp'):
+        if hasattr(request, '_start_timestamp'):
             # Duration of request, in milliseconds.
-            out['t'] = int(
-                1000 * (time.time() - request._logging_start_timestamp)
-            )
+            out['t'] = int(1000 * (time.time() - request._start_timestamp))
 
         return out
 

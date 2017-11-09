@@ -51,8 +51,8 @@ def test_heartbeat(dockerflow_middleware, reset_checks, rf, settings):
     assert response.status_code == 200
 
     settings.DOCKERFLOW_CHECKS = [
-        'tests.checks.warning',
-        'tests.checks.error',
+        'tests.django_checks.warning',
+        'tests.django_checks.error',
     ]
     checks.register()
     response = dockerflow_middleware.process_request(request)

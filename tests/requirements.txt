@@ -4,6 +4,7 @@
 pytest
 pytest-catchlog
 pytest-coverage
+pytest-flask
 pytest-django
 pytest-mock
 pytest-pythonpath

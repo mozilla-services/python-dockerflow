@@ -30,7 +30,7 @@ def version(request):
 
 def lbheartbeat(request):
     """
-    Lets the load balancer know the application is running and available
+    Let the load balancer know the application is running and available
     must return 200 (not 204) for ELB
     http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-healthchecks.html
     """
