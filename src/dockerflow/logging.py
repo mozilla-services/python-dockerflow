@@ -77,11 +77,11 @@ class JsonLogFormatter(logging.Formatter):
             if key not in self.EXCLUDED_LOGRECORD_ATTRS:
                 fields[key] = value
 
-        # Only include the 'message' key if it has useful content
+        # Only include the 'msg' key if it has useful content
         # and is not already a JSON blob.
         message = record.getMessage()
         if message and not message.startswith('{') and not message.endswith('}'):
-            fields['message'] = message
+            fields['msg'] = message
 
         # If there is an error, format it for nice output.
         if record.exc_info is not None:
