@@ -4,3 +4,4 @@
 - Michael Kelly (@Osmose)
 - Jannis Leidel (@jezdez)
 - Les Orchard (@lmorchard)
+- Mathieu Leplatre (@leplatrem)

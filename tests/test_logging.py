@@ -33,7 +33,7 @@ def test_basic_operation(caplog):
     assert details['Pid'] == os.getpid()
     assert details['Logger'] == logger_name
     assert details['EnvVersion'] == formatter.LOGGING_FORMAT_VERSION
-    assert details['Fields']['message'] == message_text
+    assert details['Fields']['msg'] == message_text
 
 
 def test_custom_paramters(caplog):
@@ -44,7 +44,7 @@ def test_custom_paramters(caplog):
 
     assert details['Type'] == 'dockerflow.test.test_logging'
     assert details['Severity'] == 4
-    assert details['Fields']['message'] == 'custom test one'
+    assert details['Fields']['msg'] == 'custom test one'
     assert details['Fields']['more'] == 'stuff'
 
 
@@ -58,7 +58,7 @@ def test_non_json_serializable_parameters_are_converted(caplog):
 
     assert details['Type'] == 'dockerflow.test.test_logging'
     assert details['Severity'] == 4
-    assert details['Fields']['message'] == 'custom test hello'
+    assert details['Fields']['msg'] == 'custom test hello'
     assert details['Fields']['foo'] == foo_repr
 
 
@@ -71,7 +71,7 @@ def test_logging_error_tracebacks(caplog):
     details = assert_records(caplog.records)
 
     assert details['Severity'] == 3
-    assert details['Fields']['message'] == 'there was an error'
+    assert details['Fields']['msg'] == 'there was an error'
     assert details['Fields']['error'] == "ValueError('\\n',)"
     assert details['Fields']['traceback'].startswith('Uncaught exception:')
     assert 'ValueError' in details['Fields']['traceback']
@@ -84,7 +84,7 @@ def test_ignore_json_message(caplog):
     except Exception:
         logging.exception(json.dumps({'spam': 'eggs'}))
     details = assert_records(caplog.records)
-    assert 'message' not in details['Fields']
+    assert 'msg' not in details['Fields']
 
 
 # https://mana.mozilla.org/wiki/pages/viewpage.action?pageId=42895640
