@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+2017.11.0 (2017-11-16)
+^^^^^^^^^^^^^^^^^^^^^^
+
+- Fixed name of mozlog message field from "message" to "msg" as
+  specified in https://wiki.mozilla.org/Firefox/Services/Logging.
+  Thanks @leplatrem!
+
 2017.5.0 (2017-05-31)
 ^^^^^^^^^^^^^^^^^^^^^
 
