@@ -6,72 +6,85 @@ import uuid
 from collections import OrderedDict
 
 from flask import (current_app, g, got_request_exception, jsonify,
-                   make_response, request, request_finished)
+                   make_response, request)
+from werkzeug.exceptions import InternalServerError
 try:
     from flask_login import current_user
-except ImportError:
+except ImportError:  # pragma: nocover
     has_flask_login = False
 else:
     has_flask_login = True
 
 
-from ..version import get_version
+from .. import version
 from . import checks
 from .signals import heartbeat_passed, heartbeat_failed
 
 # the dockerflow.flask.app logger
-logger = logging.getLogger('dockerflow.flask')
-logger.addHandler(logging.NullHandler())
+
+
+class HeartbeatFailure(InternalServerError):
+    pass
 
 
 class Dockerflow(object):
-    check_statuses = {
-        0: 'ok',
-        checks.DEBUG: 'debug',
-        checks.INFO: 'info',
-        checks.WARNING: 'warning',
-        checks.ERROR: 'error',
-        checks.CRITICAL: 'critical',
-    }
 
-    def __init__(self, app=None, *args, **kwargs):
+    def __init__(self, app=None, db=None, redis=None, migrate=None,
+                 silenced_checks=None, version_path=None, *args, **kwargs):
+        self.logger = logging.getLogger('dockerflow.flask')
+        self.logger.addHandler(logging.NullHandler())
         self.checks = OrderedDict()
         self.summary_logger = logging.getLogger('request.summary')
-        self.version_callback = get_version
+        self.silenced_checks = silenced_checks or []
+        self.version_path = version_path
+        self._version_callback = version.get_version
         if app:
             self.init_app(app)
+        if db:
+            self.init_extension(checks.check_database_connected, db)
+        if redis:
+            self.init_extension(checks.check_redis_connected, redis)
+        # if migrate:
+        #     self.init_migrate(migrate)
+
+    def init_extension(self, check, obj):
+        self.logger.info('Adding extension check %s' % check.__name__)
+        check = functools.wraps(check)(functools.partial(check, obj))
+        self.check(func=check)
 
     def init_app(self, app):
-        self.version_path = app.config.get(
-            'DOCKERFLOW_VERSION_PATH',
-            os.path.dirname(app.root_path)
-        )
+        if self.version_path is None:
+            self.version_path = os.path.dirname(app.root_path)
 
         app.add_url_rule('/__version__', 'version', self.version)
         app.add_url_rule('/__heartbeat__', 'heartbeat', self.heartbeat)
         app.add_url_rule('/__lbheartbeat__', 'lbheartbeat', self.lbheartbeat)
-
         app.before_request(self.before_request)
-        request_finished.connect(self.after_request, app)
+        app.after_request(self.after_request)
         got_request_exception.connect(self.after_exception, app)
 
-        if 'dockerflow' not in app.extensions:
-            app.extensions['dockerflow'] = {}
+        @app.errorhandler(HeartbeatFailure)
+        def heartbeat_exception_handler(error):
+            return error.get_response()
+
+        if not hasattr(app, 'extensions'):  # pragma: nocover
+            app.extensions = {}
         app.extensions['dockerflow'] = self
 
-    def before_request(self, *args, **kwargs):
+    def before_request(self):
         """
         The before_request callback.
         """
         g._request_id = str(uuid.uuid4())
         g._start_timestamp = time.time()
 
-    def after_request(self, *args, **kwargs):
+    def after_request(self, response):
         """
         The signal handler for the request_finished signal.
         """
         extra = self.summary_extra()
         self.summary_logger.info('', extra=extra)
+        return response
 
     def after_exception(self, sender, exception, **extra):
         """
@@ -87,7 +100,7 @@ class Dockerflow(object):
         """
         # This needs flask-login to be installed
         if not has_flask_login:
-            return None
+            return
 
         # and the actual login manager installed
         if not hasattr(current_app, 'login_manager'):
@@ -108,11 +121,7 @@ class Dockerflow(object):
             return
 
         # finally return the user id
-        try:
-            return current_user.get_id()
-        except NotImplementedError:
-            # but fail gracefully if the get_id wasn't implemented
-            return
+        return current_user.get_id()
 
     def summary_extra(self):
         """
@@ -127,7 +136,10 @@ class Dockerflow(object):
         }
 
         # set the uid value to the current user ID
-        out['uid'] = self.user_id() or ''
+        user_id = self.user_id()
+        if user_id is None:
+            user_id = ''
+        out['uid'] = user_id
 
         # the rid value to the current request ID
         request_id = g.get('_request_id', None)
@@ -146,7 +158,7 @@ class Dockerflow(object):
         """
         View that returns the contents of version.json or a 404.
         """
-        version_json = self.version_callback(self.version_path)
+        version_json = self._version_callback(self.version_path)
         if version_json is None:
             return 'version.json not found', 404
         else:
@@ -159,6 +171,16 @@ class Dockerflow(object):
         http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-healthchecks.html
         """
         return '', 200
+
+    def heartbeat_check_detail(self, check):
+        errors = list(filter(lambda e: e.id not in self.silenced_checks, check()))
+        level = max([0] + [e.level for e in errors])
+
+        return {
+            'status': checks.level_to_text(level),
+            'level': level,
+            'messages': {e.id: e.msg for e in errors},
+        }
 
     def heartbeat(self):
         """
@@ -173,33 +195,29 @@ class Dockerflow(object):
         level = 0
 
         for name, check in self.checks.items():
-            errors = check()
-
-            level = max([0] + [e.level for e in errors])
-            detail = {
-                'status': checks.level_to_text(level),
-                'level': level,
-                'messages': {e.id: e.msg for e in errors},
-            }
-
+            detail = self.heartbeat_check_detail(check)
             statuses[name] = detail['status']
             level = max(level, detail['level'])
             if detail['level'] > 0:
                 details[name] = detail
-
-        if level < checks.messages.WARNING:
-            status_code = 200
-            heartbeat_passed.send(self, level=level)
-        else:
-            status_code = 500
-            heartbeat_failed.send(self, level=level)
 
         payload = {
             'status': checks.level_to_text(level),
             'checks': statuses,
             'details': details,
         }
-        return make_response(jsonify(payload), status_code)
+
+        def render(status_code):
+            return make_response(jsonify(payload), status_code)
+
+        if level < checks.WARNING:
+            status_code = 200
+            heartbeat_passed.send(self, level=level)
+            return render(status_code)
+        else:
+            status_code = 500
+            heartbeat_failed.send(self, level=level)
+            raise HeartbeatFailure(response=render(status_code))
 
     def version_callback(self, func):
         """
@@ -208,8 +226,9 @@ class Dockerflow(object):
         :func:`dockerflow.version.get_version`.
 
         The callback will be passed the value of the
-        ``DOCKERFLOW_VERSION_PATH`` config variable, which defaults to the
-        parent directory of the Flask app's root path.
+        ``version_path`` parameter to the Dockerflow extension object,
+        which defaults to the parent directory of the Flask app's root path.
+
         The callback should return a dictionary with the
         version information as defined in the Dockerflow spec,
         or None if no version information could be loaded.
@@ -224,7 +243,7 @@ class Dockerflow(object):
             return json.loads(os.path.join(root, 'acme_version.json'))
 
         """
-        self.version_callback = func
+        self._version_callback = func
 
     def check(self, func=None, name=None):
         """
@@ -248,11 +267,11 @@ class Dockerflow(object):
         if name is None:
             name = func.__name__
 
-        logger.debug('Registered Dockerflow check %s', name)
+        self.logger.info('Registered Dockerflow check %s', name)
 
         @functools.wraps(func)
         def decorated_function(*args, **kwargs):
-            logger.debug('Called Dockerflow check %s', name)
+            self.logger.info('Called Dockerflow check %s', name)
             return func(*args, **kwargs)
 
         self.checks[name] = decorated_function

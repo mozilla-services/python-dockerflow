@@ -29,5 +29,9 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Topic :: Internet :: WWW/HTTP',
     ],
+    extras_require={
+        'django': ['django'],
+        'flask': ['flask', 'blinker'],
+    },
     zip_safe=False,
 )

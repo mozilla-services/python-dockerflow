@@ -4,7 +4,6 @@
 pytest
 pytest-catchlog
 pytest-coverage
-pytest-flask
 pytest-django
 pytest-mock
 pytest-pythonpath
@@ -13,3 +12,11 @@ redis
 django-redis
 fakeredis
 jsonschema
+blinker
+# these are constrained by the files in tests/constraints/*.txt
+# to support a dual stack Django/Flask
+Django
+Flask
+Flask-Redis
+Flask-SQLAlchemy
+Flask-Login

@@ -5,26 +5,13 @@ import pytest
 
 
 @pytest.fixture
-def reset_checks():
-    from django.core.checks.registry import registry
-    registry.registered_checks = []
-    registry.deployment_checks = []
-
-
-def create_app():
-    from dockerflow.flask import Dockerflow
-    from flask import Flask
-
-    app = Flask('dockerflow')
-    Dockerflow(app)
-    return app
-
-
-@pytest.fixture
-def app():
-    return create_app()
-
-
-@pytest.fixture
-def dockerflow(app):
-    return app.extensions['dockerflow']
+def version_content():
+    """
+    as documented on https://github.com/mozilla-services/Dockerflow/blob/master/docs/version_object.md
+    """
+    return {
+        'source': 'https://github.com/mozilla-services/python-dockerflow',
+        'version': 'release tag or string for humans',
+        'commit': '<git hash>',
+        'build': 'uri to CI build job'
+    }

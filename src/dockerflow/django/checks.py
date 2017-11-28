@@ -8,16 +8,7 @@ from django.db import connection
 from django.db.utils import OperationalError, ProgrammingError
 from django.utils.module_loading import import_string
 
-
-INFO_CANT_CHECK_MIGRATIONS = 'dockerflow.health.I001'
-WARNING_UNAPPLIED_MIGRATION = 'dockerflow.health.W001'
-ERROR_CANNOT_CONNECT_DATABASE = 'dockerflow.health.E001'
-ERROR_UNUSABLE_DATABASE = 'dockerflow.health.E002'
-ERROR_MISCONFIGURED_DATABASE = 'dockerflow.health.E003'
-ERROR_CANNOT_CONNECT_REDIS = 'dockerflow.health.E004'
-ERROR_MISSING_REDIS_CLIENT = 'dockerflow.health.E005'
-ERROR_MISCONFIGURED_REDIS = 'dockerflow.health.E006'
-ERROR_REDIS_PING_FAILED = 'dockerflow.health.E007'
+from .. import health
 
 
 def level_to_text(level):
@@ -43,14 +34,16 @@ def check_database_connected(app_configs, **kwargs):
         connection.ensure_connection()
     except OperationalError as e:
         msg = 'Could not connect to database: {!s}'.format(e)
-        errors.append(checks.Error(msg, id=ERROR_CANNOT_CONNECT_DATABASE))
+        errors.append(checks.Error(msg,
+                                   id=health.ERROR_CANNOT_CONNECT_DATABASE))
     except ImproperlyConfigured as e:
         msg = 'Datbase misconfigured: "{!s}"'.format(e)
-        errors.append(checks.Error(msg, id=ERROR_MISCONFIGURED_DATABASE))
+        errors.append(checks.Error(msg,
+                                   id=health.ERROR_MISCONFIGURED_DATABASE))
     else:
         if not connection.is_usable():
             errors.append(checks.Error('Database connection is not usable',
-                                       id=ERROR_UNUSABLE_DATABASE))
+                                       id=health.ERROR_UNUSABLE_DATABASE))
 
     return errors
 
@@ -67,7 +60,7 @@ def check_migrations_applied(app_configs, **kwargs):
         loader = MigrationLoader(connection, ignore_no_migrations=True)
     except (ImproperlyConfigured, ProgrammingError, OperationalError):
         msg = "Can't connect to database to check migrations"
-        return [checks.Info(msg, id=INFO_CANT_CHECK_MIGRATIONS)]
+        return [checks.Info(msg, id=health.INFO_CANT_CHECK_MIGRATIONS)]
 
     if app_configs:
         app_labels = [app.label for app in app_configs]
@@ -81,7 +74,8 @@ def check_migrations_applied(app_configs, **kwargs):
             msg = 'Unapplied migration {}'.format(migration)
             # NB: This *must* be a Warning, not an Error, because Errors
             # prevent migrations from being run.
-            errors.append(checks.Warning(msg, id=WARNING_UNAPPLIED_MIGRATION))
+            errors.append(checks.Warning(msg,
+                                         id=health.WARNING_UNAPPLIED_MIGRATION))
 
     return errors
 
@@ -100,18 +94,18 @@ def check_redis_connected(app_configs, **kwargs):
         connection = get_redis_connection('default')
     except redis.ConnectionError as e:
         msg = 'Could not connect to redis: {!s}'.format(e)
-        errors.append(checks.Error(msg, id=ERROR_CANNOT_CONNECT_REDIS))
+        errors.append(checks.Error(msg, id=health.ERROR_CANNOT_CONNECT_REDIS))
     except NotImplementedError as e:
         msg = 'Redis client not available: {!s}'.format(e)
-        errors.append(checks.Error(msg, id=ERROR_MISSING_REDIS_CLIENT))
+        errors.append(checks.Error(msg, id=health.ERROR_MISSING_REDIS_CLIENT))
     except ImproperlyConfigured as e:
         msg = 'Redis misconfigured: "{!s}"'.format(e)
-        errors.append(checks.Error(msg, id=ERROR_MISCONFIGURED_REDIS))
+        errors.append(checks.Error(msg, id=health.ERROR_MISCONFIGURED_REDIS))
     else:
         result = connection.ping()
         if not result:
             msg = 'Redis ping failed'
-            errors.append(checks.Error(msg, id=ERROR_REDIS_PING_FAILED))
+            errors.append(checks.Error(msg, id=health.ERROR_REDIS_PING_FAILED))
     return errors
 
 
