@@ -5,7 +5,7 @@ import time
 import uuid
 from collections import OrderedDict
 
-from flask import (current_app, g, got_request_exception, jsonify,
+from flask import (Blueprint, current_app, g, got_request_exception, jsonify,
                    make_response, request)
 from werkzeug.exceptions import InternalServerError
 try:
@@ -20,8 +20,6 @@ from .. import version
 from . import checks
 from .signals import heartbeat_passed, heartbeat_failed
 
-# the dockerflow.flask.app logger
-
 
 class HeartbeatFailure(InternalServerError):
     pass
@@ -31,8 +29,10 @@ class Dockerflow(object):
 
     def __init__(self, app=None, db=None, redis=None, migrate=None,
                  silenced_checks=None, version_path=None, *args, **kwargs):
+        self.blueprint = Blueprint('dockerflow', 'dockerflow.flask.app')
         self.logger = logging.getLogger('dockerflow.flask')
         self.logger.addHandler(logging.NullHandler())
+        self.logger.setLevel(logging.INFO)
         self.checks = OrderedDict()
         self.summary_logger = logging.getLogger('request.summary')
         self.silenced_checks = silenced_checks or []
@@ -56,20 +56,28 @@ class Dockerflow(object):
         if self.version_path is None:
             self.version_path = os.path.dirname(app.root_path)
 
-        app.add_url_rule('/__version__', 'version', self.version)
-        app.add_url_rule('/__heartbeat__', 'heartbeat', self.heartbeat)
-        app.add_url_rule('/__lbheartbeat__', 'lbheartbeat', self.lbheartbeat)
-        app.before_request(self.before_request)
-        app.after_request(self.after_request)
-        got_request_exception.connect(self.after_exception, app)
-
-        @app.errorhandler(HeartbeatFailure)
-        def heartbeat_exception_handler(error):
-            return error.get_response()
+        for view in (
+            ('/__version__', 'version', self.version),
+            ('/__heartbeat__', 'heartbeat', self.heartbeat),
+            ('/__lbheartbeat__', 'lbheartbeat', self.lbheartbeat),
+        ):
+            self.blueprint.add_url_rule(*view)
+        self.blueprint.before_app_request(self.before_request)
+        self.blueprint.after_app_request(self.after_request)
+        self.blueprint.app_errorhandler(HeartbeatFailure)(self.heartbeat_exception_handler)
+        app.register_blueprint(self.blueprint)
+        got_request_exception.connect(self.got_request_exception, sender=app)
 
         if not hasattr(app, 'extensions'):  # pragma: nocover
             app.extensions = {}
         app.extensions['dockerflow'] = self
+
+    def heartbeat_exception_handler(self, error):
+        """
+        An exception handler to act as a middleman to return
+        a heartbeat view response with a 500 error code.
+        """
+        return error.get_response()
 
     def before_request(self):
         """
@@ -86,7 +94,7 @@ class Dockerflow(object):
         self.summary_logger.info('', extra=extra)
         return response
 
-    def after_exception(self, sender, exception, **extra):
+    def got_request_exception(self, sender, exception, **extra):
         """
         The signal handler for the got_request_exception signal.
         """
