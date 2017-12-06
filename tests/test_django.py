@@ -4,6 +4,8 @@
 import logging
 import json
 import redis
+from django import VERSION as django_version
+from django.core.checks.registry import registry
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
 from django.db.utils import OperationalError, ProgrammingError
@@ -17,9 +19,12 @@ import pytest
 
 @pytest.fixture
 def reset_checks():
-    from django.core.checks.registry import registry
-    registry.registered_checks = []
-    registry.deployment_checks = []
+    if django_version[0] < 2:
+        registry.registered_checks = []
+        registry.deployment_checks = []
+    else:
+        registry.registered_checks = set()
+        registry.deployment_checks = set()
 
 
 @pytest.fixture
