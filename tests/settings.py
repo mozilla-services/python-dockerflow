@@ -39,6 +39,7 @@ DATABASES = {
 
 SILENCED_SYSTEM_CHECKS = [
     'security.W002',
+    'security.W003',
     'security.W001',
     'security.W009',
     'security.W016',
