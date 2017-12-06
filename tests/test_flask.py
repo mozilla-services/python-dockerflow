@@ -4,16 +4,20 @@
 import logging
 from logging.config import dictConfig
 import json
+import os
 import redis
 
 import pytest
+from fakeredis import FakeStrictRedis
 from flask import Flask, g, request, Response, has_request_context
+from flask_migrate import Migrate
 from flask_login import LoginManager, login_user, current_user
 from flask_login.mixins import UserMixin
 from flask_redis import FlaskRedis
 from flask_sqlalchemy import SQLAlchemy, get_debug_queries
 from dockerflow import health
 from dockerflow.flask import checks, Dockerflow
+from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
 
 class MockUser(UserMixin):
@@ -55,7 +59,6 @@ def create_app():
     configure_logging()
     app = Flask('dockerflow')
     app.secret_key = 'super sekrit'
-    Dockerflow(app)
     login_manager = LoginManager(app)
     login_manager.user_loader(load_user)
     return app
@@ -68,40 +71,43 @@ def app():
 
 @pytest.fixture
 def dockerflow(app):
-    return app.extensions['dockerflow']
+    return Dockerflow(app)
 
 
 @pytest.fixture
 def db(app):
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['REDIS_URL'] = 'redis://127.0.0.1:6379/0'
     return SQLAlchemy(app)
 
 
 @pytest.fixture
+def migrate(app, db):
+    test_migrations = os.path.join(os.path.dirname(__file__), 'migrations')
+    return Migrate(app, db, directory=test_migrations)
+
+
+@pytest.fixture
 def redis_store(app):
-    return FlaskRedis(app)
+    return FlaskRedis.from_custom_provider(FakeStrictRedis, app)
 
 
-@pytest.yield_fixture
-def flask_client(app):
-    """A Flask test client. An instance of :class:`flask.testing.TestClient`
-    by default.
-    """
-    with app.test_client() as client:
-        yield client
+def test_instantiating(app):
+    dockerflow = Dockerflow()
+    assert 'dockerflow.heartbeat' not in app.view_functions
+    dockerflow.init_app(app)
+    assert 'dockerflow.heartbeat' in app.view_functions
 
 
-def test_version_exists(dockerflow, mocker, flask_client, version_content):
+def test_version_exists(dockerflow, mocker, app, version_content):
     mocker.patch.object(dockerflow, '_version_callback',
                         return_value=version_content)
-    response = flask_client.get('/__version__')
+    response = app.test_client().get('/__version__')
     assert response.status_code == 200
     assert json.loads(response.data.decode()) == version_content
 
 
-def test_version_path(mocker, flask_client, version_content):
+def test_version_path(mocker, version_content):
     configure_logging()
     app = Flask('dockerflow')
     app.secret_key = 'super sekrit'
@@ -111,37 +117,37 @@ def test_version_path(mocker, flask_client, version_content):
     dockerflow = Dockerflow(app, version_path=custom_version_path)
     version_callback = mocker.patch.object(dockerflow, '_version_callback',
                                            return_value=version_content)
-    with app.test_client() as client:
-        response = client.get('/__version__')
+    with app.test_client() as test_client:
+        response = test_client.get('/__version__')
         assert response.status_code == 200
         assert json.loads(response.data.decode()) == version_content
         version_callback.assert_called_with(custom_version_path)
 
 
-def test_version_missing(dockerflow, mocker, flask_client):
+def test_version_missing(dockerflow, mocker, app):
     mocker.patch.object(dockerflow, '_version_callback',
                         return_value=None)
-    response = flask_client.get('/__version__')
+    response = app.test_client().get('/__version__')
     assert response.status_code == 404
 
 
-def test_version_callback(dockerflow, flask_client):
+def test_version_callback(dockerflow, app):
     callback_version = {'version': '1.0'}
 
     @dockerflow.version_callback
     def version_callback(path):
         return callback_version
 
-    response = flask_client.get('/__version__')
+    response = app.test_client().get('/__version__')
     assert response.status_code == 200
     assert json.loads(response.data.decode()) == callback_version
 
 
-def test_heartbeat(app, dockerflow, flask_client):
+def test_heartbeat(app, dockerflow):
     # app.debug = True
     dockerflow.checks.clear()
 
-    response = flask_client.get('/__heartbeat__')
+    response = app.test_client().get('/__heartbeat__')
     assert response.status_code == 200
 
     @dockerflow.check
@@ -156,7 +162,7 @@ def test_heartbeat(app, dockerflow, flask_client):
     def warning_check2():
         return [checks.Warning('some other warning', id='tests.checks.W002')]
 
-    response = flask_client.get('/__heartbeat__')
+    response = app.test_client().get('/__heartbeat__')
     assert response.status_code == 500
     payload = json.loads(response.data.decode())
     assert payload['status'] == 'error'
@@ -166,32 +172,66 @@ def test_heartbeat(app, dockerflow, flask_client):
     assert 'warning-check-two' in defaults
 
 
-def test_lbheartbeat_makes_no_db_queries(dockerflow, flask_client):
+def test_lbheartbeat_makes_no_db_queries(dockerflow, app):
     assert len(get_debug_queries()) == 0
-    response = flask_client.get('/__lbheartbeat__')
+    response = app.test_client().get('/__lbheartbeat__')
     assert response.status_code == 200
     assert len(get_debug_queries()) == 0
 
 
-def test_full_redis_check(flask_client, mocker, redis_store):
+def test_full_redis_check(mocker):
     app = Flask('redis-check')
+    app.debug = True
+    redis_store = FlaskRedis.from_custom_provider(FakeStrictRedis, app)
     dockerflow = Dockerflow(app, redis=redis_store)
     assert 'check_redis_connected' in dockerflow.checks
 
-    response = flask_client.get('/__heartbeat__')
+    with app.test_client() as test_client:
+        response = test_client.get('/__heartbeat__')
+        assert response.status_code == 200
+        assert json.loads(response.data.decode())['status'] == 'ok'
+
+
+def test_full_redis_check_error(mocker):
+    app = Flask('redis-check')
+    redis_store = FlaskRedis.from_custom_provider(FakeStrictRedis, app)
+    ping = mocker.patch.object(redis_store, 'ping')
+    ping.side_effect = redis.ConnectionError
+    dockerflow = Dockerflow(app, redis=redis_store)
+    assert 'check_redis_connected' in dockerflow.checks
+
+    with app.test_client() as test_client:
+        response = test_client.get('/__heartbeat__')
+        assert response.status_code == 500
+        assert json.loads(response.data.decode())['status'] == 'error'
+
+
+def test_full_db_check(mocker):
+    app = Flask('db-check')
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    db = SQLAlchemy(app)
+    dockerflow = Dockerflow(app, db=db)
+    assert 'check_database_connected' in dockerflow.checks
+
+    response = app.test_client().get('/__heartbeat__')
     assert response.status_code == 200
     assert json.loads(response.data.decode())['status'] == 'ok'
 
 
-def test_full_redis_check_error(mocker, redis_store):
-    make_connection = mocker.patch('redis.connection.ConnectionPool.make_connection')
-    make_connection.side_effect = redis.ConnectionError
-    app = Flask('redis-check')
-    dockerflow = Dockerflow(app, redis=redis_store)
-    assert 'check_redis_connected' in dockerflow.checks
+def test_full_db_check_error(mocker):
+    app = Flask('db-check')
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    db = SQLAlchemy(app)
 
-    with app.test_client() as flask_client:
-        response = flask_client.get('/__heartbeat__')
+    engine_connect = mocker.patch.object(db.engine, 'connect')
+    engine_connect.side_effect = SQLAlchemyError
+    dockerflow = Dockerflow(app, db=db)
+    assert 'check_database_connected' in dockerflow.checks
+
+    with app.test_client() as test_client:
+        response = test_client.get('/__heartbeat__')
         assert response.status_code == 500
         assert json.loads(response.data.decode())['status'] == 'error'
 
@@ -213,15 +253,16 @@ headers = {
 }
 
 
-def test_request_summary(caplog, dockerflow, flask_client):
-    flask_client.get('/', headers=headers)
-    assert getattr(g, '_request_id') is not None
-    assert isinstance(getattr(g, '_start_timestamp'), float)
+def test_request_summary(caplog, dockerflow, app):
+    with app.test_client() as test_client:
+        test_client.get('/', headers=headers)
+        assert getattr(g, '_request_id') is not None
+        assert isinstance(getattr(g, '_start_timestamp'), float)
 
-    assert len(caplog.records) == 1
-    for record in caplog.records:
-        assert_log_record(request, record)
-        assert getattr(request, 'uid', None) is None
+        assert len(caplog.records) == 1
+        for record in caplog.records:
+            assert_log_record(request, record)
+            assert getattr(request, 'uid', None) is None
 
 
 def assert_user(app, caplog, user, callback):
@@ -277,28 +318,30 @@ def test_request_summary_user_flask_login_missing(caplog, dockerflow, app, monke
     assert_user(app, caplog, user, lambda user: '')
 
 
-def test_request_summary_exception(caplog, dockerflow, flask_client, app):
-    @app.route('/')
-    def index():
-        raise ValueError('exception message')
+def test_request_summary_exception(caplog, app):
+    Dockerflow(app)
 
-    flask_client.get('/', headers=headers)
-    assert len(caplog.records) == 1
-    for record in caplog.records:
-        if not hasattr(record, 'errno'):
-            continue
-        assert_log_record(request, record, level=logging.ERROR, errno=500)
-        assert record.getMessage() == 'exception message'
+    with app.test_request_context('/', headers=headers):
+        assert has_request_context()
+        app.preprocess_request()
+        app.handle_exception(ValueError('exception message'))
+        response = Response('')
+        response = app.process_response(response)
+        for record in caplog.records:
+            if not hasattr(caplog, 'errno'):
+                continue
+            assert_log_record(request, record, level=logging.ERROR, errno=500)
+            assert record.getMessage() == 'exception message'
 
 
-def test_request_summary_failed_request(caplog, dockerflow, app, flask_client):
+def test_request_summary_failed_request(caplog, dockerflow, app):
     @app.before_request
     def hostile_callback():
         # simulating resetting request changes
         delattr(g, '_request_id')
         delattr(g, '_start_timestamp')
 
-    flask_client.get('/', headers=headers)
+    app.test_client().get('/', headers=headers)
     assert len(caplog.records) == 1
     for record in caplog.records:
         assert getattr(record, 'rid', None) is None
@@ -306,7 +349,6 @@ def test_request_summary_failed_request(caplog, dockerflow, app, flask_client):
 
 
 def test_db_check_sqlalchemy_error(mocker, db):
-    from sqlalchemy.exc import SQLAlchemyError
     engine_connect = mocker.patch.object(db.engine, 'connect')
     engine_connect.side_effect = SQLAlchemyError
     errors = checks.check_database_connected(db)
@@ -315,7 +357,6 @@ def test_db_check_sqlalchemy_error(mocker, db):
 
 
 def test_db_check_dbapi_error(mocker, db):
-    from sqlalchemy.exc import DBAPIError
     exception = DBAPIError.instance('', [], Exception(), Exception)
     engine_connect = mocker.patch.object(db.engine, 'connect')
     engine_connect.side_effect = exception
@@ -352,50 +393,46 @@ def test_check_message():
     assert message != message3
 
 
-# @pytest.mark.parametrize('exception', [
-#     ImproperlyConfigured, ProgrammingError, OperationalError
-# ])
-# def test_check_migrations_applied_cannot_check_migrations(exception, mocker):
-#     mocker.patch(
-#         'django.db.migrations.loader.MigrationLoader',
-#         side_effect=exception,
-#     )
-#     errors = checks.check_migrations_applied([])
-#     assert len(errors) == 1
-#     assert errors[0].id == checks.INFO_CANT_CHECK_MIGRATIONS
+@pytest.mark.parametrize('exception', [
+    SQLAlchemyError(), DBAPIError.instance('', [], Exception(), Exception)
+])
+def test_check_migrations_applied_cannot_check_migrations(exception, mocker, db, migrate):
+    engine_connect = mocker.patch.object(db.engine, 'connect')
+    engine_connect.side_effect = exception
+    errors = checks.check_migrations_applied(migrate)
+    assert len(errors) == 1
+    assert errors[0].id == health.INFO_CANT_CHECK_MIGRATIONS
 
 
-# @pytest.mark.django_db
-# def test_check_migrations_applied_unapplied_migrations(mocker):
-#     mock_loader = mocker.patch('django.db.migrations.loader.MigrationLoader')
-#     mock_loader.return_value.applied_migrations = ['spam', 'eggs']
+def test_check_migrations_applied_success(mocker, db, migrate):
+    get_heads = mocker.patch(
+        'alembic.script.ScriptDirectory.get_heads',
+        return_value=('17164a7d1c2e',)
+    )
+    get_current_heads = mocker.patch(
+        'alembic.migration.MigrationContext.get_current_heads',
+        return_value=('17164a7d1c2e',)
+    )
+    errors = checks.check_migrations_applied(migrate)
+    assert get_heads.called
+    assert get_current_heads.called
+    assert len(errors) == 0
 
-#     migration_mock = mocker.Mock()
-#     migration_mock.app_label = 'app'
 
-#     migration_mock2 = mocker.Mock()
-#     migration_mock2.app_label = 'app2'
-
-#     mock_loader.return_value.graph.nodes = {
-#         'app': migration_mock,
-#         'app2': migration_mock2,
-#     }
-
-#     app_config_mock = mocker.Mock()
-#     app_config_mock.label = 'app'
-
-#     errors = checks.check_migrations_applied([app_config_mock])
-#     assert len(errors) == 1
-#     assert errors[0].id == checks.WARNING_UNAPPLIED_MIGRATION
-
-#     mock_loader.return_value.migrated_apps = ['app']
-#     errors = checks.check_migrations_applied([])
-#     assert len(errors) == 1
-#     assert errors[0].id == checks.WARNING_UNAPPLIED_MIGRATION
-
-#     mock_loader.return_value.applied_migrations = ['app']
-#     errors = checks.check_migrations_applied([])
-#     assert len(errors) == 0
+def test_check_migrations_applied_unapplied_migrations(mocker, db, migrate):
+    get_heads = mocker.patch(
+        'alembic.script.ScriptDirectory.get_heads',
+        return_value=('7f447c94347a',)
+    )
+    get_current_heads = mocker.patch(
+        'alembic.migration.MigrationContext.get_current_heads',
+        return_value=('73d96d3120ff',)
+    )
+    errors = checks.check_migrations_applied(migrate)
+    assert get_heads.called
+    assert get_current_heads.called
+    assert len(errors) == 1
+    assert errors[0].id == health.WARNING_UNAPPLIED_MIGRATION
 
 
 @pytest.mark.parametrize('exception,error', [
@@ -403,20 +440,20 @@ def test_check_message():
     (redis.RedisError, health.ERROR_REDIS_EXCEPTION),
 ])
 def test_check_redis_connected(mocker, redis_store, exception, error):
-    make_connection = mocker.patch('redis.connection.ConnectionPool.make_connection')
-    make_connection.side_effect = exception
+    ping = mocker.patch.object(redis_store, 'ping')
+    ping.side_effect = exception
     errors = checks.check_redis_connected(redis_store)
     assert len(errors) == 1
     assert errors[0].id == error
 
 
 def test_check_redis_connected_ping_check(mocker, redis_store):
-    make_connection = mocker.patch('redis.connection.ConnectionPool.make_connection')
-    make_connection.return_value.ping.return_value = True
+    ping = mocker.patch.object(redis_store, 'ping')
+    ping.return_value = True
     errors = checks.check_redis_connected(redis_store)
     assert len(errors) == 0
 
-    make_connection.return_value.ping.return_value = False
+    ping.return_value = False
     errors = checks.check_redis_connected(redis_store)
     assert len(errors) == 1
     assert errors[0].id == health.ERROR_REDIS_PING_FAILED

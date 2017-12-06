@@ -87,7 +87,7 @@ class Critical(CheckMessage):
 
 def check_database_connected(db):
     """
-    A Django check to see if connecting to the configured default
+    A check to see if connecting to the configured default
     database backend succeeds.
     """
     from sqlalchemy.exc import DBAPIError, SQLAlchemyError
@@ -100,22 +100,49 @@ def check_database_connected(db):
         msg = 'DB-API error: {!s}'.format(e)
         errors.append(Error(msg, id=health.ERROR_DB_API_EXCEPTION))
     except SQLAlchemyError as e:
-        msg = 'Datbase misconfigured: "{!s}"'.format(e)
+        msg = 'Database misconfigured: "{!s}"'.format(e)
         errors.append(Error(msg, id=health.ERROR_SQLALCHEMY_EXCEPTION))
+    return errors
+
+
+def check_migrations_applied(migrate):
+    """
+    A check to see if all migrations have been applied correctly.
+    """
+    errors = []
+
+    from alembic.migration import MigrationContext
+    from alembic.script import ScriptDirectory
+    from sqlalchemy.exc import DBAPIError, SQLAlchemyError
+
+    config = migrate.get_config()
+    script = ScriptDirectory.from_config(config)
+
+    try:
+        with migrate.db.engine.connect() as connection:
+            context = MigrationContext.configure(connection)
+            db_heads = set(context.get_current_heads())
+            script_heads = set(script.get_heads())
+    except (DBAPIError, SQLAlchemyError) as e:
+        msg = "Can't connect to database to check migrations: {!s}".format(e)
+        return [Info(msg, id=health.INFO_CANT_CHECK_MIGRATIONS)]
+
+    if db_heads != script_heads:
+        msg = "Unapplied migrations found: {}".format(', '.join(script_heads))
+        errors.append(Warning(msg, id=health.WARNING_UNAPPLIED_MIGRATION))
     return errors
 
 
 def check_redis_connected(client):
     """
-    A Django check to connect to the default redis connection
-    using ``django_redis.get_redis_connection`` and see if Redis
-    responds to a ``PING`` command.
+    A check to connect to Redis using the given client and see
+    if it responds to the ``PING`` command.
     """
     import redis
     errors = []
 
     try:
-        connection = client.connection_pool.make_connection()
+        result = client.ping()
     except redis.ConnectionError as e:
         msg = 'Could not connect to redis: {!s}'.format(e)
         errors.append(Error(msg, id=health.ERROR_CANNOT_CONNECT_REDIS))
@@ -123,7 +150,6 @@ def check_redis_connected(client):
         errors.append(Error('Redis error: "{!s}"'.format(e),
                             id=health.ERROR_REDIS_EXCEPTION))
     else:
-        result = connection.ping()
         if not result:
             errors.append(Error('Redis ping failed',
                                 id=health.ERROR_REDIS_PING_FAILED))

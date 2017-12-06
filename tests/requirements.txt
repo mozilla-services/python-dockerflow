@@ -14,8 +14,10 @@ jsonschema
 blinker
 # these are constrained by the files in tests/constraints/*.txt
 # to support a dual stack Django/Flask
-Django
+Django; python_version >= '3.0'
+Django<2.0; python_version < '3.0'
 Flask
 Flask-Redis
 Flask-SQLAlchemy
 Flask-Login
+Flask-Migrate
