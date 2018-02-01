@@ -29,34 +29,7 @@ def load_user(user_id):
     return MockUser(user_id)
 
 
-def configure_logging():
-    config = {
-        'version': 1,
-        'formatters': {
-            'json': {
-                '()': 'dockerflow.logging.JsonLogFormatter',
-                'logger_name': 'tests'
-            }
-        },
-        'handlers': {
-            'console': {
-                'level': 'DEBUG',
-                'class': 'logging.StreamHandler',
-                'formatter': 'json'
-            },
-        },
-        'loggers': {
-            'request.summary': {
-                'handlers': ['console'],
-                'level': 'DEBUG',
-            },
-        }
-    }
-    dictConfig(config)
-
-
 def create_app():
-    configure_logging()
     app = Flask('dockerflow')
     app.secret_key = 'super sekrit'
     login_manager = LoginManager(app)
@@ -108,7 +81,6 @@ def test_version_exists(dockerflow, mocker, app, version_content):
 
 
 def test_version_path(mocker, version_content):
-    configure_logging()
     app = Flask('dockerflow')
     app.secret_key = 'super sekrit'
     login_manager = LoginManager(app)
