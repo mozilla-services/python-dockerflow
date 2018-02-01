@@ -9,7 +9,7 @@ import jsonschema
 
 from dockerflow.logging import JsonLogFormatter
 
-logger_name = 'TestingTestPilot'
+logger_name = 'tests'
 formatter = JsonLogFormatter(logger_name=logger_name)
 
 

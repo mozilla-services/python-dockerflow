@@ -57,7 +57,7 @@ To install ``python-dockerflow``'s Django support please follow these steps:
         'formatters': {
             'json': {
                 '()': 'dockerflow.logging.JsonLogFormatter',
-                'logger_name': '<< MySiteName >>'
+                'logger_name': '<project>'
             }
         },
         'handlers': {
@@ -93,7 +93,7 @@ djangopackages.com.
 ``os.environ``
 ~~~~~~~~~~~~~~
 
-The simplest is to use Pyhton's ``os.environ`` object to access
+The simplest is to use Python's ``os.environ`` object to access
 environment variables for settings and other variables, e.g.::
 
     MY_SETTING = os.environ.get('DJANGO_MY_SETTING', 'default value')
@@ -220,7 +220,7 @@ Versions
    Must have a JSON version object at /app/version.json.
 
 Dockerflow requires writing a `version object`_ to the file ``/app/version.json``
-as see from the docker container to be served under the URL path
+as seen from the docker container to be served under the URL path
 ``/__version__``.
 
 To facilitate this python-dockerflow contains a Django view to read the
@@ -286,16 +286,16 @@ To use it, put something like this in your Django ``settings`` file::
     LOGGING = {
         'version': 1,
         'formatters': {
-            'mozlog': {
+            'json': {
                 '()': 'dockerflow.logging.JsonLogFormatter',
-                'logger_name': 'MyServiceName'
+                'logger_name': '<project>'
             }
         },
         'handlers': {
             'console': {
                 'level': 'DEBUG',
                 'class': 'logging.StreamHandler',
-                'formatter': 'mozlog'
+                'formatter': 'json'
             },
         },
         'loggers': {

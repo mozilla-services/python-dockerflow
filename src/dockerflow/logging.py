@@ -47,7 +47,7 @@ class JsonLogFormatter(logging.Formatter):
         'relativeCreated', 'stack_info', 'thread', 'threadName'
     ))
 
-    def __init__(self, format=None, datefmt=None, logger_name='TestPilot'):
+    def __init__(self, format=None, datefmt=None, logger_name='Dockerflow'):
         super(JsonLogFormatter, self).__init__(format, datefmt)
         self.logger_name = logger_name
         self.hostname = socket.gethostname()

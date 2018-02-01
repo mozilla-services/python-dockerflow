@@ -26,8 +26,7 @@ def is_authenticated(user):  # pragma: no cover
 
 class DockerflowMiddleware(MiddlewareMixin):
     """
-
-    Emit a request.summary type log entry for every request.
+    Emits a request.summary type log entry for every request.
     https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md
     """
     viewpatterns = [

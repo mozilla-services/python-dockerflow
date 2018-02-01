@@ -19,16 +19,16 @@ Example configuration::
     cfg = {
         'version': 1,
         'formatters': {
-            'mozlog': {
+            'json': {
                 '()': 'dockerflow.logging.JsonLogFormatter',
-                'logger_name': 'MyServiceName'
+                'logger_name': 'myproject'
             }
         },
         'handlers': {
             'console': {
                 'level': 'DEBUG',
                 'class': 'logging.StreamHandler',
-                'formatter': 'mozlog'
+                'formatter': 'json'
             },
         },
         'loggers': {
@@ -44,10 +44,9 @@ Example configuration::
     logging.info('I am logging in mozlog format now! woo hoo!')
 
 
-In this example, we set up a logger for ``myservice`` (you'd replace that with
+In this example, we set up a logger for ``myproject`` (you'd replace that with
 your service name) which has a single handler named ``console`` which uses the
 ``mozlog`` formatter to output log event data to stdout.
-
 
 API
 ---
