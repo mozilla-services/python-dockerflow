@@ -41,13 +41,13 @@ class Dockerflow(object):
         if app:
             self.init_app(app)
         if db:
-            self.init_extension(checks.check_database_connected, db)
+            self.init_check(checks.check_database_connected, db)
         if redis:
-            self.init_extension(checks.check_redis_connected, redis)
-        # if migrate:
-        #     self.init_migrate(migrate)
+            self.init_check(checks.check_redis_connected, redis)
+        if migrate:
+            self.init_check(checks.check_migrations_applied, migrate)
 
-    def init_extension(self, check, obj):
+    def init_check(self, check, obj):
         self.logger.info('Adding extension check %s' % check.__name__)
         check = functools.wraps(check)(functools.partial(check, obj))
         self.check(func=check)
@@ -57,9 +57,9 @@ class Dockerflow(object):
             self.version_path = os.path.dirname(app.root_path)
 
         for view in (
-            ('/__version__', 'version', self.version),
-            ('/__heartbeat__', 'heartbeat', self.heartbeat),
-            ('/__lbheartbeat__', 'lbheartbeat', self.lbheartbeat),
+            ('/__version__', 'version', self.version_view),
+            ('/__heartbeat__', 'heartbeat', self.heartbeat_view),
+            ('/__lbheartbeat__', 'lbheartbeat', self.lbheartbeat_view),
         ):
             self.blueprint.add_url_rule(*view)
         self.blueprint.before_app_request(self.before_request)
@@ -164,7 +164,7 @@ class Dockerflow(object):
 
         return out
 
-    def version(self):
+    def version_view(self):
         """
         View that returns the contents of version.json or a 404.
         """
@@ -174,7 +174,7 @@ class Dockerflow(object):
         else:
             return jsonify(version_json)
 
-    def lbheartbeat(self):
+    def lbheartbeat_view(self):
         """
         Let the load balancer know the application is running and available
         must return 200 (not 204) for ELB
@@ -192,7 +192,7 @@ class Dockerflow(object):
             'messages': {e.id: e.msg for e in errors},
         }
 
-    def heartbeat(self):
+    def heartbeat_view(self):
         """
         Runs all the registered checks and returns a JSON response with either
         a status code of 200 or 500 depending on the results of the checks.
