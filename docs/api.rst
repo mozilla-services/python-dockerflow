@@ -75,3 +75,16 @@ URL configration:
 
 .. automodule:: dockerflow.django.views
    :members:
+
+
+Flask
+-----
+
+.. automodule:: dockerflow.flask.app
+   :members:
+
+.. automodule:: dockerflow.flask.checks
+   :members:
+
+.. automodule:: dockerflow.flask.signals
+   :members:

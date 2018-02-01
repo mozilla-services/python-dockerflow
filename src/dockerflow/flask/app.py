@@ -8,6 +8,7 @@ from collections import OrderedDict
 from flask import (Blueprint, current_app, g, got_request_exception, jsonify,
                    make_response, request)
 from werkzeug.exceptions import InternalServerError
+
 try:
     from flask_login import current_user
 except ImportError:  # pragma: nocover
@@ -26,20 +27,59 @@ class HeartbeatFailure(InternalServerError):
 
 
 class Dockerflow(object):
+    """
+    The Dockerflow Flask extension.
+
+    :param app: The Flask app that this Dockerflow extension should be
+                initialized with.
+    :type root: ~flask.Flask or None
+
+    :param db: A Flask-SQLAlchemy extension instance to be used by the
+               built-in Dockerflow check for the database connection.
+    :param redis: A Redis connection to be used by the built-in Dockerflow
+                  check for the Redis connection.
+    :param migrate: A Flask-Migrate extension instance to be used by the
+                    built-in Dockerflow check for Alembic migrations.
+    :param silenced_checks: Dockerflow check IDs to ignore when running
+                            through the list of configured checks.
+    :type silenced_checks: list
+
+    :param version_path: The filesystem path where the ``version.json`` can
+                         be found. Defaults to the parent directory of the
+                         Flask app's root path.
+    """
 
     def __init__(self, app=None, db=None, redis=None, migrate=None,
                  silenced_checks=None, version_path=None, *args, **kwargs):
+        #: The Flask blueprint to add the Dockerflow signal callbacks and views
         self.blueprint = Blueprint('dockerflow', 'dockerflow.flask.app')
+
+        #: The Dockerflow specific logger to be used by internals of this
+        #: extension.
         self.logger = logging.getLogger('dockerflow.flask')
         self.logger.addHandler(logging.NullHandler())
         self.logger.setLevel(logging.INFO)
-        self.checks = OrderedDict()
+
+        #: The request summary logger to be used by this extension
+        #: without pre-configuration. See docs for how to set it up.
         self.summary_logger = logging.getLogger('request.summary')
+
+        #: An ordered dictionary for storing custom Dockerflow checks in.
+        self.checks = OrderedDict()
+
+        #: A list of IDs of custom Dockerflow checks to ignore in case they
+        #: show up.
         self.silenced_checks = silenced_checks or []
+
+        #: The path where to find the version JSON file. Defaults to the
+        #: parent directory of the app root path.
         self.version_path = version_path
         self._version_callback = version.get_version
+
+        # Initialize the app if given.
         if app:
             self.init_app(app)
+        # Initialize the built-in checks.
         if db:
             self.init_check(checks.check_database_connected, db)
         if redis:
@@ -48,11 +88,22 @@ class Dockerflow(object):
             self.init_check(checks.check_migrations_applied, migrate)
 
     def init_check(self, check, obj):
+        """
+        Adds a given check callback with the provided object to the list
+        of checks. Useful for built-ins but also advanced custom checks.
+        """
         self.logger.info('Adding extension check %s' % check.__name__)
         check = functools.wraps(check)(functools.partial(check, obj))
         self.check(func=check)
 
     def init_app(self, app):
+        """
+        Initializes the extension with the given app, registers the
+        built-in views with an own blueprint and hooks up our signal
+        callbacks.
+        """
+        # If no version path was provided in the init of the Dockerflow
+        # class we'll use the parent directory of the app root path.
         if self.version_path is None:
             self.version_path = os.path.dirname(app.root_path)
 
@@ -176,8 +227,8 @@ class Dockerflow(object):
 
     def lbheartbeat_view(self):
         """
-        Let the load balancer know the application is running and available
-        must return 200 (not 204) for ELB
+        Lets the load balancer know the application is running and available.
+        Must return 200 (not 204) for ELB
         http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-healthchecks.html
         """
         return '', 200
@@ -245,12 +296,12 @@ class Dockerflow(object):
 
         E.g.::
 
-        app = Flask(__name__)
-        dockerflow = Dockerflow(app)
+            app = Flask(__name__)
+            dockerflow = Dockerflow(app)
 
-        @dockerflow.version_callback
-        def my_version(root):
-            return json.loads(os.path.join(root, 'acme_version.json'))
+            @dockerflow.version_callback
+            def my_version(root):
+                return json.loads(os.path.join(root, 'acme_version.json'))
 
         """
         self._version_callback = func
@@ -260,15 +311,15 @@ class Dockerflow(object):
         A decorator to register a new Dockerflow check to be run
         when the /__heartbeat__ endpoint is called, e.g.::
 
-        @dockerflow.check
-        def storage_reachable():
-            return acme.storage.ping()
+            @dockerflow.check
+            def storage_reachable():
+                return acme.storage.ping()
 
         or using a custom name::
 
-        @dockerflow.check(name='acme-storage-check)
-        def storage_reachable():
-            return acme.storage.ping()
+            @dockerflow.check(name='acme-storage-check)
+            def storage_reachable():
+                return acme.storage.ping()
 
         """
         if func is None:

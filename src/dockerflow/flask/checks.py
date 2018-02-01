@@ -25,8 +25,9 @@ def level_to_text(level):
 
 class CheckMessage(object):
     """
-    A port of the Django check system message (``django.core.checks.messages``)
-    to be used with custom checks.
+    A port of part of the :doc:`Django system checks <django:topics/checks>`
+    and their :class:`~django.core.checks.CheckMessage` class in particular
+    to be used with custom Dockerflow checks.
     """
 
     def __init__(self, msg, level=None, hint=None, obj=None, id=None):
