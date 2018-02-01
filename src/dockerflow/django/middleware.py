@@ -74,12 +74,14 @@ class DockerflowMiddleware(MiddlewareMixin):
         return out
 
     def process_response(self, request, response):
-        extra = self._build_extra_meta(request)
-        self.summary_logger.info('', extra=extra)
+        if not getattr(request, '_has_exception', False):
+            extra = self._build_extra_meta(request)
+            self.summary_logger.info('', extra=extra)
         return response
 
     def process_exception(self, request, exception):
         extra = self._build_extra_meta(request)
         extra['errno'] = 500
         self.summary_logger.error(str(exception), extra=extra)
+        request._has_exception = True
         return None

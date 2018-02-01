@@ -328,7 +328,7 @@ def test_request_summary_exception(caplog, app):
         response = Response('')
         response = app.process_response(response)
         for record in caplog.records:
-            if not hasattr(caplog, 'errno'):
+            if record != 'request.summary':
                 continue
             assert_log_record(request, record, level=logging.ERROR, errno=500)
             assert record.getMessage() == 'exception message'
@@ -343,9 +343,9 @@ def test_request_summary_failed_request(caplog, dockerflow, app):
 
     app.test_client().get('/', headers=headers)
     assert len(caplog.records) == 1
-    for record in caplog.records:
-        assert getattr(record, 'rid', None) is None
-        assert getattr(record, 't', None) is None
+    record = caplog.records[0]
+    assert getattr(record, 'rid', None) is None
+    assert getattr(record, 't', None) is None
 
 
 def test_db_check_sqlalchemy_error(mocker, db):

@@ -90,8 +90,9 @@ class Dockerflow(object):
         """
         The signal handler for the request_finished signal.
         """
-        extra = self.summary_extra()
-        self.summary_logger.info('', extra=extra)
+        if not getattr(g, '_has_exception', False):
+            extra = self.summary_extra()
+            self.summary_logger.info('', extra=extra)
         return response
 
     def got_request_exception(self, sender, exception, **extra):
@@ -101,6 +102,7 @@ class Dockerflow(object):
         extra = self.summary_extra()
         extra['errno'] = 500
         self.summary_logger.error(str(exception), extra=extra)
+        g._has_exception = True
 
     def user_id(self):
         """

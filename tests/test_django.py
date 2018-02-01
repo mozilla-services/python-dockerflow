@@ -111,9 +111,9 @@ def test_request_summary(admin_user, caplog,
 
     response = dockerflow_middleware.process_response(dockerflow_request, response)
     assert len(caplog.records) == 1
-    for record in caplog.records:
-        assert_log_record(dockerflow_request, record)
-        assert getattr(dockerflow_request, 'uid', None) is None
+    record = caplog.records[0]
+    assert_log_record(dockerflow_request, record)
+    assert getattr(dockerflow_request, 'uid', None) is None
 
 
 def test_request_summary_admin_user(admin_user, caplog,
@@ -122,20 +122,21 @@ def test_request_summary_admin_user(admin_user, caplog,
     response = dockerflow_middleware.process_request(dockerflow_request)
     dockerflow_middleware.process_response(dockerflow_request, response)
     assert len(caplog.records) == 1
-    for record in caplog.records:
-        assert_log_record(dockerflow_request, record)
-        assert record.uid == admin_user.pk
+    record = caplog.records[0]
+    assert_log_record(dockerflow_request, record)
+    assert record.uid == admin_user.pk
 
 
 def test_request_summary_exception(admin_user, caplog,
                                    dockerflow_middleware, dockerflow_request):
     exception = ValueError('exception message')
-    dockerflow_middleware.process_request(dockerflow_request)
+    response = dockerflow_middleware.process_request(dockerflow_request)
     dockerflow_middleware.process_exception(dockerflow_request, exception)
+    dockerflow_middleware.process_response(dockerflow_request, response)
     assert len(caplog.records) == 1
-    for record in caplog.records:
-        assert_log_record(dockerflow_request, record, level=logging.ERROR, errno=500)
-        assert record.getMessage() == 'exception message'
+    record = caplog.records[0]
+    assert_log_record(dockerflow_request, record, level=logging.ERROR, errno=500)
+    assert record.getMessage() == 'exception message'
 
 
 def test_request_summary_failed_request(caplog,
@@ -152,9 +153,9 @@ def test_request_summary_failed_request(caplog,
     response = HostileMiddleware().process_request(dockerflow_request)
     dockerflow_middleware.process_response(dockerflow_request, response)
     assert len(caplog.records) == 1
-    for record in caplog.records:
-        assert getattr(record, 'rid', None) is None
-        assert getattr(record, 't', None) is None
+    record = caplog.records[0]
+    assert getattr(record, 'rid', None) is None
+    assert getattr(record, 't', None) is None
 
 
 def test_check_database_connected_cannot_connect(mocker):
