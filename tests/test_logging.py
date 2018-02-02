@@ -23,6 +23,7 @@ def assert_records(records):
 def test_basic_operation(caplog):
     """Ensure log formatter contains all the expected fields and values"""
     message_text = 'simple test'
+    caplog.set_level(logging.DEBUG)
     logging.debug(message_text)
     details = assert_records(caplog.records)
 
