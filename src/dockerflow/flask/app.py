@@ -31,7 +31,49 @@ class HeartbeatFailure(InternalServerError):
 
 class Dockerflow(object):
     """
-    The Dockerflow Flask extension.
+    The Dockerflow Flask extension. Set it up like this:
+
+    .. code-block:: python
+       :caption: ``myproject.py``
+
+       from flask import Flask
+       from dockerflow.flask import Dockerflow
+
+       app = Flask(__name__)
+       dockerflow = Dockerflow(app)
+
+    Or if you use the Flask application factory pattern, in
+    an own module set up Dockerflow first:
+
+    .. code-block:: python
+       :caption: ``myproject/deployment.py``
+
+       from dockerflow.flask import Dockerflow
+
+       dockerflow = Dockerflow()
+
+    and then import and initialize it with the Flask application
+    object when you create the application:
+
+    .. code-block:: python
+       :caption: ``myproject/app.py``
+
+       def create_app(config_filename):
+           app = Flask(__name__)
+           app.config.from_pyfile(config_filename)
+
+           from myproject.deployment import dockerflow
+           dockerflow.init_app(app)
+
+           from myproject.views.admin import admin
+           from myproject.views.frontend import frontend
+           app.register_blueprint(admin)
+           app.register_blueprint(frontend)
+
+            return app
+
+    See the parameters for a more detailed list of optional features when
+    initializing the extension.
 
     :param app: The Flask app that this Dockerflow extension should be
                 initialized with.
@@ -312,17 +354,24 @@ class Dockerflow(object):
     def check(self, func=None, name=None):
         """
         A decorator to register a new Dockerflow check to be run
-        when the /__heartbeat__ endpoint is called, e.g.::
+        when the /__heartbeat__ endpoint is called., e.g.::
+
+            from dockerflow.flask import checks
 
             @dockerflow.check
             def storage_reachable():
-                return acme.storage.ping()
+                try:
+                    acme.storage.ping()
+                except SlowConnectionException as exc:
+                    return [checks.Warning(exc.msg, id='acme.health.0002')]
+                except StorageException as exc:
+                    return [checks.Error(exc.msg, id='acme.health.0001')]
 
         or using a custom name::
 
             @dockerflow.check(name='acme-storage-check)
             def storage_reachable():
-                return acme.storage.ping()
+                # ...
 
         """
         if func is None:

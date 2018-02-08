@@ -178,6 +178,8 @@ Depending on which WSGI server you are using to run your Python application
 there are different ways to accept the :envvar:`PORT` as the port to launch
 your application with.
 
+It's recommended to use port ``8000`` by default.
+
 Gunicorn
 ~~~~~~~~
 
@@ -261,10 +263,143 @@ decorate a callback that gets the ``version_path`` value passed. E.g.::
 
 .. _flask-health:
 
-Health
-------
+Health monitoring
+-----------------
 
-TODO
+Health monitoring happens via three different views following the Dockerflow_
+spec:
+
+.. http:get:: /__version__
+
+   The view that serves the :ref:`version information <flask-versions>`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /__version__ HTTP/1.1
+      Host: example.com
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept-Encoding
+      Content-Type: application/json
+
+      {
+        "commit": "52ce614fbf99540a1bf6228e36be6cef63b4d73b",
+        "version": "2017.11.0",
+        "source": "https://github.com/mozilla/telemetry-analysis-service",
+        "build": "https://circleci.com/gh/mozilla/telemetry-analysis-service/2223"
+      }
+
+   :statuscode 200: no error
+   :statuscode 404: a version.json wasn't found
+
+.. http:get:: /__heartbeat__
+
+   The heartbeat view will go through the list of registered Dockerflow
+   checks, run each check and add their results to a JSON response.
+
+   The view will return HTTP responses with either an status code of 200 if
+   all checks ran successfully or 500 if there was one or more warnings or
+   errors returned by the checks.
+
+   **Custom Dockerflow checks:**
+
+   To write your own custom Dockerflow checks simply write a function
+   that returns a list of one or many check message instances representing
+   the severity of the check result. The :mod:`dockerflow.flask.checks`
+   module contains a series of predefined check messages for the
+   severity levels: :class:`~dockerflow.flask.checks.Debug`,
+   :class:`~dockerflow.flask.checks.Info`,
+   :class:`~dockerflow.flask.checks.Warning`,
+   :class:`~dockerflow.flask.checks.Error`,
+   :class:`~dockerflow.flask.checks.Critical`.
+
+   Here's an example of a check that handles various levels of exceptions
+   from an external storage system with different check message::
+
+       from dockerflow.flask import checks, Dockerflow
+
+       app = Flask(__name__)
+       dockerflow = Dockerflow(app)
+
+       @dockerflow.check
+       def storage_reachable():
+           result = []
+           try:
+               acme.storage.ping()
+           except SlowConnectionException as exc:
+               result.append(checks.Warning(exc.msg, id='acme.health.0002'))
+           except StorageException as exc:
+               result.append(checks.Error(exc.msg, id='acme.health.0001'))
+           return result
+
+   Notice the use of the :meth:`~dockerflow.flask.app.Dockerflow.check`
+   decorator to mark the check to be used.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /__heartbeat__ HTTP/1.1
+      Host: example.com
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 500 Internal Server Error
+      Vary: Accept-Encoding
+      Content-Type: application/json
+
+      {
+        "status": "warning",
+        "checks": {
+          "check_debug": "ok",
+          "check_sts_preload": "warning"
+        },
+        "details": {
+          "check_sts_preload": {
+            "status": "warning",
+            "level": 30,
+            "messages": {
+              "security.W021": "You have not set the SECURE_HSTS_PRELOAD setting to True. Without this, your site cannot be submitted to the browser preload list."
+            }
+          }
+        }
+      }
+
+   :statuscode 200: no error
+   :statuscode 500: there was a warning or error
+
+.. http:get:: /__lbheartbeat__
+
+   The view that simply returns a successful HTTP response so that a load
+   balancer in front of the application can check that the web application
+   has started up.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /__lbheartbeat__ HTTP/1.1
+      Host: example.com
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept-Encoding
+      Content-Type: application/json
+
+   :statuscode 200: no error
+
+.. _Dockerflow: https://github.com/mozilla-services/Dockerflow
 
 .. _flask-logging:
 

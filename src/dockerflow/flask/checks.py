@@ -2,7 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 """
-This is a minor port of the Django checks system messages.
+This is a minor port of the Django checks system messages to be used
+for Dockerflow checks of the dockerflow.flask Flask extension.
 """
 from .. import health
 
@@ -31,8 +32,15 @@ class CheckMessage(object):
     A port of part of the :doc:`Django system checks <django:topics/checks>`
     and their :class:`~django.core.checks.CheckMessage` class in particular
     to be used with custom Dockerflow checks.
-    """
 
+    Please use one of its subclasses in your custom checks:
+
+    :class:`~dockerflow.flask.checks.Debug`,
+    :class:`~dockerflow.flask.checks.Info`,
+    :class:`~dockerflow.flask.checks.Warning`,
+    :class:`~dockerflow.flask.checks.Error`,
+    :class:`~dockerflow.flask.checks.Critical`
+    """
     def __init__(self, msg, level=None, hint=None, obj=None, id=None):
         self.msg = msg
         if level:
@@ -70,28 +78,48 @@ class CheckMessage(object):
 
 
 class Debug(CheckMessage):
+    """
+    A :class:`~dockerflow.flask.checks.CheckMessage` subclass to represent
+    a debugging check result.
+    """
     level = DEBUG
 
 
 class Info(CheckMessage):
+    """
+    A :class:`~dockerflow.flask.checks.CheckMessage` subclass to represent
+    a info check result.
+    """
     level = INFO
 
 
 class Warning(CheckMessage):
+    """
+    A :class:`~dockerflow.flask.checks.CheckMessage` subclass to represent
+    a warning check result.
+    """
     level = WARNING
 
 
 class Error(CheckMessage):
+    """
+    A :class:`~dockerflow.flask.checks.CheckMessage` subclass to represent
+    an error check result.
+    """
     level = ERROR
 
 
 class Critical(CheckMessage):
+    """
+    A :class:`~dockerflow.flask.checks.CheckMessage` subclass to represent
+    a critical check result.
+    """
     level = CRITICAL
 
 
 def check_database_connected(db):
     """
-    A check to see if connecting to the configured default
+    A built-in check to see if connecting to the configured default
     database backend succeeds.
     """
     from sqlalchemy.exc import DBAPIError, SQLAlchemyError
@@ -111,7 +139,7 @@ def check_database_connected(db):
 
 def check_migrations_applied(migrate):
     """
-    A check to see if all migrations have been applied correctly.
+    A built-in check to see if all migrations have been applied correctly.
     """
     errors = []
 
@@ -139,7 +167,7 @@ def check_migrations_applied(migrate):
 
 def check_redis_connected(client):
     """
-    A check to connect to Redis using the given client and see
+    A built-in check to connect to Redis using the given client and see
     if it responds to the ``PING`` command.
     """
     import redis
