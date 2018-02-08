@@ -54,28 +54,28 @@ class Dockerflow(object):
 
     def __init__(self, app=None, db=None, redis=None, migrate=None,
                  silenced_checks=None, version_path=None, *args, **kwargs):
-        #: The Flask blueprint to add the Dockerflow signal callbacks and views
-        self.blueprint = Blueprint('dockerflow', 'dockerflow.flask.app')
+        # The Flask blueprint to add the Dockerflow signal callbacks and views
+        self._blueprint = Blueprint('dockerflow', 'dockerflow.flask.app')
 
-        #: The Dockerflow specific logger to be used by internals of this
-        #: extension.
+        # The Dockerflow specific logger to be used by internals of this
+        # extension.
         self.logger = logging.getLogger('dockerflow.flask')
         self.logger.addHandler(logging.NullHandler())
         self.logger.setLevel(logging.INFO)
 
-        #: The request summary logger to be used by this extension
-        #: without pre-configuration. See docs for how to set it up.
+        # The request summary logger to be used by this extension
+        # without pre-configuration. See docs for how to set it up.
         self.summary_logger = logging.getLogger('request.summary')
 
-        #: An ordered dictionary for storing custom Dockerflow checks in.
+        # An ordered dictionary for storing custom Dockerflow checks in.
         self.checks = OrderedDict()
 
-        #: A list of IDs of custom Dockerflow checks to ignore in case they
-        #: show up.
+        # A list of IDs of custom Dockerflow checks to ignore in case they
+        # show up.
         self.silenced_checks = silenced_checks or []
 
-        #: The path where to find the version JSON file. Defaults to the
-        #: parent directory of the app root path.
+        # The path where to find the version JSON file. Defaults to the
+        # parent directory of the app root path.
         self.version_path = version_path
         self._version_callback = version.get_version
 
@@ -111,36 +111,36 @@ class Dockerflow(object):
             self.version_path = os.path.dirname(app.root_path)
 
         for view in (
-            ('/__version__', 'version', self.version_view),
-            ('/__heartbeat__', 'heartbeat', self.heartbeat_view),
-            ('/__lbheartbeat__', 'lbheartbeat', self.lbheartbeat_view),
+            ('/__version__', 'version', self._version_view),
+            ('/__heartbeat__', 'heartbeat', self._heartbeat_view),
+            ('/__lbheartbeat__', 'lbheartbeat', self._lbheartbeat_view),
         ):
-            self.blueprint.add_url_rule(*view)
-        self.blueprint.before_app_request(self.before_request)
-        self.blueprint.after_app_request(self.after_request)
-        self.blueprint.app_errorhandler(HeartbeatFailure)(self.heartbeat_exception_handler)
-        app.register_blueprint(self.blueprint)
-        got_request_exception.connect(self.got_request_exception, sender=app)
+            self._blueprint.add_url_rule(*view)
+        self._blueprint.before_app_request(self._before_request)
+        self._blueprint.after_app_request(self._after_request)
+        self._blueprint.app_errorhandler(HeartbeatFailure)(self._heartbeat_exception_handler)
+        app.register_blueprint(self._blueprint)
+        got_request_exception.connect(self._got_request_exception, sender=app)
 
         if not hasattr(app, 'extensions'):  # pragma: nocover
             app.extensions = {}
         app.extensions['dockerflow'] = self
 
-    def heartbeat_exception_handler(self, error):
+    def _heartbeat_exception_handler(self, error):
         """
         An exception handler to act as a middleman to return
         a heartbeat view response with a 500 error code.
         """
         return error.get_response()
 
-    def before_request(self):
+    def _before_request(self):
         """
         The before_request callback.
         """
         g._request_id = str(uuid.uuid4())
         g._start_timestamp = time.time()
 
-    def after_request(self, response):
+    def _after_request(self, response):
         """
         The signal handler for the request_finished signal.
         """
@@ -149,7 +149,7 @@ class Dockerflow(object):
             self.summary_logger.info('', extra=extra)
         return response
 
-    def got_request_exception(self, sender, exception, **extra):
+    def _got_request_exception(self, sender, exception, **extra):
         """
         The signal handler for the got_request_exception signal.
         """
@@ -218,7 +218,7 @@ class Dockerflow(object):
 
         return out
 
-    def version_view(self):
+    def _version_view(self):
         """
         View that returns the contents of version.json or a 404.
         """
@@ -228,7 +228,7 @@ class Dockerflow(object):
         else:
             return jsonify(version_json)
 
-    def lbheartbeat_view(self):
+    def _lbheartbeat_view(self):
         """
         Lets the load balancer know the application is running and available.
         Must return 200 (not 204) for ELB
@@ -236,7 +236,7 @@ class Dockerflow(object):
         """
         return '', 200
 
-    def heartbeat_check_detail(self, check):
+    def _heartbeat_check_detail(self, check):
         errors = list(filter(lambda e: e.id not in self.silenced_checks, check()))
         level = max([0] + [e.level for e in errors])
 
@@ -246,7 +246,7 @@ class Dockerflow(object):
             'messages': {e.id: e.msg for e in errors},
         }
 
-    def heartbeat_view(self):
+    def _heartbeat_view(self):
         """
         Runs all the registered checks and returns a JSON response with either
         a status code of 200 or 500 depending on the results of the checks.
@@ -259,7 +259,7 @@ class Dockerflow(object):
         level = 0
 
         for name, check in self.checks.items():
-            detail = self.heartbeat_check_detail(check)
+            detail = self._heartbeat_check_detail(check)
             statuses[name] = detail['status']
             level = max(level, detail['level'])
             if detail['level'] > 0:
