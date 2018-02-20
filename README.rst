@@ -19,6 +19,10 @@ The documentation can be found on `python-dockerflow.readthedocs.io`_
    :alt: Documentation Status
    :target: https://python-dockerflow.readthedocs.io/en/latest/?badge=latest
 
+.. image:: https://img.shields.io/badge/calver-YY.MM.PATCH-22bfda.svg
+   :target: https://calver.org/
+   :alt: CalVer - Timely Software Versioning
+
 Installation
 ------------
 
