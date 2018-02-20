@@ -21,3 +21,5 @@ Flask-Redis
 Flask-SQLAlchemy
 Flask-Login
 Flask-Migrate
+Sphinx
+sphinxcontrib-httpdomain
