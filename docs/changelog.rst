@@ -1,6 +1,26 @@
 Changelog
 ---------
 
+2018.2.0 (2018-02-20)
+^^^^^^^^^^^^^^^^^^^^^
+
+- Adds Flask support. See the documentation for more information.
+
+- Extends the documentation about defining custom health checks.
+
+- Refactored some of the health monitoring code that existed for
+  the Django support.
+
+- Fixed an embarrassing typo about the default logger name when
+  using the ``JsonLogFormatter`` logging formatter, changed it
+  ``TestPilot`` to ``Dockerflow``.
+
+- Extends the testing matrix to include Django 2.0.
+
+- Make sure the the combination of Python and Django versions
+  match the official recommendation as defined at
+  https://docs.djangoproject.com/en/2.0/faq/install/#what-python-version-can-i-use-with-django.
+
 2017.11.0 (2017-11-16)
 ^^^^^^^^^^^^^^^^^^^^^^
 
