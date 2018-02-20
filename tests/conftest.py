@@ -3,8 +3,15 @@
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 import pytest
 
+
 @pytest.fixture
-def reset_checks():
-    from django.core.checks.registry import registry
-    registry.registered_checks = []
-    registry.deployment_checks = []
+def version_content():
+    """
+    as documented on https://github.com/mozilla-services/Dockerflow/blob/master/docs/version_object.md
+    """
+    return {
+        'source': 'https://github.com/mozilla-services/python-dockerflow',
+        'version': 'release tag or string for humans',
+        'commit': '<git hash>',
+        'build': 'uri to CI build job'
+    }

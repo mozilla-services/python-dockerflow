@@ -26,8 +26,7 @@ def is_authenticated(user):  # pragma: no cover
 
 class DockerflowMiddleware(MiddlewareMixin):
     """
-
-    Emit a request.summary type log entry for every request.
+    Emits a request.summary type log entry for every request.
     https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md
     """
     viewpatterns = [
@@ -46,7 +45,7 @@ class DockerflowMiddleware(MiddlewareMixin):
                 return view(request)
 
         request._id = str(uuid.uuid4())
-        request._logging_start_timestamp = time.time()
+        request._start_timestamp = time.time()
         return None
 
     def _build_extra_meta(self, request):
@@ -68,21 +67,21 @@ class DockerflowMiddleware(MiddlewareMixin):
             )
         if hasattr(request, '_id'):
             out['rid'] = request._id
-        if hasattr(request, '_logging_start_timestamp'):
+        if hasattr(request, '_start_timestamp'):
             # Duration of request, in milliseconds.
-            out['t'] = int(
-                1000 * (time.time() - request._logging_start_timestamp)
-            )
+            out['t'] = int(1000 * (time.time() - request._start_timestamp))
 
         return out
 
     def process_response(self, request, response):
-        extra = self._build_extra_meta(request)
-        self.summary_logger.info('', extra=extra)
+        if not getattr(request, '_has_exception', False):
+            extra = self._build_extra_meta(request)
+            self.summary_logger.info('', extra=extra)
         return response
 
     def process_exception(self, request, exception):
         extra = self._build_extra_meta(request)
         extra['errno'] = 500
         self.summary_logger.error(str(exception), extra=extra)
+        request._has_exception = True
         return None

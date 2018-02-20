@@ -9,7 +9,7 @@ import jsonschema
 
 from dockerflow.logging import JsonLogFormatter
 
-logger_name = 'TestingTestPilot'
+logger_name = 'tests'
 formatter = JsonLogFormatter(logger_name=logger_name)
 
 
@@ -23,6 +23,7 @@ def assert_records(records):
 def test_basic_operation(caplog):
     """Ensure log formatter contains all the expected fields and values"""
     message_text = 'simple test'
+    caplog.set_level(logging.DEBUG)
     logging.debug(message_text)
     details = assert_records(caplog.records)
 
@@ -38,11 +39,11 @@ def test_basic_operation(caplog):
 
 def test_custom_paramters(caplog):
     """Ensure log formatter can handle custom parameters"""
-    logger = logging.getLogger('dockerflow.test.test_logging')
+    logger = logging.getLogger('tests.test_logging')
     logger.warning('custom test %s', 'one', extra={'more': 'stuff'})
     details = assert_records(caplog.records)
 
-    assert details['Type'] == 'dockerflow.test.test_logging'
+    assert details['Type'] == 'tests.test_logging'
     assert details['Severity'] == 4
     assert details['Fields']['msg'] == 'custom test one'
     assert details['Fields']['more'] == 'stuff'
@@ -52,11 +53,11 @@ def test_non_json_serializable_parameters_are_converted(caplog):
     """Ensure log formatter doesn't fail with non json-serializable params."""
     foo = object()
     foo_repr = repr(foo)
-    logger = logging.getLogger('dockerflow.test.test_logging')
+    logger = logging.getLogger('tests.test_logging')
     logger.warning('custom test %s', 'hello', extra={'foo': foo})
     details = assert_records(caplog.records)
 
-    assert details['Type'] == 'dockerflow.test.test_logging'
+    assert details['Type'] == 'tests.test_logging'
     assert details['Severity'] == 4
     assert details['Fields']['msg'] == 'custom test hello'
     assert details['Fields']['foo'] == foo_repr

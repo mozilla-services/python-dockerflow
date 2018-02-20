@@ -1,27 +1,30 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
-from datetime import datetime
 import logging
 import json
 import redis
+from django import VERSION as django_version
+from django.core.checks.registry import registry
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
 from django.db.utils import OperationalError, ProgrammingError
 from django.test.utils import CaptureQueriesContext
 
+from dockerflow import health
 from dockerflow.django import checks
 from dockerflow.django.middleware import DockerflowMiddleware
 import pytest
 
 
-# as documented on https://github.com/mozilla-services/Dockerflow/blob/master/docs/version_object.md
-version_content = {
-    'source': 'https://github.com/mozilla-services/python-dockerflow',
-    'version': 'release tag or string for humans',
-    'commit': '<git hash>',
-    'build': 'uri to CI build job'
-}
+@pytest.fixture
+def reset_checks():
+    if django_version[0] < 2:
+        registry.registered_checks = []
+        registry.deployment_checks = []
+    else:
+        registry.registered_checks = set()
+        registry.deployment_checks = set()
 
 
 @pytest.fixture
@@ -29,7 +32,7 @@ def dockerflow_middleware():
     return DockerflowMiddleware()
 
 
-def test_version_exists(dockerflow_middleware, mocker, rf):
+def test_version_exists(dockerflow_middleware, mocker, rf, version_content):
     mocker.patch('dockerflow.version.get_version', return_value=version_content)
     request = rf.get('/__version__')
     response = dockerflow_middleware.process_request(request)
@@ -51,8 +54,8 @@ def test_heartbeat(dockerflow_middleware, reset_checks, rf, settings):
     assert response.status_code == 200
 
     settings.DOCKERFLOW_CHECKS = [
-        'tests.checks.warning',
-        'tests.checks.error',
+        'tests.django_checks.warning',
+        'tests.django_checks.error',
     ]
     checks.register()
     response = dockerflow_middleware.process_request(request)
@@ -104,13 +107,13 @@ def test_request_summary(admin_user, caplog,
                          dockerflow_middleware, dockerflow_request):
     response = dockerflow_middleware.process_request(dockerflow_request)
     assert getattr(dockerflow_request, '_id') is not None
-    assert isinstance(getattr(dockerflow_request, '_logging_start_timestamp'), float)
+    assert isinstance(getattr(dockerflow_request, '_start_timestamp'), float)
 
     response = dockerflow_middleware.process_response(dockerflow_request, response)
     assert len(caplog.records) == 1
-    for record in caplog.records:
-        assert_log_record(dockerflow_request, record)
-        assert getattr(dockerflow_request, 'uid', None) is None
+    record = caplog.records[0]
+    assert_log_record(dockerflow_request, record)
+    assert getattr(dockerflow_request, 'uid', None) is None
 
 
 def test_request_summary_admin_user(admin_user, caplog,
@@ -119,20 +122,21 @@ def test_request_summary_admin_user(admin_user, caplog,
     response = dockerflow_middleware.process_request(dockerflow_request)
     dockerflow_middleware.process_response(dockerflow_request, response)
     assert len(caplog.records) == 1
-    for record in caplog.records:
-        assert_log_record(dockerflow_request, record)
-        assert record.uid == admin_user.pk
+    record = caplog.records[0]
+    assert_log_record(dockerflow_request, record)
+    assert record.uid == admin_user.pk
 
 
 def test_request_summary_exception(admin_user, caplog,
                                    dockerflow_middleware, dockerflow_request):
     exception = ValueError('exception message')
-    dockerflow_middleware.process_request(dockerflow_request)
+    response = dockerflow_middleware.process_request(dockerflow_request)
     dockerflow_middleware.process_exception(dockerflow_request, exception)
+    dockerflow_middleware.process_response(dockerflow_request, response)
     assert len(caplog.records) == 1
-    for record in caplog.records:
-        assert_log_record(dockerflow_request, record, level=logging.ERROR, errno=500)
-        assert record.getMessage() == 'exception message'
+    record = caplog.records[0]
+    assert_log_record(dockerflow_request, record, level=logging.ERROR, errno=500)
+    assert record.getMessage() == 'exception message'
 
 
 def test_request_summary_failed_request(caplog,
@@ -143,15 +147,15 @@ def test_request_summary_failed_request(caplog,
         def process_request(self, request):
             # simulating resetting request changes
             delattr(dockerflow_request, '_id')
-            delattr(dockerflow_request, '_logging_start_timestamp')
+            delattr(dockerflow_request, '_start_timestamp')
             return None
 
     response = HostileMiddleware().process_request(dockerflow_request)
     dockerflow_middleware.process_response(dockerflow_request, response)
     assert len(caplog.records) == 1
-    for record in caplog.records:
-        assert getattr(record, 'rid', None) is None
-        assert getattr(record, 't', None) is None
+    record = caplog.records[0]
+    assert getattr(record, 'rid', None) is None
+    assert getattr(record, 't', None) is None
 
 
 def test_check_database_connected_cannot_connect(mocker):
@@ -159,7 +163,7 @@ def test_check_database_connected_cannot_connect(mocker):
     ensure_connection.side_effect = OperationalError
     errors = checks.check_database_connected([])
     assert len(errors) == 1
-    assert errors[0].id == checks.ERROR_CANNOT_CONNECT_DATABASE
+    assert errors[0].id == health.ERROR_CANNOT_CONNECT_DATABASE
 
 
 def test_check_database_connected_misconfigured(mocker):
@@ -167,7 +171,7 @@ def test_check_database_connected_misconfigured(mocker):
     ensure_connection.side_effect = ImproperlyConfigured
     errors = checks.check_database_connected([])
     assert len(errors) == 1
-    assert errors[0].id == checks.ERROR_MISCONFIGURED_DATABASE
+    assert errors[0].id == health.ERROR_MISCONFIGURED_DATABASE
 
 
 @pytest.mark.django_db
@@ -175,7 +179,7 @@ def test_check_database_connected_unsuable(mocker):
     mocker.patch('django.db.connection.is_usable', return_value=False)
     errors = checks.check_database_connected([])
     assert len(errors) == 1
-    assert errors[0].id == checks.ERROR_UNUSABLE_DATABASE
+    assert errors[0].id == health.ERROR_UNUSABLE_DATABASE
 
 
 @pytest.mark.django_db
@@ -194,7 +198,7 @@ def test_check_migrations_applied_cannot_check_migrations(exception, mocker):
     )
     errors = checks.check_migrations_applied([])
     assert len(errors) == 1
-    assert errors[0].id == checks.INFO_CANT_CHECK_MIGRATIONS
+    assert errors[0].id == health.INFO_CANT_CHECK_MIGRATIONS
 
 
 @pytest.mark.django_db
@@ -218,12 +222,12 @@ def test_check_migrations_applied_unapplied_migrations(mocker):
 
     errors = checks.check_migrations_applied([app_config_mock])
     assert len(errors) == 1
-    assert errors[0].id == checks.WARNING_UNAPPLIED_MIGRATION
+    assert errors[0].id == health.WARNING_UNAPPLIED_MIGRATION
 
     mock_loader.return_value.migrated_apps = ['app']
     errors = checks.check_migrations_applied([])
     assert len(errors) == 1
-    assert errors[0].id == checks.WARNING_UNAPPLIED_MIGRATION
+    assert errors[0].id == health.WARNING_UNAPPLIED_MIGRATION
 
     mock_loader.return_value.applied_migrations = ['app']
     errors = checks.check_migrations_applied([])
@@ -231,9 +235,9 @@ def test_check_migrations_applied_unapplied_migrations(mocker):
 
 
 @pytest.mark.parametrize('exception,error', [
-    (redis.ConnectionError, checks.ERROR_CANNOT_CONNECT_REDIS),
-    (NotImplementedError, checks.ERROR_MISSING_REDIS_CLIENT),
-    (ImproperlyConfigured, checks.ERROR_MISCONFIGURED_REDIS),
+    (redis.ConnectionError, health.ERROR_CANNOT_CONNECT_REDIS),
+    (NotImplementedError, health.ERROR_MISSING_REDIS_CLIENT),
+    (ImproperlyConfigured, health.ERROR_MISCONFIGURED_REDIS),
 ])
 def test_check_redis_connected(mocker, exception, error):
     get_redis_connection = mocker.patch('django_redis.get_redis_connection')
@@ -248,4 +252,4 @@ def test_check_redis_connected_ping_failed(mocker):
     get_redis_connection.return_value.ping.return_value = False
     errors = checks.check_redis_connected([])
     assert len(errors) == 1
-    assert errors[0].id == checks.ERROR_REDIS_PING_FAILED
+    assert errors[0].id == health.ERROR_REDIS_PING_FAILED
