@@ -5,3 +5,4 @@
 - Jannis Leidel (@jezdez)
 - Les Orchard (@lmorchard)
 - Mathieu Leplatre (@leplatrem)
+- Mathieu Pillard (@diox)
