@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+2018.2.1 (2018-02-24)
+^^^^^^^^^^^^^^^^^^^^^
+
+- Fixes the instantiation of the JsonLogFormatter logging formatter
+  on Python 3 when using the logging module's ability to be configured
+  with ConfigParser ini files.
+
+- Extend the documentation for custom checks and reorganized it a bit.
+
 2018.2.0 (2018-02-20)
 ^^^^^^^^^^^^^^^^^^^^^
 
