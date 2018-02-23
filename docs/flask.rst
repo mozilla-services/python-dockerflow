@@ -312,7 +312,7 @@ spec:
    all checks ran successfully or 500 if there was one or more warnings or
    errors returned by the checks.
 
-   **Built-in Dockerflow checks**
+   **Built-in Dockerflow checks:**
 
    There are a few built-in checks that are automatically added to the list
    of checks if the appropriate Flask extension objects are passed to
