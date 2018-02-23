@@ -2,9 +2,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import absolute_import
-import logging
 import json
+import logging
 import socket
+import sys
 import traceback
 
 
@@ -47,8 +48,16 @@ class JsonLogFormatter(logging.Formatter):
         'relativeCreated', 'stack_info', 'thread', 'threadName'
     ))
 
-    def __init__(self, format=None, datefmt=None, logger_name='Dockerflow'):
-        super(JsonLogFormatter, self).__init__(format, datefmt)
+    def __init__(self, fmt=None, datefmt=None, style='%', logger_name='Dockerflow'):
+        parent_init = logging.Formatter.__init__
+        # The style argument was added in Python 3.1 and since
+        # the logging configuration via config (ini) files uses
+        # positional arguments we have to do a version check here
+        # to decide whether to pass the style argument or not.
+        if sys.version_info[:2] < (3, 1):
+            parent_init(self, format, datefmt)
+        else:
+            parent_init(self, format, datefmt, style)
         self.logger_name = logger_name
         self.hostname = socket.gethostname()
 
