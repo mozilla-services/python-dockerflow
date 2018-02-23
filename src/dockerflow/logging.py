@@ -20,9 +20,11 @@ class JsonLogFormatter(logging.Formatter):
     This log formatter outputs JSON format messages that are compatible with
     Mozilla's standard heka-based log aggregation infrastructure.
 
-    See also:
-    https://mana.mozilla.org/wiki/display/CLOUDSERVICES/Logging+Standard
-    https://mana.mozilla.org/wiki/pages/viewpage.action?pageId=42895640
+    .. seealso::
+
+        - https://mana.mozilla.org/wiki/display/CLOUDSERVICES/Logging+Standard
+
+        - https://mana.mozilla.org/wiki/pages/viewpage.action?pageId=42895640
 
     Adapted from:
     https://github.com/mozilla-services/mozservices/blob/master/mozsvc/util.py#L106

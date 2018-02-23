@@ -62,13 +62,14 @@ Contents
 
 .. toctree::
    :maxdepth: 2
+   :glob:
 
    authors
    changelog
    logging
    django
    flask
-   api
+   api/index
 
 Indices and tables
 ------------------

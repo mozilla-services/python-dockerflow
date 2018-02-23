@@ -5,8 +5,6 @@
 This is a minor port of the Django checks system messages to be used
 for Dockerflow checks of the dockerflow.flask Flask extension.
 """
-from .. import health
-
 # Levels
 DEBUG = 10
 INFO = 20
@@ -115,74 +113,3 @@ class Critical(CheckMessage):
     a critical check result.
     """
     level = CRITICAL
-
-
-def check_database_connected(db):
-    """
-    A built-in check to see if connecting to the configured default
-    database backend succeeds.
-    """
-    from sqlalchemy.exc import DBAPIError, SQLAlchemyError
-
-    errors = []
-    try:
-        with db.engine.connect() as connection:
-            connection.execute('SELECT 1;')
-    except DBAPIError as e:
-        msg = 'DB-API error: {!s}'.format(e)
-        errors.append(Error(msg, id=health.ERROR_DB_API_EXCEPTION))
-    except SQLAlchemyError as e:
-        msg = 'Database misconfigured: "{!s}"'.format(e)
-        errors.append(Error(msg, id=health.ERROR_SQLALCHEMY_EXCEPTION))
-    return errors
-
-
-def check_migrations_applied(migrate):
-    """
-    A built-in check to see if all migrations have been applied correctly.
-    """
-    errors = []
-
-    from alembic.migration import MigrationContext
-    from alembic.script import ScriptDirectory
-    from sqlalchemy.exc import DBAPIError, SQLAlchemyError
-
-    config = migrate.get_config()
-    script = ScriptDirectory.from_config(config)
-
-    try:
-        with migrate.db.engine.connect() as connection:
-            context = MigrationContext.configure(connection)
-            db_heads = set(context.get_current_heads())
-            script_heads = set(script.get_heads())
-    except (DBAPIError, SQLAlchemyError) as e:
-        msg = "Can't connect to database to check migrations: {!s}".format(e)
-        return [Info(msg, id=health.INFO_CANT_CHECK_MIGRATIONS)]
-
-    if db_heads != script_heads:
-        msg = "Unapplied migrations found: {}".format(', '.join(script_heads))
-        errors.append(Warning(msg, id=health.WARNING_UNAPPLIED_MIGRATION))
-    return errors
-
-
-def check_redis_connected(client):
-    """
-    A built-in check to connect to Redis using the given client and see
-    if it responds to the ``PING`` command.
-    """
-    import redis
-    errors = []
-
-    try:
-        result = client.ping()
-    except redis.ConnectionError as e:
-        msg = 'Could not connect to redis: {!s}'.format(e)
-        errors.append(Error(msg, id=health.ERROR_CANNOT_CONNECT_REDIS))
-    except redis.RedisError as e:
-        errors.append(Error('Redis error: "{!s}"'.format(e),
-                            id=health.ERROR_REDIS_EXCEPTION))
-    else:
-        if not result:
-            errors.append(Error('Redis ping failed',
-                                id=health.ERROR_REDIS_PING_FAILED))
-    return errors

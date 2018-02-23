@@ -29,6 +29,11 @@ Flask based projects that want to follow the Dockerflow specs:
 .. _`mozlog`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md
 .. _`request.summary`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md#application-request-summary-type-requestsummary
 
+.. seealso::
+
+    For more information see the :doc:`API documentation <api/flask>` for
+    the ``dockerflow.flask`` module.
+
 Setup
 -----
 
@@ -187,7 +192,7 @@ Gunicorn automatically will bind to the hostname:port combination of
 ``0.0.0.0:$PORT`` if it find the :envvar:`PORT` environment variable.
 That means running gunicorn is as simple as using this, for example::
 
-    gunicorn <project>:app --workers 4
+    gunicorn myproject:app --workers 4
 
 .. seealso::
 
@@ -206,7 +211,7 @@ define the ``uwsgi.ini``, e.g.:
     http-socket = :$(PORT)
     master = true
     processes = 4
-    module = <project>:app
+    module = myproject:app
     chdir = /app
     enable-threads = True
 
@@ -307,6 +312,15 @@ spec:
    all checks ran successfully or 500 if there was one or more warnings or
    errors returned by the checks.
 
+   **Built-in Dockerflow checks**
+
+   There are a few built-in checks that are automatically added to the list
+   of checks if the appropriate Flask extension objects are passed to
+   the :class:`~dockerflow.flask.app.Dockerflow` class during instantiation.
+
+   For detailed examples please see the API documentation for the built-in
+   :ref:`Flask Dockerflow checks <flask-checks>`.
+
    **Custom Dockerflow checks:**
 
    To write your own custom Dockerflow checks simply write a function
@@ -406,10 +420,11 @@ spec:
 Logging
 -------
 
-Dockerflow provides a :py:class:`dockerflow.logging.JsonLogFormatter` Python
+Dockerflow provides a :class:`~dockerflow.logging.JsonLogFormatter` Python
 logging formatter class.
 
-To use it, put something like this **BEFORE** your Flask app is initialized::
+To use it, put something like this **BEFORE** your Flask app is initialized
+for at least the ``request.summary`` logger::
 
     from logging.conf import dictConfig
 
@@ -418,7 +433,7 @@ To use it, put something like this **BEFORE** your Flask app is initialized::
         'formatters': {
             'json': {
                 '()': 'dockerflow.logging.JsonLogFormatter',
-                'logger_name': '<project>'
+                'logger_name': 'myproject'
             }
         },
         'handlers': {
@@ -435,7 +450,6 @@ To use it, put something like this **BEFORE** your Flask app is initialized::
             },
         }
     })
-
 
 .. _flask-static:
 

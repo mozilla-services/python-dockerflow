@@ -25,6 +25,10 @@ Django projects that want to follow the Dockerflow specs:
 .. _`mozlog`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md
 .. _`request.summary`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md#application-request-summary-type-requestsummary
 
+.. seealso::
+
+    For more information see the :doc:`API documentation <api/django>` for
+    the ``dockerflow.django`` module.
 
 Setup
 -----
@@ -48,34 +52,10 @@ To install ``python-dockerflow``'s Django support please follow these steps:
         # ...
     )
 
-#. Configure logging to use the ``JsonLogFormatter`` logging formatter for the
-   ``request.summary`` logger (you may have to extend your existing logging
-   configuration)::
-
-    LOGGING = {
-        'version': 1,
-        'formatters': {
-            'json': {
-                '()': 'dockerflow.logging.JsonLogFormatter',
-                'logger_name': '<project>'
-            }
-        },
-        'handlers': {
-            'console': {
-                'level': 'DEBUG',
-                'class': 'logging.StreamHandler',
-                'formatter': 'json'
-            },
-        },
-        'loggers': {
-            'request.summary': {
-                'handlers': ['console'],
-                'level': 'DEBUG',
-            },
-        }
-    }
-
-   .. seealso:: :ref:`django-logging` for more information
+#. :ref:`Configure logging <django-logging>` to use the
+   :class:`~dockerflow.logging.JsonLogFormatter`
+   logging formatter for the ``request.summary`` logger (you may have to
+   extend your existing logging configuration!).
 
 .. _django-config:
 
@@ -184,7 +164,7 @@ Gunicorn automatically will bind to the hostname:port combination of
 ``0.0.0.0:$PORT`` if it find the :envvar:`PORT` environment variable.
 That means running gunicorn is as simple as using this::
 
-    gunicorn <project>.wsgi:application --workers 4 --access-logfile -
+    gunicorn myproject.wsgi:application --workers 4 --access-logfile -
 
 .. seealso::
 
@@ -203,7 +183,7 @@ define the ``uwsgi.ini``, e.g.:
     http-socket = :$(PORT)
     master = true
     processes = 4
-    module = <project>.wsgi:application
+    module = myproject.wsgi:application
     chdir = /app
     enable-threads = True
 
@@ -255,7 +235,7 @@ file is located in the below example directory tree:
     ├── tests
     │   └── ..
     ├── version.json
-    ├── <project>
+    ├── myproject
     │   ├── app1
     │   │   ├── ..
     │   │   └── ..
@@ -390,17 +370,18 @@ spec:
 Logging
 -------
 
-Dockerflow provides a :py:class:`dockerflow.logging.JsonLogFormatter` Python
+Dockerflow provides a :class:`~dockerflow.logging.JsonLogFormatter` Python
 logging formatter class.
 
-To use it, put something like this in your Django ``settings`` file::
+To use it, put something like this in your Django ``settings`` file and
+configure **at least** the ``request.summary`` logger that way::
 
     LOGGING = {
         'version': 1,
         'formatters': {
             'json': {
                 '()': 'dockerflow.logging.JsonLogFormatter',
-                'logger_name': '<project>'
+                'logger_name': 'myproject'
             }
         },
         'handlers': {
@@ -411,7 +392,7 @@ To use it, put something like this in your Django ``settings`` file::
             },
         },
         'loggers': {
-            'myservice': {
+            'request.summary': {
                 'handlers': ['console'],
                 'level': 'DEBUG',
             },
