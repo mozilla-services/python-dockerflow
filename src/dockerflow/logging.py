@@ -101,7 +101,11 @@ class JsonLogFormatter(logging.Formatter):
 
         out['Fields'] = fields
 
-        return json.dumps(out, cls=SafeJSONEncoder)
+        return self.serialize(out)
+
+    def serialize(self, obj):
+        """Serialize log dictionary into JSON for output."""
+        return json.dumps(obj, cls=SafeJSONEncoder)
 
 
 def safer_format_traceback(exc_typ, exc_val, exc_tb):
