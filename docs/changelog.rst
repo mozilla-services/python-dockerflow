@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+2018.4.0 (2018-04-03)
+^^^^^^^^^^^^^^^^^^^^^
+
+- Fix backward-compatibility in the ``check_migrations_applied`` Flask check
+  when an older version of Flask-Migrate is used.
+
 2018.2.1 (2018-02-24)
 ^^^^^^^^^^^^^^^^^^^^^
 
