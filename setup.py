@@ -1,4 +1,13 @@
+import codecs
+import os
 from setuptools import setup, find_packages
+
+
+def read(*parts):
+    filename = os.path.join(os.path.dirname(__file__), *parts)
+    with codecs.open(filename, encoding='utf-8') as fp:
+        return fp.read()
+
 
 setup(
     name='dockerflow',
@@ -10,6 +19,7 @@ setup(
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     description="Python tools and helpers for Mozilla's Dockerflow",
+    long_description=read('README.rst'),
     author='Mozilla Foundation',
     author_email='dev-webdev@lists.mozilla.org',
     url='https://github.com/mozilla-services/python-dockerflow',
