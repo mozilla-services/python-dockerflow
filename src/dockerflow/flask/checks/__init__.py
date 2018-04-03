@@ -73,7 +73,9 @@ def check_migrations_applied(migrate):
     from alembic.script import ScriptDirectory
     from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
-    config = migrate.get_config()
+    # pass in Migrate.directory here explicitly to be compatible with
+    # older versions of Flask-Migrate that required the directory to be passed
+    config = migrate.get_config(directory=migrate.directory)
     script = ScriptDirectory.from_config(config)
 
     try:
