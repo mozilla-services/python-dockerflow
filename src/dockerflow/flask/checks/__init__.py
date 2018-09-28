@@ -5,7 +5,7 @@
 This module contains a few built-in checks for the Flask integration.
 """
 from ... import health
-from .messages import (  # noqa
+from ...checks import (  # noqa
     DEBUG, INFO, WARNING, ERROR, CRITICAL, STATUSES, level_to_text,
     CheckMessage, Debug, Info, Warning, Error, Critical,
 )
