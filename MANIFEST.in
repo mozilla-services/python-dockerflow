@@ -1,2 +1,6 @@
+recursive-include docs *
 recursive-include tests *
-include pytest.ini AUTHORS.rst README.rst tox.ini .coveragerc
+include pytest.ini AUTHORS.rst LICENSE README.rst tox.ini .coveragerc
+prune docs/_build
+prune *.pyc
+prune __pycache__
