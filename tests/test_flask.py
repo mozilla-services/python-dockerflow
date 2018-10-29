@@ -351,8 +351,8 @@ def test_check_message():
                            id='tests.checks.E001', obj=obj)
     assert str(message) == 'test: (tests.checks.E001) some error'
     assert (
-        repr(message) ==
-        "<Error: level=100, msg='some error', hint=None, obj='test', id='tests.checks.E001'>"
+        repr(message) == "<Error: level=100, msg='some error', "
+                         "hint=None, obj='test', id='tests.checks.E001'>"
     )
 
     message2 = checks.Error('some error', level=100,

@@ -62,8 +62,7 @@ class DockerflowMiddleware(MiddlewareMixin):
         # attributes before trying to use them.
         if hasattr(request, 'user'):
             out['uid'] = (
-                is_authenticated(request.user) and
-                request.user.pk or ''
+                is_authenticated(request.user) and request.user.pk or ''
             )
         if hasattr(request, '_id'):
             out['rid'] = request._id
