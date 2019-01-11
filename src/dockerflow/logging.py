@@ -22,9 +22,7 @@ class JsonLogFormatter(logging.Formatter):
 
     .. seealso::
 
-        - https://mana.mozilla.org/wiki/display/CLOUDSERVICES/Logging+Standard
-
-        - https://mana.mozilla.org/wiki/pages/viewpage.action?pageId=42895640
+        - https://wiki.mozilla.org/Firefox/Services/Logging
 
     Adapted from:
     https://github.com/mozilla-services/mozservices/blob/master/mozsvc/util.py#L106
@@ -68,7 +66,7 @@ class JsonLogFormatter(logging.Formatter):
         Map from Python LogRecord attributes to JSON log format fields
 
         * from - https://docs.python.org/3/library/logging.html#logrecord-attributes
-        * to - https://mana.mozilla.org/wiki/pages/viewpage.action?pageId=42895640
+        * to - https://wiki.mozilla.org/Firefox/Services/Logging
         """
         out = dict(
             Timestamp=int(record.created * 1e9),
