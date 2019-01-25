@@ -1,3 +1,5 @@
+services:
+  - redis-server
 sudo: false
 language: python
 python:
