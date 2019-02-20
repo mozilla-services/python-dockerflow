@@ -1,26 +1,35 @@
-services:
-  - redis-server
-dist: xenial
-sudo: false
-language: python
-python:
-- '2.7'
-- '3.4'
-- '3.5'
-- '3.6'
-cache: pip
-install:
-- pip install tox-travis
-script: tox -v
-after_success:
-- bash <(curl -s https://codecov.io/bash)
-deploy:
-  provider: pypi
-  user: jezdez
-  distributions: sdist bdist_wheel
-  password:
-    secure: JQf1o3a16K4roD9gLSi6CpxvErU28NFWLXiCffNZpk1tsFWnieAuxZKYzjFcfhmUvcp+qYWEBHsGw2Xej0jXI+b5y3RMH5gahuxehtiR2F/csgdjnzSQlMAsKDDeN9lXVqijcFhSutFtliDxDQ/J7xqDRF97IJPW0Ggh2jZkaM4BN80IZJmmCRqoaW3juIYWCRPRZSmJhhAOLh7P0f9PuzBc0y5pYBSNvbyRHlcb8xU8/Ya19T4G9JFpH3RmG3/5BdAVQlqlVNAhGLL0TAU1pMkgN+dc9vriJsTtBUoRf9jjeOk6ujX+d3PdFBf1lHwKe8zjsyIiMaObY3pF4vnnVoJ2iUp3oGYHVF6GKsoMMhfhPxeWqgx27Nb8G86KKGwXlA/DJyZJqTaaRo7Fj1zNFtw6A0yAbpjjKchiqivCF0LHwKupsEmA6MMWEucdlLp5Yxgwuqj3uP4zkLXXWTei05+VhbqR6lygccZCmLWuDSTiS7S4F3iWl4gZ3MYZhzz8IJbkNqLg+6yiG1PAwi36UJd0ez+cn+gFKiujUOBWEn4UPuGYGqFZHmeBVENAgcpAHIIhCQe3xadX5bcMPq80O9mDMK4uR4E2xhRmsVFAThMSR5Ne+PCX1Zj62AoJ4snDEVViWtxdCY1hYrggfnD67YwZCuYLSHJoLb+VMO3BoVA=
-  on:
-    tags: true
-    repo: mozilla-services/python-dockerflow
-    python: '3.5'
+{
+  "services": [
+    "redis-server"
+  ],
+  "dist": "xenial",
+  "sudo": false,
+  "language": "python",
+  "python": [
+    "2.7",
+    "3.4",
+    "3.5",
+    "3.6"
+  ],
+  "cache": "pip",
+  "install": [
+    "pip install tox-travis"
+  ],
+  "script": "tox -v",
+  "after_success": [
+    "bash <(curl -s https://codecov.io/bash)"
+  ],
+  "deploy": {
+    "provider": "pypi",
+    "user": "jezdez",
+    "distributions": "sdist bdist_wheel",
+    "password": {
+      "secure": "JQf1o3a16K4roD9gLSi6CpxvErU28NFWLXiCffNZpk1tsFWnieAuxZKYzjFcfhmUvcp+qYWEBHsGw2Xej0jXI+b5y3RMH5gahuxehtiR2F/csgdjnzSQlMAsKDDeN9lXVqijcFhSutFtliDxDQ/J7xqDRF97IJPW0Ggh2jZkaM4BN80IZJmmCRqoaW3juIYWCRPRZSmJhhAOLh7P0f9PuzBc0y5pYBSNvbyRHlcb8xU8/Ya19T4G9JFpH3RmG3/5BdAVQlqlVNAhGLL0TAU1pMkgN+dc9vriJsTtBUoRf9jjeOk6ujX+d3PdFBf1lHwKe8zjsyIiMaObY3pF4vnnVoJ2iUp3oGYHVF6GKsoMMhfhPxeWqgx27Nb8G86KKGwXlA/DJyZJqTaaRo7Fj1zNFtw6A0yAbpjjKchiqivCF0LHwKupsEmA6MMWEucdlLp5Yxgwuqj3uP4zkLXXWTei05+VhbqR6lygccZCmLWuDSTiS7S4F3iWl4gZ3MYZhzz8IJbkNqLg+6yiG1PAwi36UJd0ez+cn+gFKiujUOBWEn4UPuGYGqFZHmeBVENAgcpAHIIhCQe3xadX5bcMPq80O9mDMK4uR4E2xhRmsVFAThMSR5Ne+PCX1Zj62AoJ4snDEVViWtxdCY1hYrggfnD67YwZCuYLSHJoLb+VMO3BoVA="
+    },
+    "true": {
+      "tags": true,
+      "repo": "mozilla-services/python-dockerflow",
+      "python": "3.5"
+    }
+  }
+}
