@@ -1,5 +1,6 @@
 services:
   - redis-server
+dist: xenial
 sudo: false
 language: python
 python:
