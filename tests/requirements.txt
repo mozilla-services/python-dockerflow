@@ -7,7 +7,7 @@ pytest-django
 pytest-mock
 pytest-pythonpath
 mock
-redis
+redis<3.2.0
 django-redis
 fakeredis
 jsonschema
