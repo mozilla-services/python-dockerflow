@@ -19,6 +19,13 @@ except ImportError:  # pragma: nocover
 else:
     has_flask_login = True
 
+try:
+    from sqlalchemy.exc import SQLAlchemyError as UserLoadingError
+except ImportError:
+    # Just in case sqlalchemy isn't even used
+    class UserLoadingError(Exception):
+        pass
+
 
 from .. import version
 from . import checks
@@ -227,7 +234,14 @@ class Dockerflow(object):
             return
 
         # finally return the user id
-        return current_user.get_id()
+        try:
+            return current_user.get_id()
+        except UserLoadingError:
+            # but don't fail if for some reason getting the user id
+            # created an exception to not accidently make exception
+            # handling worse. If sqlalchemy is used that catches
+            # all SQLAlchemyError exceptions.
+            pass
 
     def summary_extra(self):
         """
