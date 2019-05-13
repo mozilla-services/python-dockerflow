@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+2019.5.0 (2019-05-13)
+^^^^^^^^^^^^^^^^^^^^^
+
+- Gracefully handle user loading to prevent accidental race condtions during
+  exception handling when using the Flask Dockerflow extension.
+
 2018.4.0 (2018-04-03)
 ^^^^^^^^^^^^^^^^^^^^^
 
