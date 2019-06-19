@@ -30,9 +30,9 @@ class DockerflowMiddleware(MiddlewareMixin):
     https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md
     """
     viewpatterns = [
-        (re.compile(r'/__version__$'), views.version),
-        (re.compile(r'/__heartbeat__$'), views.heartbeat),
-        (re.compile(r'/__lbheartbeat__$'), views.lbheartbeat),
+        (re.compile(r'/__version__/?$'), views.version),
+        (re.compile(r'/__heartbeat__/?$'), views.heartbeat),
+        (re.compile(r'/__lbheartbeat__/?$'), views.lbheartbeat),
     ]
 
     def __init__(self, *args, **kwargs):
