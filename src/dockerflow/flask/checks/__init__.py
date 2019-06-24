@@ -6,8 +6,19 @@ This module contains a few built-in checks for the Flask integration.
 """
 from ... import health
 from ...checks import (  # noqa
-    DEBUG, INFO, WARNING, ERROR, CRITICAL, STATUSES, level_to_text,
-    CheckMessage, Debug, Info, Warning, Error, Critical,
+    DEBUG,
+    INFO,
+    WARNING,
+    ERROR,
+    CRITICAL,
+    STATUSES,
+    level_to_text,
+    CheckMessage,
+    Debug,
+    Info,
+    Warning,
+    Error,
+    Critical,
 )
 
 
@@ -36,9 +47,9 @@ def check_database_connected(db):
     errors = []
     try:
         with db.engine.connect() as connection:
-            connection.execute('SELECT 1;')
+            connection.execute("SELECT 1;")
     except DBAPIError as e:
-        msg = 'DB-API error: {!s}'.format(e)
+        msg = "DB-API error: {!s}".format(e)
         errors.append(Error(msg, id=health.ERROR_DB_API_EXCEPTION))
     except SQLAlchemyError as e:
         msg = 'Database misconfigured: "{!s}"'.format(e)
@@ -88,7 +99,7 @@ def check_migrations_applied(migrate):
         return [Info(msg, id=health.INFO_CANT_CHECK_MIGRATIONS)]
 
     if db_heads != script_heads:
-        msg = "Unapplied migrations found: {}".format(', '.join(script_heads))
+        msg = "Unapplied migrations found: {}".format(", ".join(script_heads))
         errors.append(Warning(msg, id=health.WARNING_UNAPPLIED_MIGRATION))
     return errors
 
@@ -128,18 +139,19 @@ def check_redis_connected(client):
 
     """
     import redis
+
     errors = []
 
     try:
         result = client.ping()
     except redis.ConnectionError as e:
-        msg = 'Could not connect to redis: {!s}'.format(e)
+        msg = "Could not connect to redis: {!s}".format(e)
         errors.append(Error(msg, id=health.ERROR_CANNOT_CONNECT_REDIS))
     except redis.RedisError as e:
-        errors.append(Error('Redis error: "{!s}"'.format(e),
-                            id=health.ERROR_REDIS_EXCEPTION))
+        errors.append(
+            Error('Redis error: "{!s}"'.format(e), id=health.ERROR_REDIS_EXCEPTION)
+        )
     else:
         if not result:
-            errors.append(Error('Redis ping failed',
-                                id=health.ERROR_REDIS_PING_FAILED))
+            errors.append(Error("Redis ping failed", id=health.ERROR_REDIS_PING_FAILED))
     return errors

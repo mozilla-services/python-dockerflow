@@ -10,5 +10,5 @@ import warnings
 
 warnings.warn(
     "dockerflow.flask.checks.messages has moved to dockerflow.checks.messages",
-    PendingDeprecationWarning
+    PendingDeprecationWarning,
 )

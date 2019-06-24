@@ -5,10 +5,11 @@ from django.apps import AppConfig
 
 
 class DockerFlowAppConfig(AppConfig):
-    name = 'dockerflow.django'
-    label = 'dockerflow'
-    verbose_name = 'Dockerflow'
+    name = "dockerflow.django"
+    label = "dockerflow"
+    verbose_name = "Dockerflow"
 
     def ready(self):
         from . import checks
+
         checks.register()

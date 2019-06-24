@@ -75,18 +75,25 @@ class Dockerflow(object):
                          be found. Defaults to ``.``.
     """
 
-    def __init__(self, app=None, redis=None, silenced_checks=None,
-                 version_path='.', *args, **kwargs):
+    def __init__(
+        self,
+        app=None,
+        redis=None,
+        silenced_checks=None,
+        version_path=".",
+        *args,
+        **kwargs
+    ):
 
         # The Dockerflow specific logger to be used by internals of this
         # extension.
-        self.logger = logging.getLogger('dockerflow.sanic')
+        self.logger = logging.getLogger("dockerflow.sanic")
         self.logger.addHandler(logging.NullHandler())
         self.logger.setLevel(logging.INFO)
 
         # The request summary logger to be used by this extension
         # without pre-configuration. See docs for how to set it up.
-        self.summary_logger = logging.getLogger('request.summary')
+        self.summary_logger = logging.getLogger("request.summary")
 
         # An ordered dictionary for storing custom Dockerflow checks in.
         self.checks = OrderedDict()
@@ -112,7 +119,7 @@ class Dockerflow(object):
         Adds a given check callback with the provided object to the list
         of checks. Useful for built-ins but also advanced custom checks.
         """
-        self.logger.info('Adding extension check %s' % check.__name__)
+        self.logger.info("Adding extension check %s" % check.__name__)
         partial = functools.wraps(check)(functools.partial(check, obj))
         self.check(func=partial)
 
@@ -121,62 +128,62 @@ class Dockerflow(object):
         Add the Dockerflow views and middleware to app.
         """
         for uri, name, handler in (
-            ('/__version__', 'version', self._version_view),
-            ('/__heartbeat__', 'heartbeat', self._heartbeat_view),
-            ('/__lbheartbeat__', 'lbheartbeat', self._lbheartbeat_view),
+            ("/__version__", "version", self._version_view),
+            ("/__heartbeat__", "heartbeat", self._heartbeat_view),
+            ("/__lbheartbeat__", "lbheartbeat", self._lbheartbeat_view),
         ):
-            app.add_route(handler, uri, name='dockerflow.' + name)
-        app.middleware('request')(self._request_middleware)
-        app.middleware('response')(self._response_middleware)
+            app.add_route(handler, uri, name="dockerflow." + name)
+        app.middleware("request")(self._request_middleware)
+        app.middleware("response")(self._response_middleware)
         app.exception(Exception)(self._exception_handler)
 
     def _request_middleware(self, request):
         """
         The request middleware.
         """
-        request['_id'] = str(uuid.uuid4())
-        request['_start_timestamp'] = time.time()
+        request["_id"] = str(uuid.uuid4())
+        request["_start_timestamp"] = time.time()
 
     def _response_middleware(self, request, response):
         """
         The response middleware.
         """
-        if not request.get('_logged'):
+        if not request.get("_logged"):
             extra = self.summary_extra(request)
-            self.summary_logger.info('', extra=extra)
+            self.summary_logger.info("", extra=extra)
 
     def _exception_handler(self, request, exception):
         """
         The exception handler.
         """
         extra = self.summary_extra(request)
-        extra['errno'] = 500
+        extra["errno"] = 500
         self.summary_logger.error(str(exception), extra=extra)
-        request['_logged'] = True
+        request["_logged"] = True
 
     def summary_extra(self, request):
         """
         Build the extra data for the summary logger.
         """
         out = {
-            'errno': 0,
-            'agent': request.headers.get('User-Agent', ''),
-            'lang': request.headers.get('Accept-Language', ''),
-            'method': request.method,
-            'path': request.path,
-            'uid': '',
+            "errno": 0,
+            "agent": request.headers.get("User-Agent", ""),
+            "lang": request.headers.get("Accept-Language", ""),
+            "method": request.method,
+            "path": request.path,
+            "uid": "",
         }
 
         # the rid value to the current request ID
-        request_id = request.get('_id', None)
+        request_id = request.get("_id", None)
         if request_id is not None:
-            out['rid'] = request_id
+            out["rid"] = request_id
 
         # and the t value to the time it took to render
-        start_timestamp = request.get('_start_timestamp', None)
+        start_timestamp = request.get("_start_timestamp", None)
         if start_timestamp is not None:
             # Duration of request, in milliseconds.
-            out['t'] = int(1000 * (time.time() - start_timestamp))
+            out["t"] = int(1000 * (time.time() - start_timestamp))
 
         return out
 
@@ -188,7 +195,7 @@ class Dockerflow(object):
         if isawaitable(version_json):
             version_json = await version_json
         if version_json is None:
-            return response.raw(b'version.json not found', 404)
+            return response.raw(b"version.json not found", 404)
         else:
             return response.json(version_json)
 
@@ -198,7 +205,7 @@ class Dockerflow(object):
         Must return 200 (not 204) for ELB
         http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-healthchecks.html
         """
-        return response.raw(b'', 200)
+        return response.raw(b"", 200)
 
     async def _heartbeat_check_detail(self, check):
         result = check()
@@ -208,9 +215,9 @@ class Dockerflow(object):
         level = max([0] + [e.level for e in errors])
 
         return {
-            'status': checks.level_to_text(level),
-            'level': level,
-            'messages': {e.id: e.msg for e in errors},
+            "status": checks.level_to_text(level),
+            "level": level,
+            "messages": {e.id: e.msg for e in errors},
         }
 
     async def _heartbeat_view(self, request):
@@ -227,15 +234,15 @@ class Dockerflow(object):
 
         for name, check in self.checks.items():
             detail = await self._heartbeat_check_detail(check)
-            statuses[name] = detail['status']
-            level = max(level, detail['level'])
-            if detail['level'] > 0:
+            statuses[name] = detail["status"]
+            level = max(level, detail["level"])
+            if detail["level"] > 0:
                 details[name] = detail
 
         payload = {
-            'status': checks.level_to_text(level),
-            'checks': statuses,
-            'details': details,
+            "status": checks.level_to_text(level),
+            "checks": statuses,
+            "details": details,
         }
 
         if level < checks.WARNING:
@@ -311,11 +318,11 @@ class Dockerflow(object):
         if name is None:
             name = func.__name__
 
-        self.logger.info('Registered Dockerflow check %s', name)
+        self.logger.info("Registered Dockerflow check %s", name)
 
         @functools.wraps(func)
         def decorated_function(*args, **kwargs):
-            self.logger.info('Called Dockerflow check %s', name)
+            self.logger.info("Called Dockerflow check %s", name)
             return func(*args, **kwargs)
 
         self.checks[name] = decorated_function
