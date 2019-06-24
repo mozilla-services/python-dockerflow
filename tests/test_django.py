@@ -32,9 +32,12 @@ def dockerflow_middleware():
     return DockerflowMiddleware()
 
 
-def test_version_exists(dockerflow_middleware, mocker, rf, version_content):
-    mocker.patch('dockerflow.version.get_version', return_value=version_content)
-    request = rf.get('/__version__')
+@pytest.mark.parametrize("request_path", ["/__version__", "/__version__/"])
+def test_version_exists(
+    dockerflow_middleware, mocker, request_path, rf, version_content
+):
+    mocker.patch("dockerflow.version.get_version", return_value=version_content)
+    request = rf.get(request_path)
     response = dockerflow_middleware.process_request(request)
     assert response.status_code == 200
     assert json.loads(response.content.decode()) == version_content
