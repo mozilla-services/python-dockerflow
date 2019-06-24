@@ -163,7 +163,7 @@ html_theme = 'default'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -354,7 +354,7 @@ intersphinx_mapping = {
                'http://docs.djangoproject.com/en/stable/_objects/'),
     'flask': ('http://flask.pocoo.org/docs/', None),
     'redis-py': ('https://redis-py.readthedocs.io/en/latest/', None),
-    'flask-sqlalchemy': ('https://flask-sqlalchemy.readthedocs.io/en/stable/', None),
+    'flask-sqlalchemy': ('https://flask-sqlalchemy.readthedocs.io/en/2.x/', None),
     'python': ('https://docs.python.org/', None),
     'whitenoise': ('https://whitenoise.readthedocs.io/en/stable/', None),
 }
