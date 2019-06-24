@@ -42,6 +42,7 @@ setup(
     extras_require={
         'django': ['django'],
         'flask': ['flask', 'blinker'],
+        'sanic': ['sanic'],
     },
     zip_safe=False,
 )

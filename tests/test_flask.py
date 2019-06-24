@@ -428,3 +428,7 @@ def test_check_redis_connected_ping_check(mocker, redis_store):
     errors = checks.check_redis_connected(redis_store)
     assert len(errors) == 1
     assert errors[0].id == health.ERROR_REDIS_PING_FAILED
+
+def test_checks_imports():
+    from dockerflow.flask.checks import level_to_text
+    from dockerflow.flask.checks.messages import level_to_text
