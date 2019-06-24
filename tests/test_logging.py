@@ -108,7 +108,7 @@ def test_logging_error_tracebacks(caplog):
 
     assert details['Severity'] == 3
     assert details['Fields']['msg'] == 'there was an error'
-    assert details['Fields']['error'] == "ValueError('\\n',)"
+    assert details['Fields']['error'].startswith("ValueError('\\n'")
     assert details['Fields']['traceback'].startswith('Uncaught exception:')
     assert 'ValueError' in details['Fields']['traceback']
 
