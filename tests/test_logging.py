@@ -11,7 +11,7 @@ import jsonschema
 
 from dockerflow.logging import JsonLogFormatter
 
-logger_name = 'tests'
+logger_name = "tests"
 formatter = JsonLogFormatter(logger_name=logger_name)
 
 
@@ -23,7 +23,8 @@ def assert_records(records):
 
 
 def test_initialization_from_ini(caplog, tmpdir):
-    ini_content = textwrap.dedent("""
+    ini_content = textwrap.dedent(
+        """
     [loggers]
     keys = root
 
@@ -45,86 +46,88 @@ def test_initialization_from_ini(caplog, tmpdir):
 
     [formatter_json]
     class = dockerflow.logging.JsonLogFormatter
-    """)
-    ini_file = tmpdir.join('logging.ini')
+    """
+    )
+    ini_file = tmpdir.join("logging.ini")
     ini_file.write(ini_content)
     logging.config.fileConfig(str(ini_file))
-    logging.info('I am logging in mozlog format now! woo hoo!')
+    logging.info("I am logging in mozlog format now! woo hoo!")
     logger = logging.getLogger()
     assert len(logger.handlers) > 0
-    assert logger.handlers[0].formatter.logger_name == 'Dockerflow'
+    assert logger.handlers[0].formatter.logger_name == "Dockerflow"
 
 
 def test_basic_operation(caplog):
     """Ensure log formatter contains all the expected fields and values"""
-    message_text = 'simple test'
+    message_text = "simple test"
     caplog.set_level(logging.DEBUG)
     logging.debug(message_text)
     details = assert_records(caplog.records)
 
-    assert 'Timestamp' in details
-    assert 'Hostname' in details
-    assert details['Severity'] == 7
-    assert details['Type'] == 'root'
-    assert details['Pid'] == os.getpid()
-    assert details['Logger'] == logger_name
-    assert details['EnvVersion'] == formatter.LOGGING_FORMAT_VERSION
-    assert details['Fields']['msg'] == message_text
+    assert "Timestamp" in details
+    assert "Hostname" in details
+    assert details["Severity"] == 7
+    assert details["Type"] == "root"
+    assert details["Pid"] == os.getpid()
+    assert details["Logger"] == logger_name
+    assert details["EnvVersion"] == formatter.LOGGING_FORMAT_VERSION
+    assert details["Fields"]["msg"] == message_text
 
 
 def test_custom_paramters(caplog):
     """Ensure log formatter can handle custom parameters"""
-    logger = logging.getLogger('tests.test_logging')
-    logger.warning('custom test %s', 'one', extra={'more': 'stuff'})
+    logger = logging.getLogger("tests.test_logging")
+    logger.warning("custom test %s", "one", extra={"more": "stuff"})
     details = assert_records(caplog.records)
 
-    assert details['Type'] == 'tests.test_logging'
-    assert details['Severity'] == 4
-    assert details['Fields']['msg'] == 'custom test one'
-    assert details['Fields']['more'] == 'stuff'
+    assert details["Type"] == "tests.test_logging"
+    assert details["Severity"] == 4
+    assert details["Fields"]["msg"] == "custom test one"
+    assert details["Fields"]["more"] == "stuff"
 
 
 def test_non_json_serializable_parameters_are_converted(caplog):
     """Ensure log formatter doesn't fail with non json-serializable params."""
     foo = object()
     foo_repr = repr(foo)
-    logger = logging.getLogger('tests.test_logging')
-    logger.warning('custom test %s', 'hello', extra={'foo': foo})
+    logger = logging.getLogger("tests.test_logging")
+    logger.warning("custom test %s", "hello", extra={"foo": foo})
     details = assert_records(caplog.records)
 
-    assert details['Type'] == 'tests.test_logging'
-    assert details['Severity'] == 4
-    assert details['Fields']['msg'] == 'custom test hello'
-    assert details['Fields']['foo'] == foo_repr
+    assert details["Type"] == "tests.test_logging"
+    assert details["Severity"] == 4
+    assert details["Fields"]["msg"] == "custom test hello"
+    assert details["Fields"]["foo"] == foo_repr
 
 
 def test_logging_error_tracebacks(caplog):
     """Ensure log formatter includes exception traceback information"""
     try:
-        raise ValueError('\n')
+        raise ValueError("\n")
     except Exception:
-        logging.exception('there was an error')
+        logging.exception("there was an error")
     details = assert_records(caplog.records)
 
-    assert details['Severity'] == 3
-    assert details['Fields']['msg'] == 'there was an error'
-    assert details['Fields']['error'].startswith("ValueError('\\n'")
-    assert details['Fields']['traceback'].startswith('Uncaught exception:')
-    assert 'ValueError' in details['Fields']['traceback']
+    assert details["Severity"] == 3
+    assert details["Fields"]["msg"] == "there was an error"
+    assert details["Fields"]["error"].startswith("ValueError('\\n'")
+    assert details["Fields"]["traceback"].startswith("Uncaught exception:")
+    assert "ValueError" in details["Fields"]["traceback"]
 
 
 def test_ignore_json_message(caplog):
     """Ensure log formatter ignores messages that are JSON already"""
     try:
-        raise ValueError('\n')
+        raise ValueError("\n")
     except Exception:
-        logging.exception(json.dumps({'spam': 'eggs'}))
+        logging.exception(json.dumps({"spam": "eggs"}))
     details = assert_records(caplog.records)
-    assert 'msg' not in details['Fields']
+    assert "msg" not in details["Fields"]
 
 
 # https://mana.mozilla.org/wiki/pages/viewpage.action?pageId=42895640
-JSON_LOGGING_SCHEMA = json.loads("""
+JSON_LOGGING_SCHEMA = json.loads(
+    """
 {
     "type":"object",
     "required":["Timestamp"],
@@ -196,4 +199,7 @@ JSON_LOGGING_SCHEMA = json.loads("""
         }
     }
 }
-""".replace("\\", "\\\\"))  # HACK: Fix escaping for easy copy/paste
+""".replace(
+        "\\", "\\\\"
+    )
+)  # HACK: Fix escaping for easy copy/paste

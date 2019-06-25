@@ -6,9 +6,9 @@ from django.core import checks
 
 @checks.register
 def error(app_configs, **kwargs):
-    return [checks.Error('some error', id='tests.checks.E001')]
+    return [checks.Error("some error", id="tests.checks.E001")]
 
 
 @checks.register
 def warning(app_configs, **kwargs):
-    return [checks.Warning('some warning', id='tests.checks.W001')]
+    return [checks.Warning("some warning", id="tests.checks.W001")]

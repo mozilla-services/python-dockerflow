@@ -10,8 +10,8 @@ def version_content():
     as documented on https://github.com/mozilla-services/Dockerflow/blob/master/docs/version_object.md
     """
     return {
-        'source': 'https://github.com/mozilla-services/python-dockerflow',
-        'version': 'release tag or string for humans',
-        'commit': '<git hash>',
-        'build': 'uri to CI build job'
+        "source": "https://github.com/mozilla-services/python-dockerflow",
+        "version": "release tag or string for humans",
+        "commit": "<git hash>",
+        "build": "uri to CI build job",
     }

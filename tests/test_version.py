@@ -6,8 +6,8 @@ from dockerflow.version import get_version
 
 
 def test_get_version(tmpdir):
-    content = {'spam': 'eggs'}
-    version_json = tmpdir.join('version.json')
+    content = {"spam": "eggs"}
+    version_json = tmpdir.join("version.json")
     version_json.write(json.dumps(content))
 
     version = get_version(str(tmpdir))
