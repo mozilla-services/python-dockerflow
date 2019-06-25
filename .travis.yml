@@ -28,7 +28,7 @@
     "true": {
       "tags": true,
       "repo": "mozilla-services/python-dockerflow",
-      "python": "3.5"
+      "python": "3.7"
     }
   }
 }
