@@ -24,17 +24,17 @@ Features
    environment
 
       Accept its configuration through environment variables.
-      See: :ref:`Django <django-config>`, :ref:`Flask <flask-config>`
+      See: :ref:`Django <django-config>`, :ref:`Flask <flask-config>`, :ref:`Sanic <sanic-config>`
 
    port
 
       Listen on environment variable ``$PORT`` for HTTP requests.
-      See: :ref:`Django <django-serving>`, :ref:`Flask <flask-serving>`
+      See: :ref:`Django <django-serving>`, :ref:`Flask <flask-serving>`, :ref:`Sanic <sanic-serving>`
 
    version
 
       Must have a JSON version object at ``/app/version.json``.
-      See: :ref:`Django <django-versions>`, :ref:`Flask <flask-versions>`
+      See: :ref:`Django <django-versions>`, :ref:`Flask <flask-versions>`, :ref:`Sanic <sanic-versions>`
 
    health
 
@@ -44,18 +44,18 @@ Features
       * Respond to ``/__lbheartbeat__`` with an HTTP 200.
         This is for load balancer checks and should not check backing services.
 
-      See: :ref:`Django <django-health>`, :ref:`Flask <flask-health>`
+      See: :ref:`Django <django-health>`, :ref:`Flask <flask-health>`, :ref:`Sanic <sanic-health>`
 
    logging
 
       Send text logs to ``stdout`` or ``stderr``. See:
       :ref:`Generic <logging>`, :ref:`Django <django-logging>`,
-      :ref:`Flask <flask-logging>`
+      :ref:`Flask <flask-logging>`, :ref:`Sanic <sanic-logging>`
 
    static content
 
       Serve its own static content. See:
-      :ref:`Django <django-static>`, :ref:`Flask <flask-static>`
+      :ref:`Django <django-static>`, :ref:`Flask <flask-static>`, :ref:`Flask <sanic-static>`
 
 Contents
 --------
