@@ -69,6 +69,7 @@ Contents
    logging
    django
    flask
+   sanic
    api/index
 
 Indices and tables

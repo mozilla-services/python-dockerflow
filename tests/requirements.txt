@@ -18,7 +18,7 @@ aioredis; python_version >= '3.5'
 Sanic; python_version >= '3.5'
 sanic_redis; python_version >= '3.5'
 # these are constrained by the files in tests/constraints/*.txt
-# to support a dual stack Django/Flask
+# to support a triple stack Django/Flask/Sanic
 Django; python_version >= '3.0'
 Django<2.0; python_version < '3.0'
 Flask

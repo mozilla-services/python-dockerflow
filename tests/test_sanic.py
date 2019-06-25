@@ -2,9 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 import functools
-import json
 import logging
-import os
 import socket
 
 from sanic import Sanic, response
@@ -83,7 +81,7 @@ def test_client(app):
     # and port when calling Sanic.run in order to avoid parallel test failures
     # caused by Sanic.test_client bindngs to a static port
     s = socket.socket()
-    s.bind((sanic.testing.HOST,0))
+    s.bind((sanic.testing.HOST, 0))
     try:
         # initialize test_client with socket's port
         test_client = sanic.testing.SanicTestClient(app, s.getsockname()[1])
@@ -94,7 +92,6 @@ def test_client(app):
         yield test_client
     finally:
         s.close()
-
 
 
 def test_instantiating(app):
@@ -153,7 +150,6 @@ def test_heartbeat(dockerflow, test_client):
 
     _, response = test_client.get('/__heartbeat__')
     assert response.status == 200
-
 
 
 def test_heartbeat_checks(dockerflow, test_client):
@@ -255,4 +251,4 @@ def test_request_summary_failed_request(app, caplog, dockerflow, test_client):
         del request['_start_timestamp']
 
     test_client.get(headers=headers)
-    record = assert_log_record(caplog, rid=None, t=None)
+    assert_log_record(caplog, rid=None, t=None)

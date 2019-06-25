@@ -32,6 +32,14 @@ async def check_redis_connected(redis):
     to the :class:`~dockerflow.sanic.app.Dockerflow` class during
     instantiation, e.g.::
 
+        import redis as redislib
+        from sanic import Sanic
+        from dockerflow.sanic import Dockerflow
+
+        app = Sanic(__name__)
+        redis = redislib.from_url("redis://:password@localhost:6379/0")
+        dockerflow = Dockerflow(app, redis=redis)
+
     An alternative approach to instantiating a Redis client directly
     would be using the `Sanic-Redis <https://github.com/strahe/sanic-redis>`_
     Sanic extension::
@@ -42,7 +50,8 @@ async def check_redis_connected(redis):
 
         app = Sanic(__name__)
         app.config['REDIS'] = {'address': 'redis://:password@localhost:6379/0'}
-        dockerflow = Dockerflow(app, redis=SanicRedis(app))
+        redis = SanicRedis(app)
+        dockerflow = Dockerflow(app, redis=redis)
 
     """
     import aioredis

@@ -358,5 +358,4 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/', None),
     'whitenoise': ('https://whitenoise.readthedocs.io/en/stable/', None),
     'sanic': ('https://sanic.readthedocs.io/en/stable/', None),
-    'sanic-redis': ('https://github.com/strahe/sanic-redis', None),
 }
