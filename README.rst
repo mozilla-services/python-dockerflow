@@ -7,6 +7,9 @@ The documentation can be found on `python-dockerflow.readthedocs.io`_
 
 .. _`python-dockerflow.readthedocs.io`: https://python-dockerflow.readthedocs.io/
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/ambv/black
+
 .. image:: https://travis-ci.org/mozilla-services/python-dockerflow.svg?branch=master
    :alt: Build Status
    :target: https://travis-ci.org/mozilla-services/python-dockerflow

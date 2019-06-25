@@ -35,5 +35,5 @@ E.g. to hook into those signals to send data to statsd, do this:
 """
 from django.dispatch import Signal
 
-heartbeat_passed = Signal(providing_args=['level'])
-heartbeat_failed = Signal(providing_args=['level'])
+heartbeat_passed = Signal(providing_args=["level"])
+heartbeat_failed = Signal(providing_args=["level"])

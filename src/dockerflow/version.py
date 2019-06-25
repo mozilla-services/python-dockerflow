@@ -4,7 +4,7 @@
 import json
 import os
 
-__all__ = ['get_version']
+__all__ = ["get_version"]
 
 
 def get_version(root):
@@ -16,8 +16,8 @@ def get_version(root):
     :returns: Content of ``version.json`` or None
     :rtype: dict or None
     """
-    version_json = os.path.join(root, 'version.json')
+    version_json = os.path.join(root, "version.json")
     if os.path.exists(version_json):
-        with open(version_json, 'r') as version_json_file:
+        with open(version_json, "r") as version_json_file:
             return json.load(version_json_file)
     return None

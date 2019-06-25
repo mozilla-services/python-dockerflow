@@ -13,14 +13,14 @@ from .. import health
 
 def level_to_text(level):
     statuses = {
-        0: 'ok',
-        checks.messages.DEBUG: 'debug',
-        checks.messages.INFO: 'info',
-        checks.messages.WARNING: 'warning',
-        checks.messages.ERROR: 'error',
-        checks.messages.CRITICAL: 'critical',
+        0: "ok",
+        checks.messages.DEBUG: "debug",
+        checks.messages.INFO: "info",
+        checks.messages.WARNING: "warning",
+        checks.messages.ERROR: "error",
+        checks.messages.CRITICAL: "critical",
     }
-    return statuses.get(level, 'unknown')
+    return statuses.get(level, "unknown")
 
 
 def check_database_connected(app_configs, **kwargs):
@@ -33,17 +33,19 @@ def check_database_connected(app_configs, **kwargs):
     try:
         connection.ensure_connection()
     except OperationalError as e:
-        msg = 'Could not connect to database: {!s}'.format(e)
-        errors.append(checks.Error(msg,
-                                   id=health.ERROR_CANNOT_CONNECT_DATABASE))
+        msg = "Could not connect to database: {!s}".format(e)
+        errors.append(checks.Error(msg, id=health.ERROR_CANNOT_CONNECT_DATABASE))
     except ImproperlyConfigured as e:
         msg = 'Datbase misconfigured: "{!s}"'.format(e)
-        errors.append(checks.Error(msg,
-                                   id=health.ERROR_MISCONFIGURED_DATABASE))
+        errors.append(checks.Error(msg, id=health.ERROR_MISCONFIGURED_DATABASE))
     else:
         if not connection.is_usable():
-            errors.append(checks.Error('Database connection is not usable',
-                                       id=health.ERROR_UNUSABLE_DATABASE))
+            errors.append(
+                checks.Error(
+                    "Database connection is not usable",
+                    id=health.ERROR_UNUSABLE_DATABASE,
+                )
+            )
 
     return errors
 
@@ -53,6 +55,7 @@ def check_migrations_applied(app_configs, **kwargs):
     A Django check to see if all migrations have been applied correctly.
     """
     from django.db.migrations.loader import MigrationLoader
+
     errors = []
 
     # Load migrations from disk/DB
@@ -71,11 +74,10 @@ def check_migrations_applied(app_configs, **kwargs):
         if migration.app_label not in app_labels:
             continue
         if node not in loader.applied_migrations:
-            msg = 'Unapplied migration {}'.format(migration)
+            msg = "Unapplied migration {}".format(migration)
             # NB: This *must* be a Warning, not an Error, because Errors
             # prevent migrations from being run.
-            errors.append(checks.Warning(msg,
-                                         id=health.WARNING_UNAPPLIED_MIGRATION))
+            errors.append(checks.Warning(msg, id=health.WARNING_UNAPPLIED_MIGRATION))
 
     return errors
 
@@ -88,15 +90,16 @@ def check_redis_connected(app_configs, **kwargs):
     """
     import redis
     from django_redis import get_redis_connection
+
     errors = []
 
     try:
-        connection = get_redis_connection('default')
+        connection = get_redis_connection("default")
     except redis.ConnectionError as e:
-        msg = 'Could not connect to redis: {!s}'.format(e)
+        msg = "Could not connect to redis: {!s}".format(e)
         errors.append(checks.Error(msg, id=health.ERROR_CANNOT_CONNECT_REDIS))
     except NotImplementedError as e:
-        msg = 'Redis client not available: {!s}'.format(e)
+        msg = "Redis client not available: {!s}".format(e)
         errors.append(checks.Error(msg, id=health.ERROR_MISSING_REDIS_CLIENT))
     except ImproperlyConfigured as e:
         msg = 'Redis misconfigured: "{!s}"'.format(e)
@@ -104,17 +107,21 @@ def check_redis_connected(app_configs, **kwargs):
     else:
         result = connection.ping()
         if not result:
-            msg = 'Redis ping failed'
+            msg = "Redis ping failed"
             errors.append(checks.Error(msg, id=health.ERROR_REDIS_PING_FAILED))
     return errors
 
 
 def register():
-    check_paths = getattr(settings, 'DOCKERFLOW_CHECKS', [
-        'dockerflow.django.checks.check_database_connected',
-        'dockerflow.django.checks.check_migrations_applied',
-        # 'dockerflow.django.checks.check_redis_connected',
-    ])
+    check_paths = getattr(
+        settings,
+        "DOCKERFLOW_CHECKS",
+        [
+            "dockerflow.django.checks.check_database_connected",
+            "dockerflow.django.checks.check_migrations_applied",
+            # 'dockerflow.django.checks.check_redis_connected',
+        ],
+    )
     for check_path in check_paths:
         check = import_string(check_path)
         checks.register(check)

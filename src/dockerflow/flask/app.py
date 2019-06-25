@@ -8,8 +8,15 @@ import time
 import uuid
 from collections import OrderedDict
 
-from flask import (Blueprint, current_app, g, got_request_exception, jsonify,
-                   make_response, request)
+from flask import (
+    Blueprint,
+    current_app,
+    g,
+    got_request_exception,
+    jsonify,
+    make_response,
+    request,
+)
 from werkzeug.exceptions import InternalServerError
 
 try:
@@ -101,20 +108,29 @@ class Dockerflow(object):
                          Flask app's root path.
     """
 
-    def __init__(self, app=None, db=None, redis=None, migrate=None,
-                 silenced_checks=None, version_path=None, *args, **kwargs):
+    def __init__(
+        self,
+        app=None,
+        db=None,
+        redis=None,
+        migrate=None,
+        silenced_checks=None,
+        version_path=None,
+        *args,
+        **kwargs
+    ):
         # The Flask blueprint to add the Dockerflow signal callbacks and views
-        self._blueprint = Blueprint('dockerflow', 'dockerflow.flask.app')
+        self._blueprint = Blueprint("dockerflow", "dockerflow.flask.app")
 
         # The Dockerflow specific logger to be used by internals of this
         # extension.
-        self.logger = logging.getLogger('dockerflow.flask')
+        self.logger = logging.getLogger("dockerflow.flask")
         self.logger.addHandler(logging.NullHandler())
         self.logger.setLevel(logging.INFO)
 
         # The request summary logger to be used by this extension
         # without pre-configuration. See docs for how to set it up.
-        self.summary_logger = logging.getLogger('request.summary')
+        self.summary_logger = logging.getLogger("request.summary")
 
         # An ordered dictionary for storing custom Dockerflow checks in.
         self.checks = OrderedDict()
@@ -144,7 +160,7 @@ class Dockerflow(object):
         Adds a given check callback with the provided object to the list
         of checks. Useful for built-ins but also advanced custom checks.
         """
-        self.logger.info('Adding extension check %s' % check.__name__)
+        self.logger.info("Adding extension check %s" % check.__name__)
         check = functools.wraps(check)(functools.partial(check, obj))
         self.check(func=check)
 
@@ -160,20 +176,22 @@ class Dockerflow(object):
             self.version_path = os.path.dirname(app.root_path)
 
         for view in (
-            ('/__version__', 'version', self._version_view),
-            ('/__heartbeat__', 'heartbeat', self._heartbeat_view),
-            ('/__lbheartbeat__', 'lbheartbeat', self._lbheartbeat_view),
+            ("/__version__", "version", self._version_view),
+            ("/__heartbeat__", "heartbeat", self._heartbeat_view),
+            ("/__lbheartbeat__", "lbheartbeat", self._lbheartbeat_view),
         ):
             self._blueprint.add_url_rule(*view)
         self._blueprint.before_app_request(self._before_request)
         self._blueprint.after_app_request(self._after_request)
-        self._blueprint.app_errorhandler(HeartbeatFailure)(self._heartbeat_exception_handler)
+        self._blueprint.app_errorhandler(HeartbeatFailure)(
+            self._heartbeat_exception_handler
+        )
         app.register_blueprint(self._blueprint)
         got_request_exception.connect(self._got_request_exception, sender=app)
 
-        if not hasattr(app, 'extensions'):  # pragma: nocover
+        if not hasattr(app, "extensions"):  # pragma: nocover
             app.extensions = {}
-        app.extensions['dockerflow'] = self
+        app.extensions["dockerflow"] = self
 
     def _heartbeat_exception_handler(self, error):
         """
@@ -193,9 +211,9 @@ class Dockerflow(object):
         """
         The signal handler for the request_finished signal.
         """
-        if not getattr(g, '_has_exception', False):
+        if not getattr(g, "_has_exception", False):
             extra = self.summary_extra()
-            self.summary_logger.info('', extra=extra)
+            self.summary_logger.info("", extra=extra)
         return response
 
     def _got_request_exception(self, sender, exception, **extra):
@@ -203,7 +221,7 @@ class Dockerflow(object):
         The signal handler for the got_request_exception signal.
         """
         extra = self.summary_extra()
-        extra['errno'] = 500
+        extra["errno"] = 500
         self.summary_logger.error(str(exception), extra=extra)
         g._has_exception = True
 
@@ -216,7 +234,7 @@ class Dockerflow(object):
             return
 
         # and the actual login manager installed
-        if not hasattr(current_app, 'login_manager'):
+        if not hasattr(current_app, "login_manager"):
             return
 
         # fail if no current_user was attached to the request context
@@ -248,29 +266,29 @@ class Dockerflow(object):
         Build the extra data for the summary logger.
         """
         out = {
-            'errno': 0,
-            'agent': request.headers.get('User-Agent', ''),
-            'lang': request.headers.get('Accept-Language', ''),
-            'method': request.method,
-            'path': request.path,
+            "errno": 0,
+            "agent": request.headers.get("User-Agent", ""),
+            "lang": request.headers.get("Accept-Language", ""),
+            "method": request.method,
+            "path": request.path,
         }
 
         # set the uid value to the current user ID
         user_id = self.user_id()
         if user_id is None:
-            user_id = ''
-        out['uid'] = user_id
+            user_id = ""
+        out["uid"] = user_id
 
         # the rid value to the current request ID
-        request_id = g.get('_request_id', None)
+        request_id = g.get("_request_id", None)
         if request_id is not None:
-            out['rid'] = request_id
+            out["rid"] = request_id
 
         # and the t value to the time it took to render
-        start_timestamp = g.get('_start_timestamp', None)
+        start_timestamp = g.get("_start_timestamp", None)
         if start_timestamp is not None:
             # Duration of request, in milliseconds.
-            out['t'] = int(1000 * (time.time() - start_timestamp))
+            out["t"] = int(1000 * (time.time() - start_timestamp))
 
         return out
 
@@ -280,7 +298,7 @@ class Dockerflow(object):
         """
         version_json = self._version_callback(self.version_path)
         if version_json is None:
-            return 'version.json not found', 404
+            return "version.json not found", 404
         else:
             return jsonify(version_json)
 
@@ -290,16 +308,16 @@ class Dockerflow(object):
         Must return 200 (not 204) for ELB
         http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-healthchecks.html
         """
-        return '', 200
+        return "", 200
 
     def _heartbeat_check_detail(self, check):
         errors = list(filter(lambda e: e.id not in self.silenced_checks, check()))
         level = max([0] + [e.level for e in errors])
 
         return {
-            'status': checks.level_to_text(level),
-            'level': level,
-            'messages': {e.id: e.msg for e in errors},
+            "status": checks.level_to_text(level),
+            "level": level,
+            "messages": {e.id: e.msg for e in errors},
         }
 
     def _heartbeat_view(self):
@@ -316,15 +334,15 @@ class Dockerflow(object):
 
         for name, check in self.checks.items():
             detail = self._heartbeat_check_detail(check)
-            statuses[name] = detail['status']
-            level = max(level, detail['level'])
-            if detail['level'] > 0:
+            statuses[name] = detail["status"]
+            level = max(level, detail["level"])
+            if detail["level"] > 0:
                 details[name] = detail
 
         payload = {
-            'status': checks.level_to_text(level),
-            'checks': statuses,
-            'details': details,
+            "status": checks.level_to_text(level),
+            "checks": statuses,
+            "details": details,
         }
 
         def render(status_code):
@@ -394,11 +412,11 @@ class Dockerflow(object):
         if name is None:
             name = func.__name__
 
-        self.logger.info('Registered Dockerflow check %s', name)
+        self.logger.info("Registered Dockerflow check %s", name)
 
         @functools.wraps(func)
         def decorated_function(*args, **kwargs):
-            self.logger.info('Called Dockerflow check %s', name)
+            self.logger.info("Called Dockerflow check %s", name)
             return func(*args, **kwargs)
 
         self.checks[name] = decorated_function

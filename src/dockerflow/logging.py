@@ -27,6 +27,7 @@ class JsonLogFormatter(logging.Formatter):
     Adapted from:
     https://github.com/mozilla-services/mozservices/blob/master/mozsvc/util.py#L106
     """
+
     LOGGING_FORMAT_VERSION = "2.0"
 
     # Map from Python logging to Syslog severity levels
@@ -41,14 +42,34 @@ class JsonLogFormatter(logging.Formatter):
     # Syslog level to use when/if python level isn't found in map
     DEFAULT_SYSLOG_LEVEL = 7
 
-    EXCLUDED_LOGRECORD_ATTRS = set((
-        'args', 'asctime', 'created', 'exc_info', 'exc_text', 'filename',
-        'funcName', 'levelname', 'levelno', 'lineno', 'module', 'msecs',
-        'message', 'msg', 'name', 'pathname', 'process', 'processName',
-        'relativeCreated', 'stack_info', 'thread', 'threadName'
-    ))
+    EXCLUDED_LOGRECORD_ATTRS = set(
+        (
+            "args",
+            "asctime",
+            "created",
+            "exc_info",
+            "exc_text",
+            "filename",
+            "funcName",
+            "levelname",
+            "levelno",
+            "lineno",
+            "module",
+            "msecs",
+            "message",
+            "msg",
+            "name",
+            "pathname",
+            "process",
+            "processName",
+            "relativeCreated",
+            "stack_info",
+            "thread",
+            "threadName",
+        )
+    )
 
-    def __init__(self, fmt=None, datefmt=None, style='%', logger_name='Dockerflow'):
+    def __init__(self, fmt=None, datefmt=None, style="%", logger_name="Dockerflow"):
         parent_init = logging.Formatter.__init__
         # The style argument was added in Python 3.1 and since
         # the logging configuration via config (ini) files uses
@@ -74,8 +95,9 @@ class JsonLogFormatter(logging.Formatter):
             Logger=self.logger_name,
             Hostname=self.hostname,
             EnvVersion=self.LOGGING_FORMAT_VERSION,
-            Severity=self.SYSLOG_LEVEL_MAP.get(record.levelno,
-                                               self.DEFAULT_SYSLOG_LEVEL),
+            Severity=self.SYSLOG_LEVEL_MAP.get(
+                record.levelno, self.DEFAULT_SYSLOG_LEVEL
+            ),
             Pid=record.process,
         )
 
@@ -89,15 +111,15 @@ class JsonLogFormatter(logging.Formatter):
         # Only include the 'msg' key if it has useful content
         # and is not already a JSON blob.
         message = record.getMessage()
-        if message and not message.startswith('{') and not message.endswith('}'):
-            fields['msg'] = message
+        if message and not message.startswith("{") and not message.endswith("}"):
+            fields["msg"] = message
 
         # If there is an error, format it for nice output.
         if record.exc_info is not None:
-            fields['error'] = repr(record.exc_info[1])
-            fields['traceback'] = safer_format_traceback(*record.exc_info)
+            fields["error"] = repr(record.exc_info[1])
+            fields["traceback"] = safer_format_traceback(*record.exc_info)
 
-        out['Fields'] = fields
+        out["Fields"] = fields
 
         return json.dumps(out, cls=SafeJSONEncoder)
 
@@ -110,8 +132,8 @@ def safer_format_traceback(exc_typ, exc_val, exc_tb):
     using "%r" for the actual exception data, which passes it through repr()
     so that any special chars are safely escaped.
     """
-    lines = ['Uncaught exception:\n']
+    lines = ["Uncaught exception:\n"]
     lines.extend(traceback.format_tb(exc_tb))
-    lines.append('%r\n' % (exc_typ,))
-    lines.append('%r\n' % (exc_val,))
+    lines.append("%r\n" % (exc_typ,))
+    lines.append("%r\n" % (exc_val,))
     return "".join(lines)

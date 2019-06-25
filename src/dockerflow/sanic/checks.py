@@ -6,8 +6,19 @@ This module contains built-in checks for the Sanic integration.
 """
 from .. import health
 from ..checks import (  # noqa
-    DEBUG, INFO, WARNING, ERROR, CRITICAL, STATUSES, level_to_text,
-    CheckMessage, Debug, Info, Warning, Error, Critical,
+    DEBUG,
+    INFO,
+    WARNING,
+    ERROR,
+    CRITICAL,
+    STATUSES,
+    level_to_text,
+    CheckMessage,
+    Debug,
+    Info,
+    Warning,
+    Error,
+    Critical,
 )
 
 
@@ -35,19 +46,20 @@ async def check_redis_connected(redis):
 
     """
     import aioredis
+
     errors = []
 
     try:
         with await redis.conn as r:
             result = await r.ping()
     except aioredis.ConnectionClosedError as e:
-        msg = 'Could not connect to redis: {!s}'.format(e)
+        msg = "Could not connect to redis: {!s}".format(e)
         errors.append(Error(msg, id=health.ERROR_CANNOT_CONNECT_REDIS))
     except aioredis.RedisError as e:
-        errors.append(Error('Redis error: "{!s}"'.format(e),
-                                   id=health.ERROR_REDIS_EXCEPTION))
+        errors.append(
+            Error('Redis error: "{!s}"'.format(e), id=health.ERROR_REDIS_EXCEPTION)
+        )
     else:
-        if result != b'PONG':
-            errors.append(Error('Redis ping failed',
-                                       id=health.ERROR_REDIS_PING_FAILED))
+        if result != b"PONG":
+            errors.append(Error("Redis ping failed", id=health.ERROR_REDIS_PING_FAILED))
     return errors

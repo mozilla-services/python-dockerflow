@@ -11,9 +11,7 @@ from .signals import heartbeat_failed, heartbeat_passed
 
 
 version_callback = getattr(
-    settings,
-    'DOCKERFLOW_VERSION_CALLBACK',
-    'dockerflow.version.get_version',
+    settings, "DOCKERFLOW_VERSION_CALLBACK", "dockerflow.version.get_version"
 )
 
 
@@ -23,7 +21,7 @@ def version(request):
     """
     version_json = import_string(version_callback)(settings.BASE_DIR)
     if version_json is None:
-        return HttpResponseNotFound('version.json not found')
+        return HttpResponseNotFound("version.json not found")
     else:
         return JsonResponse(version_json)
 
@@ -46,7 +44,7 @@ def heartbeat(request):
     return a 500 response.
     """
     all_checks = checks.registry.registry.get_checks(
-        include_deployment_checks=not settings.DEBUG,
+        include_deployment_checks=not settings.DEBUG
     )
 
     details = {}
@@ -55,9 +53,9 @@ def heartbeat(request):
 
     for check in all_checks:
         detail = heartbeat_check_detail(check)
-        statuses[check.__name__] = detail['status']
-        level = max(level, detail['level'])
-        if detail['level'] > 0:
+        statuses[check.__name__] = detail["status"]
+        level = max(level, detail["level"])
+        if detail["level"] > 0:
             details[check.__name__] = detail
 
     if level < checks.messages.WARNING:
@@ -67,11 +65,7 @@ def heartbeat(request):
         status_code = 500
         heartbeat_failed.send(sender=heartbeat, level=level)
 
-    payload = {
-        'status': level_to_text(level),
-        'checks': statuses,
-        'details': details,
-    }
+    payload = {"status": level_to_text(level), "checks": statuses, "details": details}
     return JsonResponse(payload, status=status_code)
 
 
@@ -81,7 +75,7 @@ def heartbeat_check_detail(check):
     level = max([0] + [e.level for e in errors])
 
     return {
-        'status': level_to_text(level),
-        'level': level,
-        'messages': {e.id: e.msg for e in errors},
+        "status": level_to_text(level),
+        "level": level,
+        "messages": {e.id: e.msg for e in errors},
     }

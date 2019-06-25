@@ -12,17 +12,17 @@ WARNING = 30
 ERROR = 40
 CRITICAL = 50
 STATUSES = {
-    0: 'ok',
-    DEBUG: 'debug',
-    INFO: 'info',
-    WARNING: 'warning',
-    ERROR: 'error',
-    CRITICAL: 'critical',
+    0: "ok",
+    DEBUG: "debug",
+    INFO: "info",
+    WARNING: "warning",
+    ERROR: "error",
+    CRITICAL: "critical",
 }
 
 
 def level_to_text(level):
-    return STATUSES.get(level, 'unknown')
+    return STATUSES.get(level, "unknown")
 
 
 class CheckMessage(object):
@@ -39,6 +39,7 @@ class CheckMessage(object):
     :class:`~dockerflow.checks.Error`,
     :class:`~dockerflow.checks.Critical`
     """
+
     def __init__(self, msg, level=None, hint=None, obj=None, id=None):
         self.msg = msg
         if level:
@@ -48,11 +49,9 @@ class CheckMessage(object):
         self.id = id
 
     def __eq__(self, other):
-        return (
-            isinstance(other, self.__class__) and all(
-                getattr(self, attr) == getattr(other, attr)
-                for attr in ['level', 'msg', 'hint', 'obj', 'id']
-            )
+        return isinstance(other, self.__class__) and all(
+            getattr(self, attr) == getattr(other, attr)
+            for attr in ["level", "msg", "hint", "obj", "id"]
         )
 
     def __ne__(self, other):
@@ -64,13 +63,18 @@ class CheckMessage(object):
         else:
             obj = self.obj
         id = "(%s) " % self.id if self.id else ""
-        hint = "\n\tHINT: %s" % self.hint if self.hint else ''
+        hint = "\n\tHINT: %s" % self.hint if self.hint else ""
         return "%s: %s%s%s" % (obj, id, self.msg, hint)
 
     def __repr__(self):
-        return "<%s: level=%r, msg=%r, hint=%r, obj=%r, id=%r>" % \
-            (self.__class__.__name__, self.level,
-             self.msg, self.hint, self.obj, self.id)
+        return "<%s: level=%r, msg=%r, hint=%r, obj=%r, id=%r>" % (
+            self.__class__.__name__,
+            self.level,
+            self.msg,
+            self.hint,
+            self.obj,
+            self.id,
+        )
 
     def is_serious(self, level=ERROR):
         return self.level >= level
@@ -81,6 +85,7 @@ class Debug(CheckMessage):
     A :class:`~dockerflow.checks.CheckMessage` subclass to represent
     a debugging check result.
     """
+
     level = DEBUG
 
 
@@ -89,6 +94,7 @@ class Info(CheckMessage):
     A :class:`~dockerflow.checks.CheckMessage` subclass to represent
     a info check result.
     """
+
     level = INFO
 
 
@@ -97,6 +103,7 @@ class Warning(CheckMessage):
     A :class:`~dockerflow.checks.CheckMessage` subclass to represent
     a warning check result.
     """
+
     level = WARNING
 
 
@@ -105,6 +112,7 @@ class Error(CheckMessage):
     A :class:`~dockerflow.checks.CheckMessage` subclass to represent
     an error check result.
     """
+
     level = ERROR
 
 
@@ -113,4 +121,5 @@ class Critical(CheckMessage):
     A :class:`~dockerflow.checks.CheckMessage` subclass to represent
     a critical check result.
     """
+
     level = CRITICAL
