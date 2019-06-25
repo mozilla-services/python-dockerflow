@@ -1,6 +1,19 @@
 Changelog
 ---------
 
+2019.6.0 (2019-06-25)
+^^^^^^^^^^^^^^^^^^^^^
+
+- Add support for Sanic 19.
+
+- Add support for Python 3.7 and Django 2.1 and 2.2.
+
+- Drop support for Python 3.4 and 3.5 and Django 1.8, 1.9, 1.10 and 2.0.
+
+- Match Django urlpatterns with trailing slash.
+
+- Use black for code formatting.
+
 2019.5.0 (2019-05-13)
 ^^^^^^^^^^^^^^^^^^^^^
 
