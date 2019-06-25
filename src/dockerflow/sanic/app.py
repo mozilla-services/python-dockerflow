@@ -199,7 +199,7 @@ class Dockerflow(object):
         else:
             return response.json(version_json)
 
-    def _lbheartbeat_view(self, request):
+    async def _lbheartbeat_view(self, request):
         """
         Lets the load balancer know the application is running and available.
         Must return 200 (not 204) for ELB
