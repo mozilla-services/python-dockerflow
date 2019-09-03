@@ -82,28 +82,35 @@ class JsonLogFormatter(logging.Formatter):
         self.logger_name = logger_name
         self.hostname = socket.gethostname()
 
-    def format(self, record):
+    def is_value_jsonlike(self, value):
         """
-        Map from Python LogRecord attributes to JSON log format fields
+        Return True if the value looks like JSON. Use only on strings.
+        """
+        return value.startswith('{') and value.endswith('}')
+
+    def convert_record(self, record):
+        """
+        Convert a Python LogRecord attribute into a dict that follows MozLog
+        application logging standard.
 
         * from - https://docs.python.org/3/library/logging.html#logrecord-attributes
         * to - https://wiki.mozilla.org/Firefox/Services/Logging
         """
-        out = dict(
-            Timestamp=int(record.created * 1e9),
-            Type=record.name,
-            Logger=self.logger_name,
-            Hostname=self.hostname,
-            EnvVersion=self.LOGGING_FORMAT_VERSION,
-            Severity=self.SYSLOG_LEVEL_MAP.get(
+        out = {
+            'Timestamp': int(record.created * 1e9),
+            'Type': record.name,
+            'Logger': self.logger_name,
+            'Hostname': self.hostname,
+            'EnvVersion': self.LOGGING_FORMAT_VERSION,
+            'Severity': self.SYSLOG_LEVEL_MAP.get(
                 record.levelno, self.DEFAULT_SYSLOG_LEVEL
             ),
-            Pid=record.process,
-        )
+            'Pid': record.process,
+        }
 
         # Include any custom attributes set on the record.
         # These would usually be collected metrics data.
-        fields = dict()
+        fields = {}
         for key, value in record.__dict__.items():
             if key not in self.EXCLUDED_LOGRECORD_ATTRS:
                 fields[key] = value
@@ -111,7 +118,7 @@ class JsonLogFormatter(logging.Formatter):
         # Only include the 'msg' key if it has useful content
         # and is not already a JSON blob.
         message = record.getMessage()
-        if message and not message.startswith("{") and not message.endswith("}"):
+        if message and not self.is_value_jsonlike(message):
             fields["msg"] = message
 
         # If there is an error, format it for nice output.
@@ -120,7 +127,14 @@ class JsonLogFormatter(logging.Formatter):
             fields["traceback"] = safer_format_traceback(*record.exc_info)
 
         out["Fields"] = fields
+        return out
 
+    def format(self, record):
+        """
+        Format a Python LogRecord into a JSON string following MozLog
+        application logging standard.
+        """
+        out = self.convert_record(record)
         return json.dumps(out, cls=SafeJSONEncoder)
 
 
