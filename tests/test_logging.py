@@ -63,6 +63,7 @@ def test_basic_operation(caplog):
     caplog.set_level(logging.DEBUG)
     logging.debug(message_text)
     details = assert_records(caplog.records)
+    assert details == formatter.convert_record(caplog.records[0])
 
     assert "Timestamp" in details
     assert "Hostname" in details
@@ -79,6 +80,7 @@ def test_custom_paramters(caplog):
     logger = logging.getLogger("tests.test_logging")
     logger.warning("custom test %s", "one", extra={"more": "stuff"})
     details = assert_records(caplog.records)
+    assert details == formatter.convert_record(caplog.records[0])
 
     assert details["Type"] == "tests.test_logging"
     assert details["Severity"] == 4
@@ -123,6 +125,10 @@ def test_ignore_json_message(caplog):
         logging.exception(json.dumps({"spam": "eggs"}))
     details = assert_records(caplog.records)
     assert "msg" not in details["Fields"]
+
+    assert formatter.is_value_jsonlike('{"spam": "eggs"}')
+    assert not formatter.is_value_jsonlike('{"spam": "eggs"')
+    assert not formatter.is_value_jsonlike('"spam": "eggs"}')
 
 
 # https://mana.mozilla.org/wiki/pages/viewpage.action?pageId=42895640
