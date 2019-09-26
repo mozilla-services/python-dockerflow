@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+2019.9.0 (2019-09-26)
+^^^^^^^^^^^^^^^^^^^^^
+
+- Make JsonLogFormatter easier to extend
+
+- Blacken and isorted source code.
+
 2019.6.0 (2019-06-25)
 ^^^^^^^^^^^^^^^^^^^^^
 
