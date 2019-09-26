@@ -1,6 +1,7 @@
 import codecs
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 
 def read(*parts):
@@ -17,6 +18,7 @@ setup(
     package_dir={"": "src"},
     description="Python tools and helpers for Mozilla's Dockerflow",
     long_description=read("README.rst"),
+    long_description_content_type="text/x-rst",
     author="Mozilla Foundation",
     author_email="dev-webdev@lists.mozilla.org",
     url="https://github.com/mozilla-services/python-dockerflow",

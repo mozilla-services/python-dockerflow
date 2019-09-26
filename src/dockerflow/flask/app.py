@@ -2,8 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 import functools
-import os
 import logging
+import os
 import time
 import uuid
 from collections import OrderedDict
@@ -19,6 +19,10 @@ from flask import (
 )
 from werkzeug.exceptions import InternalServerError
 
+from .. import version
+from . import checks
+from .signals import heartbeat_failed, heartbeat_passed
+
 try:
     from flask_login import current_user
 except ImportError:  # pragma: nocover
@@ -32,11 +36,6 @@ except ImportError:
     # Just in case sqlalchemy isn't even used
     class UserLoadingError(Exception):
         pass
-
-
-from .. import version
-from . import checks
-from .signals import heartbeat_passed, heartbeat_failed
 
 
 class HeartbeatFailure(InternalServerError):

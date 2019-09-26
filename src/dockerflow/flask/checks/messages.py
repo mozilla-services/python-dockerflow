@@ -5,8 +5,9 @@
 This exposes dockerflow.checks.messages as dockerflow.flask.checks.messages
 for backwards compatibility
 """
-from ...checks.messages import *  # noqa
 import warnings
+
+from ...checks.messages import *  # noqa
 
 warnings.warn(
     "dockerflow.flask.checks.messages has moved to dockerflow.checks.messages",

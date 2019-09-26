@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import absolute_import
+
 import json
 import logging
 import socket
@@ -86,7 +87,7 @@ class JsonLogFormatter(logging.Formatter):
         """
         Return True if the value looks like JSON. Use only on strings.
         """
-        return value.startswith('{') and value.endswith('}')
+        return value.startswith("{") and value.endswith("}")
 
     def convert_record(self, record):
         """
@@ -97,15 +98,15 @@ class JsonLogFormatter(logging.Formatter):
         * to - https://wiki.mozilla.org/Firefox/Services/Logging
         """
         out = {
-            'Timestamp': int(record.created * 1e9),
-            'Type': record.name,
-            'Logger': self.logger_name,
-            'Hostname': self.hostname,
-            'EnvVersion': self.LOGGING_FORMAT_VERSION,
-            'Severity': self.SYSLOG_LEVEL_MAP.get(
+            "Timestamp": int(record.created * 1e9),
+            "Type": record.name,
+            "Logger": self.logger_name,
+            "Hostname": self.hostname,
+            "EnvVersion": self.LOGGING_FORMAT_VERSION,
+            "Severity": self.SYSLOG_LEVEL_MAP.get(
                 record.levelno, self.DEFAULT_SYSLOG_LEVEL
             ),
-            'Pid': record.process,
+            "Pid": record.process,
         }
 
         # Include any custom attributes set on the record.

@@ -5,12 +5,13 @@ import uuid
 
 from django import VERSION
 
+from . import views
+
 try:
     from django.utils.deprecation import MiddlewareMixin
 except ImportError:  # pragma: no cover
     MiddlewareMixin = object
 
-from . import views
 
 # Computed once, reused in every request
 _less_than_django_1_10 = VERSION < (1, 10)

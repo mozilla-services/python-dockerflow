@@ -2,17 +2,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 from .messages import (  # noqa
-    DEBUG,
-    INFO,
-    WARNING,
-    ERROR,
     CRITICAL,
+    DEBUG,
+    ERROR,
+    INFO,
     STATUSES,
-    level_to_text,
+    WARNING,
     CheckMessage,
+    Critical,
     Debug,
+    Error,
     Info,
     Warning,
-    Error,
-    Critical,
+    level_to_text,
 )

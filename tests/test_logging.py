@@ -8,7 +8,6 @@ import os
 import textwrap
 
 import jsonschema
-
 from dockerflow.logging import JsonLogFormatter
 
 logger_name = "tests"

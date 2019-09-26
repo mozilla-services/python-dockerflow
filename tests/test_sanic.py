@@ -5,15 +5,14 @@ import functools
 import logging
 import socket
 
-from sanic import Sanic, response
-from sanic_redis import SanicRedis
 import aioredis
 import pytest
 import sanic.testing
 import sanic_redis.core
-
 from dockerflow import health
 from dockerflow.sanic import Dockerflow, checks
+from sanic import Sanic, response
+from sanic_redis import SanicRedis
 
 
 class FakeRedis:
@@ -168,7 +167,6 @@ def test_heartbeat_checks(dockerflow, test_client):
 
     _, response = test_client.get("/__heartbeat__")
     assert response.status == 500
-    print (response.body)
     payload = response.json
     assert payload["status"] == "error"
     details = payload["details"]
@@ -181,7 +179,6 @@ def test_redis_check(dockerflow_redis, mocker, test_client):
     assert "check_redis_connected" in dockerflow_redis.checks
     mocker.patch.object(sanic_redis.core, "create_redis_pool", fake_redis)
     _, response = test_client.get("/__heartbeat__")
-    print (response)
     assert response.status == 200
     assert response.json["status"] == "ok"
 

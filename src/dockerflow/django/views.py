@@ -9,7 +9,6 @@ from django.utils.module_loading import import_string
 from .checks import level_to_text
 from .signals import heartbeat_failed, heartbeat_passed
 
-
 version_callback = getattr(
     settings, "DOCKERFLOW_VERSION_CALLBACK", "dockerflow.version.get_version"
 )

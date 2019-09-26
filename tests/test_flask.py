@@ -1,21 +1,21 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
-import logging
 import json
+import logging
 import os
-import redis
 
 import pytest
+import redis
+from dockerflow import health
+from dockerflow.flask import Dockerflow, checks
 from fakeredis import FakeStrictRedis
-from flask import Flask, g, request, Response, has_request_context
-from flask_migrate import Migrate
-from flask_login import LoginManager, login_user, current_user
+from flask import Flask, Response, g, has_request_context, request
+from flask_login import LoginManager, current_user, login_user
 from flask_login.mixins import UserMixin
+from flask_migrate import Migrate
 from flask_redis import FlaskRedis
 from flask_sqlalchemy import SQLAlchemy, get_debug_queries
-from dockerflow import health
-from dockerflow.flask import checks, Dockerflow
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
 
@@ -425,5 +425,7 @@ def test_check_redis_connected_ping_check(mocker, redis_store):
 
 
 def test_checks_imports():
-    from dockerflow.flask.checks import level_to_text
-    from dockerflow.flask.checks.messages import level_to_text
+    from dockerflow.flask.checks import level_to_text as a
+    from dockerflow.flask.checks.messages import level_to_text as b
+
+    assert a == b

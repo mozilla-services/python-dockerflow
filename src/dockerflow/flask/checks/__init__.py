@@ -6,19 +6,19 @@ This module contains a few built-in checks for the Flask integration.
 """
 from ... import health
 from ...checks import (  # noqa
-    DEBUG,
-    INFO,
-    WARNING,
-    ERROR,
     CRITICAL,
+    DEBUG,
+    ERROR,
+    INFO,
     STATUSES,
-    level_to_text,
+    WARNING,
     CheckMessage,
+    Critical,
     Debug,
+    Error,
     Info,
     Warning,
-    Error,
-    Critical,
+    level_to_text,
 )
 
 

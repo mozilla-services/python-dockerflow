@@ -1,8 +1,11 @@
 from __future__ import with_statement
-from alembic import context
-from sqlalchemy import engine_from_config, pool
-from logging.config import fileConfig
+
 import logging
+from logging.config import fileConfig
+
+from alembic import context  # no:qa
+from flask import current_app  # noqa
+from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -13,11 +16,6 @@ config = context.config
 fileConfig(config.config_file_name)
 logger = logging.getLogger("alembic.env")
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-from flask import current_app  # noqa
 
 config.set_main_option(
     "sqlalchemy.url", current_app.config.get("SQLALCHEMY_DATABASE_URI")

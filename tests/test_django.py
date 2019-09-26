@@ -1,8 +1,10 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
-import logging
 import json
+import logging
+
+import pytest
 import redis
 from django import VERSION as django_version
 from django.core.checks.registry import registry
@@ -10,11 +12,9 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
 from django.db.utils import OperationalError, ProgrammingError
 from django.test.utils import CaptureQueriesContext
-
 from dockerflow import health
 from dockerflow.django import checks
 from dockerflow.django.middleware import DockerflowMiddleware
-import pytest
 
 
 @pytest.fixture
