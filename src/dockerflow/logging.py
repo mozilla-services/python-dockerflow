@@ -79,7 +79,7 @@ class JsonLogFormatter(logging.Formatter):
         if sys.version_info[:2] < (3, 1):
             parent_init(self, format, datefmt)
         else:
-            parent_init(self, format, datefmt, style)
+            parent_init(self, datefmt=datefmt, style=style)
         self.logger_name = logger_name
         self.hostname = socket.gethostname()
 
