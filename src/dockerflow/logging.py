@@ -77,7 +77,7 @@ class JsonLogFormatter(logging.Formatter):
         # positional arguments we have to do a version check here
         # to decide whether to pass the style argument or not.
         if sys.version_info[:2] < (3, 1):
-            parent_init(self, format, datefmt)
+             parent_init(self, fmt, datefmt)
         else:
             parent_init(self, datefmt=datefmt, style=style)
         self.logger_name = logger_name
