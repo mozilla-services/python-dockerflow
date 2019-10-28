@@ -1,6 +1,19 @@
 Changelog
 ---------
 
+2019.10.0 (2019-10-28)
+^^^^^^^^^^^^^^^^^^^^^^
+
+- Add Python 3.8 support.
+
+- Fix a regression in the JSON logger parameter signature introduced in
+  version 2018.2.1.
+
+- Fixed some test harness issues, e.g. broken version contraint on the
+  Django 2.2 tests.
+
+- Speed up tests by only installing framework dependencies when needed.
+
 2019.9.0 (2019-09-26)
 ^^^^^^^^^^^^^^^^^^^^^
 
