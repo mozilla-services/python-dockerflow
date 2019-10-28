@@ -24,7 +24,7 @@ from pkg_resources import get_distribution
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("../src"))
 
-os.environ["DJANGO_SETTINGS_MODULE"] = "tests.settings"
+os.environ["DJANGO_SETTINGS_MODULE"] = "tests.django.settings"
 
 # -- General configuration ------------------------------------------------
 

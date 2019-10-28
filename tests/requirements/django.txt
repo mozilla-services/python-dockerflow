@@ -1,0 +1,6 @@
+django-redis
+pytest-django
+# these are constrained by the files in tests/constraints/*.txt
+# to support a triple stack Django/Flask/Sanic
+Django; python_version >= '3.0'
+Django<2.0; python_version < '3.0'

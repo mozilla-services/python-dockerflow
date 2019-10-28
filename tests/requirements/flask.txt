@@ -1,0 +1,8 @@
+# these are constrained by the files in tests/constraints/*.txt
+# to support a triple stack Django/Flask/Sanic
+Flask
+Flask-Redis
+Flask-SQLAlchemy
+Flask-Login
+Flask-Migrate
+blinker

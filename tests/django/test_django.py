@@ -16,6 +16,11 @@ from dockerflow import health
 from dockerflow.django import checks
 from dockerflow.django.middleware import DockerflowMiddleware
 
+try:
+    from django.utils.deprecation import MiddlewareMixin
+except ImportError:  # pragma: no cover
+    MiddlewareMixin = object
+
 
 @pytest.fixture
 def reset_checks():
@@ -57,8 +62,8 @@ def test_heartbeat(dockerflow_middleware, reset_checks, rf, settings):
     assert response.status_code == 200
 
     settings.DOCKERFLOW_CHECKS = [
-        "tests.django_checks.warning",
-        "tests.django_checks.error",
+        "tests.django.django_checks.warning",
+        "tests.django.django_checks.error",
     ]
     checks.register()
     response = dockerflow_middleware.process_request(request)
@@ -138,18 +143,21 @@ def test_request_summary_exception(
 
 
 def test_request_summary_failed_request(
-    caplog, dockerflow_middleware, dockerflow_request
+    admin_user, caplog, dockerflow_middleware, dockerflow_request
 ):
-    dockerflow_middleware.process_request(dockerflow_request)
-
-    class HostileMiddleware(object):
+    class HostileMiddleware(MiddlewareMixin):
         def process_request(self, request):
             # simulating resetting request changes
-            delattr(dockerflow_request, "_id")
-            delattr(dockerflow_request, "_start_timestamp")
-            return None
+            delattr(request, "_id")
+            delattr(request, "_start_timestamp")
 
-    response = HostileMiddleware().process_request(dockerflow_request)
+        def process_response(self, request, response):
+            return response
+
+    hostile_middleware = HostileMiddleware()
+    response = dockerflow_middleware.process_request(dockerflow_request)
+    response = hostile_middleware.process_request(dockerflow_request)
+    response = hostile_middleware.process_response(dockerflow_request, response)
     dockerflow_middleware.process_response(dockerflow_request, response)
     assert len(caplog.records) == 1
     record = caplog.records[0]
