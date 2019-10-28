@@ -1,0 +1,5 @@
+-r ../tests/requirements/default.txt
+-r ../tests/requirements/docs.txt
+-r ../tests/requirements/django.txt
+-r ../tests/requirements/flask.txt
+-r ../tests/requirements/sanic.txt
