@@ -70,7 +70,7 @@ def dockerflow(app):
 
 @pytest.fixture
 def dockerflow_redis(app):
-    app.config["REDIS"] = {}
+    app.config["REDIS"] = {"address": "redis://:password@localhost:6379/0"}
     return Dockerflow(app, redis=SanicRedis(app))
 
 
