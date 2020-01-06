@@ -204,14 +204,14 @@ def test_redis_check_error(dockerflow_redis, mocker, test_client, error, message
     assert response.json["details"]["check_redis_connected"]["messages"] == messages
 
 
-def assert_log_record(caplog, errno=0, level=logging.INFO, rid=None, t=int):
+def assert_log_record(caplog, errno=0, level=logging.INFO, rid=None, t=int, path="/"):
     records = [r for r in caplog.records if r.name == "request.summary"]
     assert len(records) == 1
     record = records.pop()
     assert record.agent == "dockerflow/tests"
     assert record.lang == "tlh"
     assert record.method == "GET"
-    assert record.path == "/"
+    assert record.path == path
     assert record.errno == errno
     assert record.levelno == level
     assert getattr(record, "rid", None) == rid
@@ -232,9 +232,15 @@ def test_request_summary(caplog, dockerflow, test_client):
     assert_log_record(caplog, rid=request.get("_id"))
 
 
-def test_request_summary_exception(caplog, dockerflow, test_client):
-    request, _ = test_client.get(data="exception message", headers=headers)
-    record = assert_log_record(caplog, 500, logging.ERROR, request.get("_id"))
+def test_request_summary_exception(app, caplog, dockerflow, test_client):
+    @app.route("/exception")
+    def exception_raiser(request):
+        raise ValueError("exception message")
+
+    request, _ = test_client.get("/exception", headers=headers)
+    record = assert_log_record(
+        caplog, 500, logging.ERROR, request.get("_id"), path="/exception"
+    )
     assert record.getMessage() == "exception message"
 
 
