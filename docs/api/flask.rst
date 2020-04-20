@@ -7,7 +7,10 @@ internals of the extension.
 Extension
 ---------
 
-.. automodule:: dockerflow.flask.app
+.. autoclass:: dockerflow.flask.app.Dockerflow
+   :members:
+
+.. autoclass:: dockerflow.flask.app.HeartbeatFailure
    :members:
 
 .. _flask-checks:
