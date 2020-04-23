@@ -1,2 +1,4 @@
-Sphinx
+# Pin Sphinx to an older version until this is fixed:
+# https://github.com/sphinx-doc/sphinx/issues/7516
+Sphinx!=3.0.2
 sphinxcontrib-httpdomain
