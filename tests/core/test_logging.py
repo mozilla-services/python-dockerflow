@@ -116,20 +116,6 @@ def test_logging_error_tracebacks(caplog):
     assert "ValueError" in details["Fields"]["traceback"]
 
 
-def test_ignore_json_message(caplog):
-    """Ensure log formatter ignores messages that are JSON already"""
-    try:
-        raise ValueError("\n")
-    except Exception:
-        logging.exception(json.dumps({"spam": "eggs"}))
-    details = assert_records(caplog.records)
-    assert "msg" not in details["Fields"]
-
-    assert formatter.is_value_jsonlike('{"spam": "eggs"}')
-    assert not formatter.is_value_jsonlike('{"spam": "eggs"')
-    assert not formatter.is_value_jsonlike('"spam": "eggs"}')
-
-
 # https://mana.mozilla.org/wiki/pages/viewpage.action?pageId=42895640
 JSON_LOGGING_SCHEMA = json.loads(
     """

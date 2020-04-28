@@ -83,12 +83,6 @@ class JsonLogFormatter(logging.Formatter):
         self.logger_name = logger_name
         self.hostname = socket.gethostname()
 
-    def is_value_jsonlike(self, value):
-        """
-        Return True if the value looks like JSON. Use only on strings.
-        """
-        return value.startswith("{") and value.endswith("}")
-
     def convert_record(self, record):
         """
         Convert a Python LogRecord attribute into a dict that follows MozLog
@@ -119,7 +113,7 @@ class JsonLogFormatter(logging.Formatter):
         # Only include the 'msg' key if it has useful content
         # and is not already a JSON blob.
         message = record.getMessage()
-        if message and not self.is_value_jsonlike(message):
+        if message:
             fields["msg"] = message
 
         # If there is an error, format it for nice output.
