@@ -127,8 +127,8 @@ def test_logging_exc_info_false(caplog):
 
     assert details["Severity"] == 3
     assert details["Fields"]["msg"] == "there was an error"
-    assert 'error' not in details["Fields"]
-    assert 'traceback' not in details["Fields"]
+    assert "error" not in details["Fields"]
+    assert "traceback" not in details["Fields"]
 
 
 def test_ignore_json_message(caplog):
