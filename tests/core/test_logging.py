@@ -116,6 +116,21 @@ def test_logging_error_tracebacks(caplog):
     assert "ValueError" in details["Fields"]["traceback"]
 
 
+def test_logging_exc_info_false(caplog):
+    """Ensure log formatter does not include exception traceback information
+    when exc_info is False"""
+    try:
+        raise ValueError("\n")
+    except Exception:
+        logging.exception("there was an error", exc_info=False)
+    details = assert_records(caplog.records)
+
+    assert details["Severity"] == 3
+    assert details["Fields"]["msg"] == "there was an error"
+    assert 'error' not in details["Fields"]
+    assert 'traceback' not in details["Fields"]
+
+
 def test_ignore_json_message(caplog):
     """Ensure log formatter ignores messages that are JSON already"""
     try:
