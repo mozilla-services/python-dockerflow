@@ -245,7 +245,7 @@ class Dockerflow(object):
             "details": details,
         }
 
-        if level < checks.WARNING:
+        if level < checks.ERROR:
             status_code = 200
         else:
             status_code = 500

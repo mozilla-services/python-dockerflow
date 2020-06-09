@@ -57,7 +57,7 @@ def heartbeat(request):
         if detail["level"] > 0:
             details[check.__name__] = detail
 
-    if level < checks.messages.WARNING:
+    if level < checks.messages.ERROR:
         status_code = 200
         heartbeat_passed.send(sender=heartbeat, level=level)
     else:

@@ -347,7 +347,7 @@ class Dockerflow(object):
         def render(status_code):
             return make_response(jsonify(payload), status_code)
 
-        if level < checks.WARNING:
+        if level < checks.ERROR:
             status_code = 200
             heartbeat_passed.send(self, level=level)
             return render(status_code)
