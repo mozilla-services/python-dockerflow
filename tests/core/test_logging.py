@@ -10,7 +10,6 @@ import textwrap
 
 import jsonschema
 import pytest
-
 from dockerflow.logging import JsonLogFormatter
 
 logger_name = "tests"
