@@ -5,9 +5,11 @@ import json
 import logging
 import logging.config
 import os
+import sys
 import textwrap
 
 import jsonschema
+import pytest
 from dockerflow.logging import JsonLogFormatter
 
 logger_name = "tests"
@@ -111,6 +113,41 @@ def test_logging_error_tracebacks(caplog):
 
     assert details["Severity"] == 3
     assert details["Fields"]["msg"] == "there was an error"
+    assert details["Fields"]["error"].startswith("ValueError('\\n'")
+    assert details["Fields"]["traceback"].startswith("Uncaught exception:")
+    assert "ValueError" in details["Fields"]["traceback"]
+
+
+@pytest.mark.skipif(sys.version_info < (3, 5), reason="Requires python >= 3.5")
+def test_logging_exc_info_false_3x(caplog):
+    """Ensure log formatter does not fail and does not include exception
+    traceback information when exc_info is False under Python 3.x"""
+    try:
+        raise ValueError("\n")
+    except Exception:
+        logging.exception("there was an error", exc_info=False)
+    details = assert_records(caplog.records)
+
+    assert details["Severity"] == 3
+    assert details["Fields"]["msg"] == "there was an error"
+    assert "error" not in details["Fields"]
+    assert "traceback" not in details["Fields"]
+
+
+@pytest.mark.skipif(sys.version_info >= (3,), reason="Requires python 2")
+def test_logging_exc_info_false_2x(caplog):
+    """Ensure log formatter does not fail *but* still includes exception
+    traceback information when exc_info is False under Python 2.x"""
+    try:
+        raise ValueError("\n")
+    except Exception:
+        logging.exception("there was an error", exc_info=False)
+    details = assert_records(caplog.records)
+
+    assert details["Severity"] == 3
+    assert details["Fields"]["msg"] == "there was an error"
+    # In Python 2, when exc_info=False is passed, we still see a tuple in the
+    # formatter, so we still include the error and traceback keys.
     assert details["Fields"]["error"].startswith("ValueError('\\n'")
     assert details["Fields"]["traceback"].startswith("Uncaught exception:")
     assert "ValueError" in details["Fields"]["traceback"]

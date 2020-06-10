@@ -123,7 +123,7 @@ class JsonLogFormatter(logging.Formatter):
             fields["msg"] = message
 
         # If there is an error, format it for nice output.
-        if record.exc_info is not None:
+        if record.exc_info:
             fields["error"] = repr(record.exc_info[1])
             fields["traceback"] = safer_format_traceback(*record.exc_info)
 
