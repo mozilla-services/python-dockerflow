@@ -5,11 +5,12 @@ import json
 import logging
 import logging.config
 import os
-import textwrap
 import sys
+import textwrap
 
 import jsonschema
 import pytest
+
 from dockerflow.logging import JsonLogFormatter
 
 logger_name = "tests"
