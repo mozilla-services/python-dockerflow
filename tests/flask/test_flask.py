@@ -224,12 +224,26 @@ def test_request_summary(caplog, dockerflow, app):
     with app.test_client() as test_client:
         test_client.get("/", headers=headers)
         assert getattr(g, "_request_id") is not None
+        assert getattr(g, "request_id") is not None
         assert isinstance(getattr(g, "_start_timestamp"), float)
 
         assert len(caplog.records) == 1
         for record in caplog.records:
             assert_log_record(request, record)
             assert getattr(request, "uid", None) is None
+
+
+def test_preserves_existing_request_id(dockerflow, app):
+    with app.test_client() as test_client:
+
+        def set_dummy_request_id():
+            g.request_id = "predefined-request-id"
+
+        app.before_request(set_dummy_request_id)
+
+        test_client.get("/", headers=headers)
+        assert getattr(g, "_request_id") is not None
+        assert getattr(g, "request_id") != getattr(g, "_request_id")
 
 
 def assert_user(app, caplog, user, callback):
