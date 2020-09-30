@@ -9,10 +9,11 @@ import aioredis
 import pytest
 import sanic.testing
 import sanic_redis.core
-from dockerflow import health
-from dockerflow.sanic import Dockerflow, checks
 from sanic import Sanic, response
 from sanic_redis import SanicRedis
+
+from dockerflow import health
+from dockerflow.sanic import Dockerflow, checks
 
 
 class FakeRedis:

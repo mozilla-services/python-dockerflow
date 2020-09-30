@@ -12,6 +12,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
 from django.db.utils import OperationalError, ProgrammingError
 from django.test.utils import CaptureQueriesContext
+
 from dockerflow import health
 from dockerflow.django import checks
 from dockerflow.django.middleware import DockerflowMiddleware
