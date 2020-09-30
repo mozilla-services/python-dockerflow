@@ -7,8 +7,6 @@ import os
 
 import pytest
 import redis
-from dockerflow import health
-from dockerflow.flask import Dockerflow, checks
 from fakeredis import FakeStrictRedis
 from flask import Flask, Response, g, has_request_context, request
 from flask_login import LoginManager, current_user, login_user
@@ -17,6 +15,9 @@ from flask_migrate import Migrate
 from flask_redis import FlaskRedis
 from flask_sqlalchemy import SQLAlchemy, get_debug_queries
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
+
+from dockerflow import health
+from dockerflow.flask import Dockerflow, checks
 
 
 class MockUser(UserMixin):
