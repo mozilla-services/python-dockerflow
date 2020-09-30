@@ -141,14 +141,14 @@ class Dockerflow(object):
         """
         The request middleware.
         """
-        request["_id"] = str(uuid.uuid4())
-        request["_start_timestamp"] = time.time()
+        request.ctx.id = str(uuid.uuid4())
+        request.ctx.start_timestamp = time.time()
 
     def _response_middleware(self, request, response):
         """
         The response middleware.
         """
-        if not request.get("_logged"):
+        if not getattr(request.ctx, "logged", False):
             extra = self.summary_extra(request)
             self.summary_logger.info("", extra=extra)
 
@@ -159,7 +159,7 @@ class Dockerflow(object):
         extra = self.summary_extra(request)
         extra["errno"] = 500
         self.summary_logger.error(str(exception), extra=extra)
-        request["_logged"] = True
+        request.ctx.logged = True
 
     def summary_extra(self, request):
         """
@@ -175,15 +175,17 @@ class Dockerflow(object):
         }
 
         # the rid value to the current request ID
-        request_id = request.get("_id", None)
-        if request_id is not None:
-            out["rid"] = request_id
+        try:
+            out["rid"] = request.ctx.id
+        except AttributeError:
+            pass
 
         # and the t value to the time it took to render
-        start_timestamp = request.get("_start_timestamp", None)
-        if start_timestamp is not None:
+        try:
             # Duration of request, in milliseconds.
-            out["t"] = int(1000 * (time.time() - start_timestamp))
+            out["t"] = int(1000 * (time.time() - request.ctx.start_timestamp))
+        except AttributeError:
+            pass
 
         return out
 

@@ -228,9 +228,9 @@ headers = {"User-Agent": "dockerflow/tests", "Accept-Language": "tlh"}
 
 def test_request_summary(caplog, dockerflow, test_client):
     request, _ = test_client.get(headers=headers)
-    assert isinstance(request.get("_start_timestamp"), float)
-    assert request.get("_id") is not None
-    assert_log_record(caplog, rid=request.get("_id"))
+    assert isinstance(request.ctx.start_timestamp, float)
+    assert request.ctx.id is not None
+    assert_log_record(caplog, rid=request.ctx.id)
 
 
 def test_request_summary_exception(app, caplog, dockerflow, test_client):
@@ -240,7 +240,7 @@ def test_request_summary_exception(app, caplog, dockerflow, test_client):
 
     request, _ = test_client.get("/exception", headers=headers)
     record = assert_log_record(
-        caplog, 500, logging.ERROR, request.get("_id"), path="/exception"
+        caplog, 500, logging.ERROR, request.ctx.id, path="/exception"
     )
     assert record.getMessage() == "exception message"
 
@@ -249,8 +249,8 @@ def test_request_summary_failed_request(app, caplog, dockerflow, test_client):
     @app.middleware
     def hostile_callback(request):
         # simulating resetting request changes
-        del request["_id"]
-        del request["_start_timestamp"]
+        del request.ctx.id
+        del request.ctx.start_timestamp
 
     test_client.get(headers=headers)
     assert_log_record(caplog, rid=None, t=None)
