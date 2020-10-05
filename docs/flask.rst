@@ -25,6 +25,9 @@ Flask based projects that want to follow the Dockerflow specs:
 
   - Hooks to add custom Dockerflow checks.
 
+- Adds ``request_id`` to the `flask.g`_ application namespace when it isn't already set
+
+.. _`flask.g`: https://flask.palletsprojects.com/en/1.1.x/api/#flask.g
 .. _`mozlog`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md
 .. _`request.summary`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md#application-request-summary-type-requestsummary
 

@@ -204,6 +204,8 @@ class Dockerflow(object):
         The before_request callback.
         """
         g._request_id = str(uuid.uuid4())
+        if not hasattr(g, "request_id"):
+            g.request_id = g._request_id
         g._start_timestamp = time.time()
 
     def _after_request(self, response):
