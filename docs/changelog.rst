@@ -1,8 +1,15 @@
 Changelog
 ---------
 
-2020.06.0 (2020-06-09)
+2020.10.0 (2020-10-05)
 ^^^^^^^^^^^^^^^^^^^^^^
+
+- Add support for Sanic 20.3.0 and up
+
+- Add public ``flask.g.request_id`` when not set
+
+2020.6.0 (2020-06-09)
+^^^^^^^^^^^^^^^^^^^^^
 
 - Set heartbeat fail level to checks.ERROR
 
