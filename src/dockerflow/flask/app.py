@@ -8,15 +8,7 @@ import time
 import uuid
 from collections import OrderedDict
 
-from flask import (
-    Blueprint,
-    current_app,
-    g,
-    got_request_exception,
-    jsonify,
-    make_response,
-    request,
-)
+import flask
 from werkzeug.exceptions import InternalServerError
 
 from .. import version
@@ -119,7 +111,7 @@ class Dockerflow(object):
         **kwargs
     ):
         # The Flask blueprint to add the Dockerflow signal callbacks and views
-        self._blueprint = Blueprint("dockerflow", "dockerflow.flask.app")
+        self._blueprint = flask.Blueprint("dockerflow", "dockerflow.flask.app")
 
         # The Dockerflow specific logger to be used by internals of this
         # extension.
@@ -186,7 +178,7 @@ class Dockerflow(object):
             self._heartbeat_exception_handler
         )
         app.register_blueprint(self._blueprint)
-        got_request_exception.connect(self._got_request_exception, sender=app)
+        flask.got_request_exception.connect(self._got_request_exception, sender=app)
 
         if not hasattr(app, "extensions"):  # pragma: nocover
             app.extensions = {}
@@ -203,16 +195,16 @@ class Dockerflow(object):
         """
         The before_request callback.
         """
-        g._request_id = str(uuid.uuid4())
-        if not hasattr(g, "request_id"):
-            g.request_id = g._request_id
-        g._start_timestamp = time.time()
+        flask.g._request_id = str(uuid.uuid4())
+        if not hasattr(flask.g, "request_id"):
+            flask.g.request_id = flask.g._request_id
+        flask.g._start_timestamp = time.time()
 
     def _after_request(self, response):
         """
         The signal handler for the request_finished signal.
         """
-        if not getattr(g, "_has_exception", False):
+        if not getattr(flask.g, "_has_exception", False):
             extra = self.summary_extra()
             self.summary_logger.info("", extra=extra)
         return response
@@ -224,7 +216,7 @@ class Dockerflow(object):
         extra = self.summary_extra()
         extra["errno"] = 500
         self.summary_logger.error(str(exception), extra=extra)
-        g._has_exception = True
+        flask.g._has_exception = True
 
     def user_id(self):
         """
@@ -235,7 +227,7 @@ class Dockerflow(object):
             return
 
         # and the actual login manager installed
-        if not hasattr(current_app, "login_manager"):
+        if not hasattr(flask.current_app, "login_manager"):
             return
 
         # fail if no current_user was attached to the request context
@@ -268,10 +260,10 @@ class Dockerflow(object):
         """
         out = {
             "errno": 0,
-            "agent": request.headers.get("User-Agent", ""),
-            "lang": request.headers.get("Accept-Language", ""),
-            "method": request.method,
-            "path": request.path,
+            "agent": flask.request.headers.get("User-Agent", ""),
+            "lang": flask.request.headers.get("Accept-Language", ""),
+            "method": flask.request.method,
+            "path": flask.request.path,
         }
 
         # set the uid value to the current user ID
@@ -281,12 +273,12 @@ class Dockerflow(object):
         out["uid"] = user_id
 
         # the rid value to the current request ID
-        request_id = g.get("_request_id", None)
+        request_id = flask.g.get("_request_id", None)
         if request_id is not None:
             out["rid"] = request_id
 
         # and the t value to the time it took to render
-        start_timestamp = g.get("_start_timestamp", None)
+        start_timestamp = flask.g.get("_start_timestamp", None)
         if start_timestamp is not None:
             # Duration of request, in milliseconds.
             out["t"] = int(1000 * (time.time() - start_timestamp))
@@ -301,7 +293,7 @@ class Dockerflow(object):
         if version_json is None:
             return "version.json not found", 404
         else:
-            return jsonify(version_json)
+            return flask.jsonify(version_json)
 
     def _lbheartbeat_view(self):
         """
@@ -347,7 +339,7 @@ class Dockerflow(object):
         }
 
         def render(status_code):
-            return make_response(jsonify(payload), status_code)
+            return flask.make_response(flask.jsonify(payload), status_code)
 
         if level < checks.ERROR:
             status_code = 200
