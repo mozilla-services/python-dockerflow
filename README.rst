@@ -10,9 +10,9 @@ The documentation can be found on `python-dockerflow.readthedocs.io`_
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
 
-.. image:: https://travis-ci.org/mozilla-services/python-dockerflow.svg?branch=master
-   :alt: Build Status
-   :target: https://travis-ci.org/mozilla-services/python-dockerflow
+.. image:: https://github.com/mozilla-services/python-dockerflow/workflows/Test/badge.svg
+   :target: https://github.com/mozilla-services/python-dockerflow/actions
+   :alt: GitHub Actions
 
 .. image:: https://codecov.io/github/mozilla-services/python-dockerflow/coverage.svg?branch=master
    :alt: Codecov

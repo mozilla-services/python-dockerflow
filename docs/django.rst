@@ -224,7 +224,6 @@ file is located in the below example directory tree:
     .
     ├── .dockerignore
     ├── .gitignore
-    ├── .travis.yml
     ├── Dockerfile
     ├── README.rst
     ├── circle.yml
