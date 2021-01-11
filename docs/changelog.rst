@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+Unreleased
+^^^^^^^^^^
+
+- Drop support for Python 2.7!
+
+- Drop support for Django 1.11, 2.0 and 2.1!
+
+- Move to GitHub Actions: https://github.com/mozilla-services/python-dockerflow/actions
+
 2020.10.0 (2020-10-05)
 ^^^^^^^^^^^^^^^^^^^^^^
 
