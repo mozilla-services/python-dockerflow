@@ -25,8 +25,8 @@ Sanic based projects that want to follow the Dockerflow specs:
 
   - Hooks to add custom Dockerflow checks.
 
-.. _`mozlog`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md
-.. _`request.summary`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md#application-request-summary-type-requestsummary
+.. _`mozlog`: https://github.com/mozilla-services/Dockerflow/blob/main/docs/mozlog.md
+.. _`request.summary`: https://github.com/mozilla-services/Dockerflow/blob/main/docs/mozlog.md#application-request-summary-type-requestsummary
 
 .. seealso::
 
@@ -235,7 +235,7 @@ decorate a callback that gets the ``version_path`` value passed. E.g.::
     def my_version(root):
         return json.loads(os.path.join(root, 'acme_version.json'))
 
-.. _version object: https://github.com/mozilla-services/Dockerflow/blob/master/docs/version_object.md
+.. _version object: https://github.com/mozilla-services/Dockerflow/blob/main/docs/version_object.md
 
 .. _sanic-health:
 

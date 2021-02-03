@@ -28,8 +28,8 @@ Flask based projects that want to follow the Dockerflow specs:
 - Adds ``request_id`` to the `flask.g`_ application namespace when it isn't already set
 
 .. _`flask.g`: https://flask.palletsprojects.com/en/1.1.x/api/#flask.g
-.. _`mozlog`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md
-.. _`request.summary`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md#application-request-summary-type-requestsummary
+.. _`mozlog`: https://github.com/mozilla-services/Dockerflow/blob/main/docs/mozlog.md
+.. _`request.summary`: https://github.com/mozilla-services/Dockerflow/blob/main/docs/mozlog.md#application-request-summary-type-requestsummary
 
 .. seealso::
 
@@ -266,7 +266,7 @@ decorate a callback that gets the ``version_path`` value passed. E.g.::
     def my_version(root):
         return json.loads(os.path.join(root, 'acme_version.json'))
 
-.. _version object: https://github.com/mozilla-services/Dockerflow/blob/master/docs/version_object.md
+.. _version object: https://github.com/mozilla-services/Dockerflow/blob/main/docs/version_object.md
 
 .. _flask-health:
 

@@ -14,9 +14,9 @@ The documentation can be found on `python-dockerflow.readthedocs.io`_
    :target: https://github.com/mozilla-services/python-dockerflow/actions
    :alt: GitHub Actions
 
-.. image:: https://codecov.io/github/mozilla-services/python-dockerflow/coverage.svg?branch=master
+.. image:: https://codecov.io/github/mozilla-services/python-dockerflow/coverage.svg?branch=main
    :alt: Codecov
-   :target: https://codecov.io/github/mozilla-services/python-dockerflow?branch=master
+   :target: https://codecov.io/github/mozilla-services/python-dockerflow?branch=main
 
 .. image:: https://readthedocs.org/projects/python-dockerflow/badge/?version=latest
    :alt: Documentation Status

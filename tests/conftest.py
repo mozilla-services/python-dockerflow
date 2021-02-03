@@ -7,7 +7,7 @@ import pytest
 @pytest.fixture
 def version_content():
     """
-    as documented on https://github.com/mozilla-services/Dockerflow/blob/master/docs/version_object.md
+    as documented on https://github.com/mozilla-services/Dockerflow/blob/main/docs/version_object.md
     """
     return {
         "source": "https://github.com/mozilla-services/python-dockerflow",

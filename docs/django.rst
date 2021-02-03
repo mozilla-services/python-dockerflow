@@ -22,8 +22,8 @@ Django projects that want to follow the Dockerflow specs:
 
 - Signals for passed and failed heartbeats.
 
-.. _`mozlog`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md
-.. _`request.summary`: https://github.com/mozilla-services/Dockerflow/blob/master/docs/mozlog.md#application-request-summary-type-requestsummary
+.. _`mozlog`: https://github.com/mozilla-services/Dockerflow/blob/main/docs/mozlog.md
+.. _`request.summary`: https://github.com/mozilla-services/Dockerflow/blob/main/docs/mozlog.md#application-request-summary-type-requestsummary
 
 .. seealso::
 
@@ -245,7 +245,7 @@ file is located in the below example directory tree:
     │   └── urls.py
     └── ..
 
-.. _version object: https://github.com/mozilla-services/Dockerflow/blob/master/docs/version_object.md
+.. _version object: https://github.com/mozilla-services/Dockerflow/blob/main/docs/version_object.md
 
 .. _django-health:
 
