@@ -12,3 +12,8 @@ def error(app_configs, **kwargs):
 @checks.register
 def warning(app_configs, **kwargs):
     return [checks.Warning("some warning", id="tests.checks.W001")]
+
+
+@checks.register
+def exception(app_configs, **kwargs):
+    raise RuntimeError("uhoh")

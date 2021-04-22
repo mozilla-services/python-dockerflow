@@ -69,7 +69,10 @@ def heartbeat(request):
 
 
 def heartbeat_check_detail(check):
-    errors = check(app_configs=None)
+    try:
+        errors = check(app_configs=None)
+    except Exception as ex:
+        errors = [checks.Error(f"check {check} raised exception {ex}")]
     errors = list(filter(lambda e: e.id not in settings.SILENCED_SYSTEM_CHECKS, errors))
     level = max([0] + [e.level for e in errors])
 

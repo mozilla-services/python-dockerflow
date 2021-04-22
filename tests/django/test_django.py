@@ -65,6 +65,7 @@ def test_heartbeat(dockerflow_middleware, reset_checks, rf, settings):
     settings.DOCKERFLOW_CHECKS = [
         "tests.django.django_checks.warning",
         "tests.django.django_checks.error",
+        "tests.django.django_checks.exception",
     ]
     checks.register()
     response = dockerflow_middleware.process_request(request)
