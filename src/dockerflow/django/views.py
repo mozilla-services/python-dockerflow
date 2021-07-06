@@ -64,7 +64,12 @@ def heartbeat(request):
         status_code = 500
         heartbeat_failed.send(sender=heartbeat, level=level)
 
-    payload = {"status": level_to_text(level), "checks": statuses, "details": details}
+    payload = {
+        "status": level_to_text(level)
+    }
+    if settings.DEBUG:
+        payload["checks"] = statuses
+        payload["details"] = details
     return JsonResponse(payload, status=status_code)
 
 
