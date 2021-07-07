@@ -1,8 +1,12 @@
 Changelog
 ---------
 
-Unreleased
-^^^^^^^^^^
+2020.7.0 (2020-07-07)
+^^^^^^^^^^^^^^^^^^^^^
+
+- Do not expose details in Django heartbeat by default
+
+- Limit aioredis to version 1.X
 
 - Drop support for Python 2.7!
 
