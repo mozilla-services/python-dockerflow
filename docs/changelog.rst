@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-2020.7.0 (2020-07-07)
+2021.7.0 (2021-07-07)
 ^^^^^^^^^^^^^^^^^^^^^
 
 - Do not expose details in Django heartbeat by default
