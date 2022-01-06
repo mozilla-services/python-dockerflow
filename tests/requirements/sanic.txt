@@ -3,5 +3,5 @@
 aiohttp
 aioredis<2.0.0
 Sanic
-sanic_redis
+sanic_redis<0.3.0
 uvloop>=0.14.0rc1
