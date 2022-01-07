@@ -11,6 +11,7 @@ from django.core.checks.registry import registry
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
 from django.db.utils import OperationalError, ProgrammingError
+from django.http import HttpResponse
 from django.test.utils import CaptureQueriesContext
 
 from dockerflow import health
@@ -35,7 +36,7 @@ def reset_checks():
 
 @pytest.fixture
 def dockerflow_middleware():
-    return DockerflowMiddleware()
+    return DockerflowMiddleware(get_response=HttpResponse())
 
 
 @pytest.mark.parametrize("request_path", ["/__version__", "/__version__/"])
@@ -155,7 +156,7 @@ def test_request_summary_failed_request(
         def process_response(self, request, response):
             return response
 
-    hostile_middleware = HostileMiddleware()
+    hostile_middleware = HostileMiddleware(get_response=HttpResponse())
     response = dockerflow_middleware.process_request(dockerflow_request)
     response = hostile_middleware.process_request(dockerflow_request)
     response = hostile_middleware.process_response(dockerflow_request, response)

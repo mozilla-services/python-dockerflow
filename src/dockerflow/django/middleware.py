@@ -38,8 +38,10 @@ class DockerflowMiddleware(MiddlewareMixin):
         (re.compile(r"/__lbheartbeat__/?$"), views.lbheartbeat),
     ]
 
-    def __init__(self, *args, **kwargs):
-        super(DockerflowMiddleware, self).__init__(*args, **kwargs)
+    def __init__(self, get_response=None, *args, **kwargs):
+        super(DockerflowMiddleware, self).__init__(
+            get_response=get_response, *args, **kwargs
+        )
         self.summary_logger = logging.getLogger("request.summary")
 
     def process_request(self, request):
