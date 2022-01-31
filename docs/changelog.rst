@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+2022.1.0 (2022-01-31)
+^^^^^^^^^^^^^^^^^^^^^
+
+- Add support for django 4.0 (#62)
+
+- Limit sanic_redis to < 0.3.0 as it requires aioredis 2.x
+
+
 2021.7.0 (2021-07-07)
 ^^^^^^^^^^^^^^^^^^^^^
 
