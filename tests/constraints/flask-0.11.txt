@@ -1,2 +1,0 @@
-Flask<0.12
-Werkzeug<1.0.0
