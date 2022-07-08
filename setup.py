@@ -27,7 +27,6 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment :: Mozilla",
         "Framework :: Django",
-        "Framework :: Django :: 3.1",
         "Framework :: Django :: 3.2",
         "Framework :: Flask",
         "Intended Audience :: Developers",
