@@ -108,7 +108,7 @@ class Dockerflow(object):
         silenced_checks=None,
         version_path=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         # The Flask blueprint to add the Dockerflow signal callbacks and views
         self._blueprint = flask.Blueprint("dockerflow", "dockerflow.flask.app")

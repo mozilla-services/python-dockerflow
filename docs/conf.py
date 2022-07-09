@@ -59,9 +59,9 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"python-dockerflow"
-copyright = u"2016, Mozilla Foundation"
-author = u"Mozilla Foundation"
+project = "python-dockerflow"
+copyright = "2016, Mozilla Foundation"
+author = "Mozilla Foundation"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -270,8 +270,8 @@ latex_documents = [
     (
         master_doc,
         "python-dockerflow.tex",
-        u"python-dockerflow Documentation",
-        u"Mozilla Foundation",
+        "python-dockerflow Documentation",
+        "Mozilla Foundation",
         "manual",
     )
 ]
@@ -314,7 +314,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, "python-dockerflow", u"python-dockerflow Documentation", [author], 1)
+    (master_doc, "python-dockerflow", "python-dockerflow Documentation", [author], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -331,7 +331,7 @@ texinfo_documents = [
     (
         master_doc,
         "python-dockerflow",
-        u"python-dockerflow Documentation",
+        "python-dockerflow Documentation",
         author,
         "python-dockerflow",
         "One line description of project.",

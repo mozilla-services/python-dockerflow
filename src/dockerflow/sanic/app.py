@@ -82,7 +82,7 @@ class Dockerflow(object):
         silenced_checks=None,
         version_path=".",
         *args,
-        **kwargs
+        **kwargs,
     ):
 
         # The Dockerflow specific logger to be used by internals of this

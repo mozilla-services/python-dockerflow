@@ -47,5 +47,5 @@ setup(
         "sanic": ["sanic"],
     },
     zip_safe=False,
-    python_requires='>=3.7,<4',
+    python_requires=">=3.7,<4",
 )
