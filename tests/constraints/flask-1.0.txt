@@ -1,1 +1,4 @@
-Flask<2.0
+Flask<1.1
+Werkzeug<1.0.0
+Jinja2<3.1
+itsdangerous<2.1.0
