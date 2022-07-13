@@ -1,6 +1,36 @@
 Changelog
 ---------
 
+2022.7.0 (2022-07-12)
+~~~~~~~~~~~~~~~~~~~~~
+
+- Django: Remove `default_app_config`, deprecated in Django 3.2 and removed in 4.1
+
+- Add support for Python 3.10
+
+- Add support for Flask 2.0 and 2.1
+
+- Explicitly support Flask 1.0 and 1.1 (Flask 1.1 was previously tested as 1.0)
+
+- Drop support for Python 3.6
+
+- Drop support for Django 2.2, 3.0, and 3.1
+
+- Drop support for Flask 0.11
+
+- Drop support for Sanic 19
+
+- Target Black formatting to Python 3.7 to 3.10, drop 2.7
+
+2022.1.0 (2022-01-31)
+~~~~~~~~~~~~~~~~~~~~~
+
+- Sanic: Limit `sanic_redis` to 0.3.0 or earlier, since later versions require
+  `aioredis` 2.x
+
+- Django: Support for 4.0
+
+
 2021.7.0 (2021-07-07)
 ^^^^^^^^^^^^^^^^^^^^^
 
