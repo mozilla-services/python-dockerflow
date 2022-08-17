@@ -3,11 +3,11 @@
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 import functools
 import logging
-import socket
+import uuid
 
 import aioredis
 import pytest
-import sanic.testing
+import sanic
 import sanic_redis.core
 from sanic import Sanic, response
 from sanic_redis import SanicRedis
@@ -15,9 +15,14 @@ from sanic_redis import SanicRedis
 from dockerflow import health
 from dockerflow.sanic import Dockerflow, checks
 
+if sanic.__version__.startswith("20."):
+    from sanic.testing import SanicTestClient
+else:
+    from sanic_testing.testing import SanicTestClient
+
 
 class FakeRedis:
-    def __init__(self, error=None, **kw):
+    def __init__(self, *args, error=None, **kw):
         self.error = error
 
     def __await__(self):
@@ -30,7 +35,7 @@ class FakeRedis:
     def __exit__(self, *exc_info):
         pass
 
-    def close(self):
+    async def close(self):
         pass
 
     async def wait_closed(self):
@@ -38,7 +43,11 @@ class FakeRedis:
 
     async def ping(self):
         if self.error == "connection":
-            raise aioredis.ConnectionClosedError("fake")
+            if aioredis.__version__.startswith("1."):
+                RedisConnectionError = aioredis.ConnectionClosedError
+            else:
+                RedisConnectionError = aioredis.ConnectionError
+            raise RedisConnectionError("fake")
         elif self.error == "redis":
             raise aioredis.RedisError("fake")
         elif self.error == "malformed":
@@ -47,13 +56,20 @@ class FakeRedis:
             return b"PONG"
 
 
-async def fake_redis(**kw):
-    return FakeRedis(**kw)
+class FakeRedis1(FakeRedis):
+    def close(self):
+        pass
+
+
+async def fake_redis(*args, **kw):
+    if aioredis.__version__.startswith("1."):
+        return FakeRedis1(*args, **kw)
+    return FakeRedis(*args, **kw)
 
 
 @pytest.fixture(scope="function")
 def app():
-    app = Sanic("dockerflow")
+    app = Sanic(f"dockerflow-{uuid.uuid4().hex}")
 
     @app.route("/")
     async def root(request):
@@ -77,28 +93,20 @@ def dockerflow_redis(app):
 
 @pytest.fixture
 def test_client(app):
-    # Create SanicTestClient manually and provide a socket object instead of host
-    # and port when calling Sanic.run in order to avoid parallel test failures
-    # caused by Sanic.test_client bindngs to a static port
-    s = socket.socket()
-    s.bind((sanic.testing.HOST, 0))
-    try:
-        # initialize test_client with socket's port
-        test_client = sanic.testing.SanicTestClient(app, s.getsockname()[1])
-        # override app.run to drop host and port in favor of socket
-        run = app.run
-        app.run = lambda host, port, **kw: run(sock=s, **kw)
-        # yield test_client
-        yield test_client
-    finally:
-        s.close()
+    return SanicTestClient(app)
 
 
 def test_instantiating(app):
-    dockerflow = Dockerflow()
-    assert "dockerflow.heartbeat" not in app.router.routes_names
-    dockerflow.init_app(app)
-    assert "dockerflow.heartbeat" in app.router.routes_names
+    Dockerflow()
+    if sanic.__version__.startswith("20."):
+        assert "dockerflow.heartbeat" not in app.router.routes_names
+    else:
+        assert ("__heartbeat__",) not in app.router.routes_all
+    Dockerflow(app)
+    if sanic.__version__.startswith("20."):
+        assert "dockerflow.heartbeat" in app.router.routes_names
+    else:
+        assert ("__heartbeat__",) in app.router.routes_all
 
 
 def test_version_exists(dockerflow, mocker, test_client, version_content):
@@ -178,7 +186,10 @@ def test_heartbeat_checks(dockerflow, test_client):
 
 def test_redis_check(dockerflow_redis, mocker, test_client):
     assert "check_redis_connected" in dockerflow_redis.checks
-    mocker.patch.object(sanic_redis.core, "create_redis_pool", fake_redis)
+    if aioredis.__version__.startswith("1."):
+        mocker.patch.object(sanic_redis.core, "create_redis_pool", fake_redis)
+    else:
+        mocker.patch.object(sanic_redis.core, "from_url", fake_redis)
     _, response = test_client.get("/__heartbeat__")
     assert response.status == 200
     assert response.json["status"] == "ok"
@@ -198,7 +209,10 @@ def test_redis_check(dockerflow_redis, mocker, test_client):
 def test_redis_check_error(dockerflow_redis, mocker, test_client, error, messages):
     assert "check_redis_connected" in dockerflow_redis.checks
     fake_redis_error = functools.partial(fake_redis, error=error)
-    mocker.patch.object(sanic_redis.core, "create_redis_pool", fake_redis_error)
+    if aioredis.__version__.startswith("1."):
+        mocker.patch.object(sanic_redis.core, "create_redis_pool", fake_redis_error)
+    else:
+        mocker.patch.object(sanic_redis.core, "from_url", fake_redis_error)
     _, response = test_client.get("/__heartbeat__")
     assert response.status == 500
     assert response.json["status"] == "error"

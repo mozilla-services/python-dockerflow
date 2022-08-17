@@ -56,12 +56,17 @@ async def check_redis_connected(redis):
     """
     import aioredis
 
+    if aioredis.__version__.startswith("1."):
+        RedisConnectionError = aioredis.ConnectionClosedError
+    else:
+        RedisConnectionError = aioredis.ConnectionError
+
     errors = []
 
     try:
         with await redis.conn as r:
             result = await r.ping()
-    except aioredis.ConnectionClosedError as e:
+    except RedisConnectionError as e:
         msg = "Could not connect to redis: {!s}".format(e)
         errors.append(Error(msg, id=health.ERROR_CANNOT_CONNECT_REDIS))
     except aioredis.RedisError as e:
