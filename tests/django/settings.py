@@ -66,3 +66,5 @@ LOGGING = {
     },
     "loggers": {"request.summary": {"handlers": ["console"], "level": "DEBUG"}},
 }
+
+USE_TZ = True  # Default False until Django 5.0, when it switches to True
