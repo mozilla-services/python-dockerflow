@@ -127,7 +127,7 @@ specific casters for typical Flask configuration values. E.g.:
 Flask-Env
 ~~~~~~~~~
 
-If you need to solve :ref:`more complex configuration scenarios <flask:config>`
+If you need to solve more complex configuration scenarios
 there are tools like Flask-Env_ which allows loading settings for different
 environments (e.g. dev, stage, prod) via environment variables. It provides
 a small Python meta class to allow setting up the configuration values:

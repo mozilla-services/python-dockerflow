@@ -80,10 +80,12 @@ for settings and other variables.
     loaded by the application automatically and fed into the
     ``REQUEST_TIMEOUT`` config variable.
 
-    -- :doc:`Sanic docs on configuration <sanic/config>`.
+    -- `Sanic docs on configuration`_.
 
 The downside of that is that it nicely works only for string
 based variables, since that's what ``os.environ`` returns.
+
+.. _Sanic docs on configuration: https://sanic.dev/en/guide/deployment/configuration.html#environment-variables
 
 python-decouple
 ~~~~~~~~~~~~~~~
@@ -190,8 +192,9 @@ Uvicorn, and Hypercorn.
 
 .. seealso::
 
-    The :doc:`Sanic deployment documentation <sanic/deploying>` has more
-    for more details.
+    The `Sanic deployment documentation`_ has more details.
+
+.. _Sanic deployment documentation: https://sanic.dev/en/guide/deployment/running.html#asgi
 
 .. _sanic-versions:
 
@@ -454,5 +457,7 @@ Alternatively you can also pass the same logging config dictionary to the
 Static content
 --------------
 
-Please refer to the Sanic documentation about
-:doc:`serving static files <sanic/static_files>` for more information.
+Please refer to the Sanic documentation about `serving static files`_ for more
+information.
+
+.. _serving static files: https://sanic.dev/en/guide/basics/routing.html#static-files
