@@ -96,17 +96,22 @@ def test_client(app):
     return SanicTestClient(app)
 
 
+@pytest.mark.skipif(not sanic.__version__.startswith("20."), reason="requires sanic 20")
+def test_instantiating_sanic_20(app):
+    dockerflow = Dockerflow()
+    assert "dockerflow.heartbeat" not in app.router.routes_names
+    dockerflow.init_app(app)
+    assert "dockerflow.heartbeat" in app.router.routes_names
+
+
+@pytest.mark.skipif(
+    sanic.__version__.startswith("20."), reason="requires sanic 21 or later"
+)
 def test_instantiating(app):
     Dockerflow()
-    if sanic.__version__.startswith("20."):
-        assert "dockerflow.heartbeat" not in app.router.routes_names
-    else:
-        assert ("__heartbeat__",) not in app.router.routes_all
+    assert ("__heartbeat__",) not in app.router.routes_all
     Dockerflow(app)
-    if sanic.__version__.startswith("20."):
-        assert "dockerflow.heartbeat" in app.router.routes_names
-    else:
-        assert ("__heartbeat__",) in app.router.routes_all
+    assert ("__heartbeat__",) in app.router.routes_all
 
 
 def test_version_exists(dockerflow, mocker, test_client, version_content):
