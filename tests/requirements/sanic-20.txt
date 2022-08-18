@@ -4,5 +4,4 @@ aiohttp
 aioredis
 Sanic
 sanic_redis
-sanic-testing
 uvloop>=0.14.0rc1
