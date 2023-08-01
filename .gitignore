@@ -10,3 +10,4 @@ build
 dist
 *.pyc
 .pytest_cache/
+dump.rdb
