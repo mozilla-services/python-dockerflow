@@ -6,6 +6,6 @@ pytest-coverage
 pytest-mock
 pytest-pythonpath
 mock
-redis<3.2.0
+redis
 fakeredis
 jsonschema
