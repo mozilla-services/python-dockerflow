@@ -18,10 +18,8 @@ from dockerflow import health
 from dockerflow.django import checks
 from dockerflow.django.middleware import DockerflowMiddleware
 
-try:
-    from django.utils.deprecation import MiddlewareMixin
-except ImportError:  # pragma: no cover
-    MiddlewareMixin = object
+
+from django.utils.deprecation import MiddlewareMixin
 
 
 @pytest.fixture

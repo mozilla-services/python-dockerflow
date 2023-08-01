@@ -56,10 +56,8 @@ async def check_redis_connected(redis):
     """
     import aioredis
 
-    if aioredis.__version__.startswith("1."):
-        RedisConnectionError = aioredis.ConnectionClosedError
-    else:
-        RedisConnectionError = aioredis.ConnectionError
+
+    RedisConnectionError = aioredis.ConnectionError
 
     errors = []
 
