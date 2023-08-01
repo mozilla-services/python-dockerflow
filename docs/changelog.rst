@@ -10,6 +10,15 @@ Changelog
 
 - Add support for Python 3.11
 
+2022.8.0 (2022-08-18)
+~~~~~~~~~~~~~~~~~~~~~
+
+- Add support for Sanic 21 and 22, with `aioredis` 2.x
+
+- Add support for Django 4.1
+
+- Add support for Flask 2.2
+
 2022.7.0 (2022-07-12)
 ~~~~~~~~~~~~~~~~~~~~~
 
