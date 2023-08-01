@@ -11,14 +11,10 @@ import sanic_redis.core
 from redis import asyncio as aioredis
 from sanic import Sanic, response
 from sanic_redis import SanicRedis
+from sanic_testing.testing import SanicTestClient
 
 from dockerflow import health
 from dockerflow.sanic import Dockerflow, checks
-
-if sanic.__version__.startswith("20."):
-    from sanic.testing import SanicTestClient
-else:
-    from sanic_testing.testing import SanicTestClient
 
 
 class FakeRedis:
@@ -91,17 +87,6 @@ def test_client(app):
     return SanicTestClient(app)
 
 
-@pytest.mark.skipif(not sanic.__version__.startswith("20."), reason="requires sanic 20")
-def test_instantiating_sanic_20(app):
-    dockerflow = Dockerflow()
-    assert "dockerflow.heartbeat" not in app.router.routes_names
-    dockerflow.init_app(app)
-    assert "dockerflow.heartbeat" in app.router.routes_names
-
-
-@pytest.mark.skipif(
-    sanic.__version__.startswith("20."), reason="requires sanic 21 or later"
-)
 def test_instantiating(app):
     Dockerflow()
     assert ("__heartbeat__",) not in app.router.routes_all
