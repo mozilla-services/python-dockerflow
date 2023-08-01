@@ -6,7 +6,6 @@ import logging
 import uuid
 
 import pytest
-import sanic
 import sanic_redis.core
 from redis import asyncio as aioredis
 from sanic import Sanic, response
