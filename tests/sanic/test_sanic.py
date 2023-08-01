@@ -5,10 +5,10 @@ import functools
 import logging
 import uuid
 
-import aioredis
 import pytest
 import sanic
 import sanic_redis.core
+from redis import asyncio as aioredis
 from sanic import Sanic, response
 from sanic_redis import SanicRedis
 
@@ -43,10 +43,7 @@ class FakeRedis:
 
     async def ping(self):
         if self.error == "connection":
-            if aioredis.__version__.startswith("1."):
-                RedisConnectionError = aioredis.ConnectionClosedError
-            else:
-                RedisConnectionError = aioredis.ConnectionError
+            RedisConnectionError = aioredis.ConnectionError
             raise RedisConnectionError("fake")
         elif self.error == "redis":
             raise aioredis.RedisError("fake")
@@ -62,8 +59,6 @@ class FakeRedis1(FakeRedis):
 
 
 async def fake_redis(*args, **kw):
-    if aioredis.__version__.startswith("1."):
-        return FakeRedis1(*args, **kw)
     return FakeRedis(*args, **kw)
 
 
@@ -191,10 +186,7 @@ def test_heartbeat_checks(dockerflow, test_client):
 
 def test_redis_check(dockerflow_redis, mocker, test_client):
     assert "check_redis_connected" in dockerflow_redis.checks
-    if aioredis.__version__.startswith("1."):
-        mocker.patch.object(sanic_redis.core, "create_redis_pool", fake_redis)
-    else:
-        mocker.patch.object(sanic_redis.core, "from_url", fake_redis)
+    mocker.patch.object(sanic_redis.core, "from_url", fake_redis)
     _, response = test_client.get("/__heartbeat__")
     assert response.status == 200
     assert response.json["status"] == "ok"
@@ -214,10 +206,7 @@ def test_redis_check(dockerflow_redis, mocker, test_client):
 def test_redis_check_error(dockerflow_redis, mocker, test_client, error, messages):
     assert "check_redis_connected" in dockerflow_redis.checks
     fake_redis_error = functools.partial(fake_redis, error=error)
-    if aioredis.__version__.startswith("1."):
-        mocker.patch.object(sanic_redis.core, "create_redis_pool", fake_redis_error)
-    else:
-        mocker.patch.object(sanic_redis.core, "from_url", fake_redis_error)
+    mocker.patch.object(sanic_redis.core, "from_url", fake_redis_error)
     _, response = test_client.get("/__heartbeat__")
     assert response.status == 500
     assert response.json["status"] == "error"

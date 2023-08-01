@@ -1,7 +1,7 @@
 # these are constrained by the files in tests/constraints/*.txt
 # to support a triple stack Django/Flask/Sanic
 aiohttp
-aioredis
+redis
 Sanic
 sanic_redis
 sanic-testing
