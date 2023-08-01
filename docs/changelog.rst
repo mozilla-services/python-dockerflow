@@ -4,9 +4,11 @@ Changelog
 2023.8.0
 ~~~~~~~~~~~~~~~~~~~~~
 
+- Add support for Django 4.2
+
 - Drop support for Sanic 20
 
-- Drop support for Flask 0.12, 1.0, 1.1, and 2.0
+- Drop support for Flask 0.12, 1.0, and 1.1
 
 - Add support for Python 3.11
 
