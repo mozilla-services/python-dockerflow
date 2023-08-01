@@ -256,6 +256,7 @@ def test_request_summary_user_success(caplog, dockerflow, app):
 
 def test_request_summary_user_is_authenticated_missing(caplog, dockerflow, app):
     caplog.set_level(logging.INFO)
+
     class MissingIsAuthenticatedUser(object):
         id = 0
         is_active = True
@@ -268,6 +269,7 @@ def test_request_summary_user_is_authenticated_missing(caplog, dockerflow, app):
 
 def test_request_summary_user_is_authenticated_callable(caplog, dockerflow, app):
     caplog.set_level(logging.INFO)
+
     class CallableIsAuthenticatedUser(object):
         id = 0
         is_active = True
@@ -306,6 +308,7 @@ def test_request_summary_exception(caplog, app):
 
 def test_request_summary_failed_request(caplog, dockerflow, app):
     caplog.set_level(logging.INFO)
+
     @app.before_request
     def hostile_callback():
         # simulating resetting request changes

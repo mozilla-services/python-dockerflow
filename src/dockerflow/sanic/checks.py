@@ -54,8 +54,7 @@ async def check_redis_connected(redis):
         dockerflow = Dockerflow(app, redis=redis)
 
     """
-    import aioredis
-
+    from redis import asyncio as aioredis
 
     RedisConnectionError = aioredis.ConnectionError
 
