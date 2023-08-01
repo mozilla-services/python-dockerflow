@@ -6,8 +6,8 @@ import logging
 import uuid
 
 import pytest
+import redis
 import sanic_redis.core
-from redis import asyncio as aioredis
 from sanic import Sanic, response
 from sanic_redis import SanicRedis
 from sanic_testing.testing import SanicTestClient
@@ -38,19 +38,13 @@ class FakeRedis:
 
     async def ping(self):
         if self.error == "connection":
-            RedisConnectionError = aioredis.ConnectionError
-            raise RedisConnectionError("fake")
+            raise redis.ConnectionError("fake")
         elif self.error == "redis":
-            raise aioredis.RedisError("fake")
+            raise redis.RedisError("fake")
         elif self.error == "malformed":
             return b"PING"
         else:
             return b"PONG"
-
-
-class FakeRedis1(FakeRedis):
-    def close(self):
-        pass
 
 
 async def fake_redis(*args, **kw):

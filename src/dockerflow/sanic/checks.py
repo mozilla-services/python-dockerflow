@@ -22,7 +22,7 @@ from ..checks import (  # noqa
 )
 
 
-async def check_redis_connected(redis):
+async def check_redis_connected(redis_client):
     """
     A built-in check to connect to Redis using the given client and see
     if it responds to the ``PING`` command.
@@ -54,19 +54,17 @@ async def check_redis_connected(redis):
         dockerflow = Dockerflow(app, redis=redis)
 
     """
-    from redis import asyncio as aioredis
-
-    RedisConnectionError = aioredis.ConnectionError
+    import redis
 
     errors = []
 
     try:
-        with await redis.conn as r:
+        with await redis_client.conn as r:
             result = await r.ping()
-    except RedisConnectionError as e:
+    except redis.ConnectionError as e:
         msg = "Could not connect to redis: {!s}".format(e)
         errors.append(Error(msg, id=health.ERROR_CANNOT_CONNECT_REDIS))
-    except aioredis.RedisError as e:
+    except redis.RedisError as e:
         errors.append(
             Error('Redis error: "{!s}"'.format(e), id=health.ERROR_REDIS_EXCEPTION)
         )
