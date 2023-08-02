@@ -1,26 +1,19 @@
 import os
 
 from fastapi import Request, Response
-from fastapi.routing import APIRouter
 
-
-from ..version import get_version
-from .checks import run_checks
 from dockerflow import checks
 
-dockerflow_router = APIRouter(tags=["Dockerflow"])
+from ..version import get_version
+from .checks import run_heartbeat_checks
 
 
-@dockerflow_router.get("/__lbheartbeat__")
-@dockerflow_router.head("/__lbheartbeat__")
 def lbheartbeat():
     return {"status": "ok"}
 
 
-@dockerflow_router.get("/__heartbeat__")
-@dockerflow_router.head("/__heartbeat__")
 def heartbeat(response: Response):
-    check_results = run_checks()
+    check_results = run_heartbeat_checks()
     details = {}
     statuses = {}
     level = 0
@@ -43,7 +36,6 @@ def heartbeat(response: Response):
     }
 
 
-@dockerflow_router.get("/__version__")
 def version(request: Request):
     if getattr(request.app.state, "APP_DIR", None):
         root = request.app.state.APP_DIR

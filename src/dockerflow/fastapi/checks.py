@@ -1,6 +1,6 @@
-from dataclasses import dataclass
 import functools
 import logging
+from dataclasses import dataclass
 from typing import Dict, List, Tuple
 
 from ..checks import level_to_text
@@ -18,7 +18,10 @@ class CheckDetail:
 registered_checks = dict()
 
 
-def check(func, name=None):
+def register_heartbeat_check(func=None, *, name=None):
+    if func is None:
+        return functools.partial(register_heartbeat_check, name=name)
+
     if name is None:
         name = func.__name__
 
@@ -41,7 +44,7 @@ def _heartbeat_check_detail(check):
     )
 
 
-def run_checks():
+def run_heartbeat_checks():
     check_details: List[Tuple[str, CheckDetail]] = []
     for name, check in registered_checks.items():
         detail = _heartbeat_check_detail(check)

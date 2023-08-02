@@ -8,8 +8,10 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from dockerflow.fastapi import MozlogRequestSummaryLogger, check, dockerflow_router
 from dockerflow.checks import Error
+from dockerflow.fastapi import register_heartbeat_check
+from dockerflow.fastapi import router as dockerflow_router
+from dockerflow.fastapi.middleware import MozlogRequestSummaryLogger
 
 
 def create_app():
@@ -85,7 +87,7 @@ def test_version_env_var(client, tmp_path, monkeypatch):
 
 def test_version_default(client, mocker):
     mock_get_version = mocker.MagicMock(return_value=VERSION_CONTENT)
-    mocker.patch("dockerflow.fastapi.router.get_version", mock_get_version)
+    mocker.patch("dockerflow.fastapi.views.get_version", mock_get_version)
 
     response = client.get("/__version__")
     assert response.status_code == 200
@@ -94,7 +96,7 @@ def test_version_default(client, mocker):
 
 
 def test_heartbeat_get(client):
-    @check
+    @register_heartbeat_check
     def return_error():
         return [Error("BOOM", id="foo")]
 
@@ -114,9 +116,18 @@ def test_heartbeat_get(client):
 
 
 def test_heartbeat_head(client):
-    @check
+    @register_heartbeat_check
     def return_error():
         return [Error("BOOM", id="foo")]
 
     response = client.head("/__heartbeat__")
     assert response.content == b""
+
+
+def test_heartbeat_custom_name(client):
+    @register_heartbeat_check(name="my_check_name")
+    def return_error():
+        return [Error("BOOM", id="foo")]
+
+    response = client.get("/__heartbeat__")
+    assert response.json()["checks"]["my_check_name"]
