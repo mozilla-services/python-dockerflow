@@ -8,7 +8,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from dockerflow.fastapi import MozlogRequestSummaryLogger, dockerflow_router
+from dockerflow.fastapi import MozlogRequestSummaryLogger, check, dockerflow_router
+from dockerflow.checks import Error
 
 
 def create_app():
@@ -92,3 +93,30 @@ def test_version_default(client, mocker):
     mock_get_version.assert_called_with("/app")
 
 
+def test_heartbeat_get(client):
+    @check
+    def return_error():
+        return [Error("BOOM", id="foo")]
+
+    response = client.get("/__heartbeat__")
+    assert response.status_code == 500
+    assert response.json() == {
+        "status": "error",
+        "checks": {"return_error": "error"},
+        "details": {
+            "return_error": {
+                "level": 40,
+                "messages": {"foo": "BOOM"},
+                "status": "error",
+            }
+        },
+    }
+
+
+def test_heartbeat_head(client):
+    @check
+    def return_error():
+        return [Error("BOOM", id="foo")]
+
+    response = client.head("/__heartbeat__")
+    assert response.content == b""
