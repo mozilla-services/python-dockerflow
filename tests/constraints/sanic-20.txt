@@ -1,3 +1,0 @@
-Sanic>=20,<21
-aioredis<2
-sanic_redis<0.3.0

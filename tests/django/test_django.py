@@ -13,15 +13,11 @@ from django.db import connection
 from django.db.utils import OperationalError, ProgrammingError
 from django.http import HttpResponse
 from django.test.utils import CaptureQueriesContext
+from django.utils.deprecation import MiddlewareMixin
 
 from dockerflow import health
 from dockerflow.django import checks
 from dockerflow.django.middleware import DockerflowMiddleware
-
-try:
-    from django.utils.deprecation import MiddlewareMixin
-except ImportError:  # pragma: no cover
-    MiddlewareMixin = object
 
 
 @pytest.fixture

@@ -84,7 +84,6 @@ class Dockerflow(object):
         *args,
         **kwargs,
     ):
-
         # The Dockerflow specific logger to be used by internals of this
         # extension.
         self.logger = logging.getLogger("dockerflow.sanic")

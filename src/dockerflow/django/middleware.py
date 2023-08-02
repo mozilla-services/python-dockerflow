@@ -3,27 +3,9 @@ import re
 import time
 import uuid
 
-from django import VERSION
+from django.utils.deprecation import MiddlewareMixin
 
 from . import views
-
-try:
-    from django.utils.deprecation import MiddlewareMixin
-except ImportError:  # pragma: no cover
-    MiddlewareMixin = object
-
-
-# Computed once, reused in every request
-_less_than_django_1_10 = VERSION < (1, 10)
-
-
-def is_authenticated(user):  # pragma: no cover
-    """Check if the user is authenticated but do it in a way that
-    it doesnt' cause a DeprecationWarning in Django >=1.10"""
-    if _less_than_django_1_10:
-        # Prior to Django 1.10, user.is_authenticated was a method
-        return user.is_authenticated()
-    return user.is_authenticated
 
 
 class DockerflowMiddleware(MiddlewareMixin):
@@ -66,7 +48,7 @@ class DockerflowMiddleware(MiddlewareMixin):
         # modified earlier, so be sure to check for existence of these
         # attributes before trying to use them.
         if hasattr(request, "user"):
-            out["uid"] = is_authenticated(request.user) and request.user.pk or ""
+            out["uid"] = request.user.is_authenticated and request.user.pk or ""
         if hasattr(request, "_id"):
             out["rid"] = request._id
         if hasattr(request, "_start_timestamp"):

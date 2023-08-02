@@ -29,7 +29,8 @@ def load_user(user_id):
     return MockUser(user_id)
 
 
-def create_app():
+@pytest.fixture
+def app():
     app = Flask("dockerflow")
     app.secret_key = "super sekrit"
     login_manager = LoginManager(app)
@@ -37,9 +38,9 @@ def create_app():
     return app
 
 
-@pytest.fixture
-def app():
-    return create_app()
+@pytest.fixture()
+def client(app):
+    return app.test_client()
 
 
 @pytest.fixture
@@ -72,28 +73,23 @@ def test_instantiating(app):
     assert "dockerflow.heartbeat" in app.view_functions
 
 
-def test_version_exists(dockerflow, mocker, app, version_content):
+def test_version_exists(dockerflow, mocker, version_content, client):
     mocker.patch.object(dockerflow, "_version_callback", return_value=version_content)
-    response = app.test_client().get("/__version__")
+    response = client.get("/__version__")
     assert response.status_code == 200
     assert json.loads(response.data.decode()) == version_content
 
 
-def test_version_path(mocker, version_content):
-    app = Flask("dockerflow")
-    app.secret_key = "super sekrit"
-    login_manager = LoginManager(app)
-    login_manager.user_loader(load_user)
+def test_version_path(mocker, app, client, version_content):
     custom_version_path = "/something/extra/ordinary"
     dockerflow = Dockerflow(app, version_path=custom_version_path)
     version_callback = mocker.patch.object(
         dockerflow, "_version_callback", return_value=version_content
     )
-    with app.test_client() as test_client:
-        response = test_client.get("/__version__")
-        assert response.status_code == 200
-        assert json.loads(response.data.decode()) == version_content
-        version_callback.assert_called_with(custom_version_path)
+    response = client.get("/__version__")
+    assert response.status_code == 200
+    assert json.loads(response.data.decode()) == version_content
+    version_callback.assert_called_with(custom_version_path)
 
 
 def test_version_missing(dockerflow, mocker, app):
@@ -144,10 +140,11 @@ def test_heartbeat(app, dockerflow):
 
 
 def test_lbheartbeat_makes_no_db_queries(dockerflow, app):
-    assert len(get_debug_queries()) == 0
-    response = app.test_client().get("/__lbheartbeat__")
-    assert response.status_code == 200
-    assert len(get_debug_queries()) == 0
+    with app.app_context():
+        assert len(get_debug_queries()) == 0
+        response = app.test_client().get("/__lbheartbeat__")
+        assert response.status_code == 200
+        assert len(get_debug_queries()) == 0
 
 
 def test_full_redis_check(mocker):
@@ -177,37 +174,26 @@ def test_full_redis_check_error(mocker):
         assert json.loads(response.data.decode())["status"] == "error"
 
 
-def test_full_db_check(mocker):
-    app = Flask("db-check")
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    db = SQLAlchemy(app)
+def test_full_db_check(mocker, app, db, client):
     dockerflow = Dockerflow(app, db=db)
     assert "check_database_connected" in dockerflow.checks
 
-    response = app.test_client().get("/__heartbeat__")
+    response = client.get("/__heartbeat__")
     assert response.status_code == 200
     assert json.loads(response.data.decode())["status"] == "ok"
 
 
-def test_full_db_check_error(mocker):
-    app = Flask("db-check")
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    db = SQLAlchemy(app)
-
-    engine_connect = mocker.patch.object(db.engine, "connect")
-    engine_connect.side_effect = SQLAlchemyError
-    dockerflow = Dockerflow(app, db=db)
-    assert "check_database_connected" in dockerflow.checks
-
-    with app.test_client() as test_client:
-        response = test_client.get("/__heartbeat__")
+def test_full_db_check_error(mocker, app, db, client):
+    with app.app_context():
+        mocker.patch.object(db.engine, "connect", side_effect=SQLAlchemyError)
+        dockerflow = Dockerflow(app, db=db)
+        assert "check_database_connected" in dockerflow.checks
+        response = client.get("/__heartbeat__")
         assert response.status_code == 500
         assert json.loads(response.data.decode())["status"] == "error"
 
 
-def assert_log_record(request, record, errno=0, level=logging.INFO):
+def assert_log_record(record, errno=0, level=logging.INFO):
     assert record.levelno == level
     assert record.errno == errno
     assert record.agent == "dockerflow/tests"
@@ -221,17 +207,18 @@ def assert_log_record(request, record, errno=0, level=logging.INFO):
 headers = {"User-Agent": "dockerflow/tests", "Accept-Language": "tlh"}
 
 
-def test_request_summary(caplog, dockerflow, app):
-    with app.test_client() as test_client:
-        test_client.get("/", headers=headers)
+def test_request_summary(caplog, app, dockerflow, client):
+    caplog.set_level(logging.INFO)
+    with app.test_request_context("/"):
+        client.get("/", headers=headers)
         assert getattr(g, "_request_id") is not None
         assert getattr(g, "request_id") is not None
         assert isinstance(getattr(g, "_start_timestamp"), float)
 
         assert len(caplog.records) == 1
-        for record in caplog.records:
-            assert_log_record(request, record)
-            assert getattr(request, "uid", None) is None
+        record = caplog.records[0]
+        assert_log_record(record)
+        assert getattr(request, "uid", None) is None
 
 
 def test_preserves_existing_request_id(dockerflow, app):
@@ -256,17 +243,20 @@ def assert_user(app, caplog, user, callback):
         response = Response("")
         response = app.process_response(response)
         assert len(caplog.records) == 1
-        for record in caplog.records:
-            assert_log_record(request, record)
-            assert record.uid == callback(user)
+        record = caplog.records[0]
+        assert_log_record(record)
+        assert record.uid == callback(user)
 
 
-def test_request_summary_user_success(caplog, dockerflow, mocker, app):
+def test_request_summary_user_success(caplog, dockerflow, app):
+    caplog.set_level(logging.INFO)
     user = MockUser(100)
     assert_user(app, caplog, user, lambda user: user.get_id())
 
 
 def test_request_summary_user_is_authenticated_missing(caplog, dockerflow, app):
+    caplog.set_level(logging.INFO)
+
     class MissingIsAuthenticatedUser(object):
         id = 0
         is_active = True
@@ -278,6 +268,8 @@ def test_request_summary_user_is_authenticated_missing(caplog, dockerflow, app):
 
 
 def test_request_summary_user_is_authenticated_callable(caplog, dockerflow, app):
+    caplog.set_level(logging.INFO)
+
     class CallableIsAuthenticatedUser(object):
         id = 0
         is_active = True
@@ -292,6 +284,7 @@ def test_request_summary_user_is_authenticated_callable(caplog, dockerflow, app)
 
 
 def test_request_summary_user_flask_login_missing(caplog, dockerflow, app, monkeypatch):
+    caplog.set_level(logging.INFO)
     monkeypatch.setattr("dockerflow.flask.app.has_flask_login", False)
     user = MockUser(100)
     assert_user(app, caplog, user, lambda user: "")
@@ -314,6 +307,8 @@ def test_request_summary_exception(caplog, app):
 
 
 def test_request_summary_failed_request(caplog, dockerflow, app):
+    caplog.set_level(logging.INFO)
+
     @app.before_request
     def hostile_callback():
         # simulating resetting request changes
@@ -327,25 +322,26 @@ def test_request_summary_failed_request(caplog, dockerflow, app):
     assert getattr(record, "t", None) is None
 
 
-def test_db_check_sqlalchemy_error(mocker, db):
-    engine_connect = mocker.patch.object(db.engine, "connect")
-    engine_connect.side_effect = SQLAlchemyError
-    errors = checks.check_database_connected(db)
+def test_db_check_sqlalchemy_error(app, mocker, db):
+    with app.app_context():
+        mocker.patch.object(db.engine, "connect", side_effect=SQLAlchemyError)
+        errors = checks.check_database_connected(db)
     assert len(errors) == 1
     assert errors[0].id == health.ERROR_SQLALCHEMY_EXCEPTION
 
 
-def test_db_check_dbapi_error(mocker, db):
-    exception = DBAPIError.instance("", [], Exception(), Exception)
-    engine_connect = mocker.patch.object(db.engine, "connect")
-    engine_connect.side_effect = exception
-    errors = checks.check_database_connected(db)
+def test_db_check_dbapi_error(app, mocker, db):
+    with app.app_context():
+        exception = DBAPIError.instance("", [], Exception(), Exception)
+        mocker.patch.object(db.engine, "connect", side_effect=exception)
+        errors = checks.check_database_connected(db)
     assert len(errors) == 1
     assert errors[0].id == health.ERROR_DB_API_EXCEPTION
 
 
-def test_db_check_success(db):
-    errors = checks.check_database_connected(db)
+def test_db_check_success(app, db):
+    with app.app_context():
+        errors = checks.check_database_connected(db)
     assert errors == []
 
 
@@ -374,16 +370,16 @@ def test_check_message():
     [SQLAlchemyError(), DBAPIError.instance("", [], Exception(), Exception)],
 )
 def test_check_migrations_applied_cannot_check_migrations(
-    exception, mocker, db, migrate
+    exception, mocker, app, db, migrate
 ):
-    engine_connect = mocker.patch.object(db.engine, "connect")
-    engine_connect.side_effect = exception
-    errors = checks.check_migrations_applied(migrate)
+    with app.app_context():
+        mocker.patch.object(db.engine, "connect", side_effect=exception)
+        errors = checks.check_migrations_applied(migrate)
     assert len(errors) == 1
     assert errors[0].id == health.INFO_CANT_CHECK_MIGRATIONS
 
 
-def test_check_migrations_applied_success(mocker, db, migrate):
+def test_check_migrations_applied_success(mocker, app, db, migrate):
     get_heads = mocker.patch(
         "alembic.script.ScriptDirectory.get_heads", return_value=("17164a7d1c2e",)
     )
@@ -391,13 +387,14 @@ def test_check_migrations_applied_success(mocker, db, migrate):
         "alembic.migration.MigrationContext.get_current_heads",
         return_value=("17164a7d1c2e",),
     )
-    errors = checks.check_migrations_applied(migrate)
+    with app.app_context():
+        errors = checks.check_migrations_applied(migrate)
     assert get_heads.called
     assert get_current_heads.called
     assert len(errors) == 0
 
 
-def test_check_migrations_applied_unapplied_migrations(mocker, db, migrate):
+def test_check_migrations_applied_unapplied_migrations(mocker, app, db, migrate):
     get_heads = mocker.patch(
         "alembic.script.ScriptDirectory.get_heads", return_value=("7f447c94347a",)
     )
@@ -405,7 +402,8 @@ def test_check_migrations_applied_unapplied_migrations(mocker, db, migrate):
         "alembic.migration.MigrationContext.get_current_heads",
         return_value=("73d96d3120ff",),
     )
-    errors = checks.check_migrations_applied(migrate)
+    with app.app_context():
+        errors = checks.check_migrations_applied(migrate)
     assert get_heads.called
     assert get_current_heads.called
     assert len(errors) == 1

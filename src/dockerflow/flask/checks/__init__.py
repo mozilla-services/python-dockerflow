@@ -4,6 +4,8 @@
 """
 This module contains a few built-in checks for the Flask integration.
 """
+from sqlalchemy import text
+
 from ... import health
 from ...checks import (  # noqa
     CRITICAL,
@@ -47,7 +49,7 @@ def check_database_connected(db):
     errors = []
     try:
         with db.engine.connect() as connection:
-            connection.execute("SELECT 1;")
+            connection.execute(text("SELECT 1;"))
     except DBAPIError as e:
         msg = "DB-API error: {!s}".format(e)
         errors.append(Error(msg, id=health.ERROR_DB_API_EXCEPTION))
