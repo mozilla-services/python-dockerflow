@@ -16,6 +16,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+from datetime import date
 import os
 import sys
 
@@ -60,7 +61,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "python-dockerflow"
-copyright = "2016 - 2023, Mozilla Foundation"
+copyright = f"2016 - {date.today().year}, Mozilla Foundation"
 author = "Mozilla Foundation"
 
 # The version info for the project you're documenting, acts as replacement for
