@@ -16,6 +16,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+from datetime import date
 import os
 import sys
 
@@ -60,7 +61,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "python-dockerflow"
-copyright = "2016, Mozilla Foundation"
+copyright = f"2016 - {date.today().year}, Mozilla Foundation"
 author = "Mozilla Foundation"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -77,7 +78,7 @@ version = ".".join(release.split(".")[:2])
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

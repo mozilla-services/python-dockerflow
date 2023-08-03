@@ -1,6 +1,6 @@
 recursive-include docs *
 recursive-include tests *
-include pytest.ini AUTHORS.rst CODE_OF_CONDUCT.md pyproject.toml LICENSE README.rst tox.ini .coveragerc .isort.cfg
+include pytest.ini AUTHORS.rst CODE_OF_CONDUCT.md pyproject.toml LICENSE README.rst tox.ini .coveragerc .isort.cfg .readthedocs.yaml
 prune docs/_build
 global-exclude *.pyc
 prune __pycache__
