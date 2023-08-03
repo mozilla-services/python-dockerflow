@@ -1,2 +1,2 @@
-Sphinx
+Sphinx>=7.1
 sphinxcontrib-httpdomain
