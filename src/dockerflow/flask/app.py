@@ -11,6 +11,8 @@ from collections import OrderedDict
 import flask
 from werkzeug.exceptions import InternalServerError
 
+from dockerflow.checks import run_checks
+
 from .. import version
 from . import checks
 from .signals import heartbeat_failed, heartbeat_passed
@@ -303,16 +305,6 @@ class Dockerflow(object):
         """
         return "", 200
 
-    def _heartbeat_check_detail(self, check):
-        errors = list(filter(lambda e: e.id not in self.silenced_checks, check()))
-        level = max([0] + [e.level for e in errors])
-
-        return {
-            "status": checks.level_to_text(level),
-            "level": level,
-            "messages": {e.id: e.msg for e in errors},
-        }
-
     def _heartbeat_view(self):
         """
         Runs all the registered checks and returns a JSON response with either
@@ -321,33 +313,25 @@ class Dockerflow(object):
         Any check that returns a warning or worse (error, critical) will
         return a 500 response.
         """
-        details = {}
-        statuses = {}
-        level = 0
 
-        for name, check in self.checks.items():
-            detail = self._heartbeat_check_detail(check)
-            statuses[name] = detail["status"]
-            level = max(level, detail["level"])
-            if detail["level"] > 0:
-                details[name] = detail
+        check_results = run_checks(self.checks.items())
 
         payload = {
-            "status": checks.level_to_text(level),
-            "checks": statuses,
-            "details": details,
+            "status": checks.level_to_text(check_results.level),
+            "checks": check_results.statuses,
+            "details": check_results.details,
         }
 
         def render(status_code):
             return flask.make_response(flask.jsonify(payload), status_code)
 
-        if level < checks.ERROR:
+        if check_results.level < checks.ERROR:
             status_code = 200
-            heartbeat_passed.send(self, level=level)
+            heartbeat_passed.send(self, level=check_results.level)
             return render(status_code)
         else:
             status_code = 500
-            heartbeat_failed.send(self, level=level)
+            heartbeat_failed.send(self, level=check_results.level)
             raise HeartbeatFailure(response=render(status_code))
 
     def version_callback(self, func):
