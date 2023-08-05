@@ -11,6 +11,8 @@ from inspect import isawaitable
 
 from sanic import response
 
+from dockerflow.checks import iscoroutinefunction_or_partial, run_checks_async
+
 from .. import version
 from . import checks
 
@@ -208,19 +210,6 @@ class Dockerflow(object):
         """
         return response.raw(b"", 200)
 
-    async def _heartbeat_check_detail(self, check):
-        result = check()
-        if isawaitable(result):
-            result = await result
-        errors = [e for e in result if e.id not in self.silenced_checks]
-        level = max([0] + [e.level for e in errors])
-
-        return {
-            "status": checks.level_to_text(level),
-            "level": level,
-            "messages": {e.id: e.msg for e in errors},
-        }
-
     async def _heartbeat_view(self, request):
         """
         Runs all the registered checks and returns a JSON response with either
@@ -229,24 +218,16 @@ class Dockerflow(object):
         Any check that returns a warning or worse (error, critical) will
         return a 500 response.
         """
-        details = {}
-        statuses = {}
-        level = 0
 
-        for name, check in self.checks.items():
-            detail = await self._heartbeat_check_detail(check)
-            statuses[name] = detail["status"]
-            level = max(level, detail["level"])
-            if detail["level"] > 0:
-                details[name] = detail
+        check_results = await run_checks_async(self.checks.items())
 
         payload = {
-            "status": checks.level_to_text(level),
-            "checks": statuses,
-            "details": details,
+            "status": checks.level_to_text(check_results.level),
+            "checks": check_results.statuses,
+            "details": check_results.details,
         }
 
-        if level < checks.ERROR:
+        if check_results.level < checks.ERROR:
             status_code = 200
         else:
             status_code = 500
@@ -321,10 +302,21 @@ class Dockerflow(object):
 
         self.logger.info("Registered Dockerflow check %s", name)
 
-        @functools.wraps(func)
-        def decorated_function(*args, **kwargs):
-            self.logger.info("Called Dockerflow check %s", name)
-            return func(*args, **kwargs)
+        if iscoroutinefunction_or_partial(func):
 
-        self.checks[name] = decorated_function
-        return decorated_function
+            @functools.wraps(func)
+            async def decorated_function_asyc(*args, **kwargs):
+                self.logger.info("Called Dockerflow check %s", name)
+                return await func(*args, **kwargs)
+
+            self.checks[name] = decorated_function_asyc
+            return decorated_function_asyc
+        else:
+
+            @functools.wraps(func)
+            def decorated_function(*args, **kwargs):
+                self.logger.info("Called Dockerflow check %s", name)
+                return func(*args, **kwargs)
+
+            self.checks[name] = decorated_function
+            return decorated_function
