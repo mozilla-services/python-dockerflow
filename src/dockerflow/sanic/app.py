@@ -219,7 +219,10 @@ class Dockerflow(object):
         return a 500 response.
         """
 
-        check_results = await run_checks_async(self.checks.items())
+        check_results = await run_checks_async(
+            self.checks.items(),
+            silenced_check_ids=self.silenced_checks,
+        )
 
         payload = {
             "status": checks.level_to_text(check_results.level),

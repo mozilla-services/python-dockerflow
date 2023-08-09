@@ -314,7 +314,10 @@ class Dockerflow(object):
         return a 500 response.
         """
 
-        check_results = run_checks(self.checks.items())
+        check_results = run_checks(
+            self.checks.items(),
+            silenced_check_ids=self.silenced_checks,
+        )
 
         payload = {
             "status": checks.level_to_text(check_results.level),
