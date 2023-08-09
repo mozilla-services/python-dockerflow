@@ -6,7 +6,7 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-ROOT_URLCONF = "tests.urls"
+ROOT_URLCONF = "tests.django.urls"
 
 SECRET_KEY = (
     "e4ac21f475d9d1c4b426f82640e7772d7f09fd8caa78919abbfcc4949bd74aa1b48302a3d2162cdd"

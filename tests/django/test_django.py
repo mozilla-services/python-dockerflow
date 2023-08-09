@@ -6,7 +6,6 @@ import logging
 
 import pytest
 import redis
-from django import VERSION as django_version
 from django.core.checks.registry import registry
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
@@ -20,14 +19,11 @@ from dockerflow.django import checks
 from dockerflow.django.middleware import DockerflowMiddleware
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def reset_checks():
-    if django_version[0] < 2:
-        registry.registered_checks = []
-        registry.deployment_checks = []
-    else:
-        registry.registered_checks = set()
-        registry.deployment_checks = set()
+    yield
+    registry.registered_checks = set()
+    registry.deployment_checks = set()
 
 
 @pytest.fixture
@@ -54,9 +50,8 @@ def test_version_missing(dockerflow_middleware, mocker, rf):
 
 
 @pytest.mark.django_db
-def test_heartbeat(dockerflow_middleware, reset_checks, rf, settings):
-    request = rf.get("/__heartbeat__")
-    response = dockerflow_middleware.process_request(request)
+def test_heartbeat(client, settings):
+    response = client.get("/__heartbeat__")
     assert response.status_code == 200
 
     settings.DOCKERFLOW_CHECKS = [
@@ -64,8 +59,30 @@ def test_heartbeat(dockerflow_middleware, reset_checks, rf, settings):
         "tests.django.django_checks.error",
     ]
     checks.register()
-    response = dockerflow_middleware.process_request(request)
+    response = client.get("/__heartbeat__")
     assert response.status_code == 500
+    content = response.json()
+    assert content["status"] == "error"
+    assert content.get("checks") is None
+    assert content.get("details") is None
+
+
+@pytest.mark.django_db
+def test_heartbeat_debug(client, settings):
+    settings.DOCKERFLOW_CHECKS = [
+        "tests.django.django_checks.warning",
+        "tests.django.django_checks.error",
+    ]
+    settings.DEBUG = True
+    checks.register()
+    response = client.get("/__heartbeat__")
+    assert response.status_code == 500
+    content = response.json()
+    assert content["status"]
+    assert content["checks"]
+    assert content["details"]
+
+
 
 
 @pytest.mark.django_db
@@ -79,7 +96,7 @@ def test_lbheartbeat_makes_no_db_queries(dockerflow_middleware, rf):
 
 
 @pytest.mark.django_db
-def test_redis_check(dockerflow_middleware, reset_checks, rf, settings):
+def test_redis_check(dockerflow_middleware, rf, settings):
     settings.DOCKERFLOW_CHECKS = ["dockerflow.django.checks.check_redis_connected"]
     checks.register()
     request = rf.get("/__heartbeat__")
