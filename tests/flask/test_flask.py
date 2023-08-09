@@ -139,6 +139,26 @@ def test_heartbeat(app, dockerflow):
     assert "warning-check-two" in defaults
 
 
+def test_heartbeat_silenced_checks(app):
+    dockerflow = Dockerflow(app, silenced_checks=["tests.checks.W001"])
+
+    @dockerflow.check
+    def error_check():
+        return [checks.Error("some error", id="tests.checks.E001")]
+
+    @dockerflow.check()
+    def warning_check():
+        return [checks.Warning("some warning", id="tests.checks.W001")]
+
+    response = app.test_client().get("/__heartbeat__")
+    assert response.status_code == 500
+    payload = json.loads(response.data.decode())
+    assert payload["status"] == "error"
+    details = payload["details"]
+    assert "error_check" in details
+    assert "warning_check" not in details
+
+
 def test_lbheartbeat_makes_no_db_queries(dockerflow, app):
     with app.app_context():
         assert len(get_debug_queries()) == 0

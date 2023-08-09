@@ -83,6 +83,22 @@ def test_heartbeat_debug(client, settings):
     assert content["details"]
 
 
+@pytest.mark.django_db
+def test_heartbeat_silenced(client, settings):
+    settings.DOCKERFLOW_CHECKS = [
+        "tests.django.django_checks.warning",
+        "tests.django.django_checks.error",
+    ]
+    settings.SILENCED_SYSTEM_CHECKS.append("tests.checks.E001")
+    settings.DEBUG = True
+    checks.register()
+
+    response = client.get("/__heartbeat__")
+    assert response.status_code == 200
+    content = response.json()
+    assert content["status"] == "warning"
+    assert "warning" in content["details"]
+    assert "error" not in content["details"]
 
 
 @pytest.mark.django_db
