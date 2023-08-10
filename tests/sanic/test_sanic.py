@@ -12,8 +12,8 @@ from sanic import Sanic, response
 from sanic_redis import SanicRedis
 from sanic_testing.testing import SanicTestClient
 
-from dockerflow import health
-from dockerflow.sanic import Dockerflow, checks
+from dockerflow import checks, health
+from dockerflow.sanic import Dockerflow
 
 
 class FakeRedis:
@@ -131,24 +131,20 @@ def test_lbheartbeat(dockerflow, test_client):
 
 
 def test_heartbeat(dockerflow, test_client):
-    dockerflow.checks.clear()
-
     _, response = test_client.get("/__heartbeat__")
     assert response.status == 200
 
 
 def test_heartbeat_checks(dockerflow, test_client):
-    dockerflow.checks.clear()
-
-    @dockerflow.check
+    @checks.register
     def error_check():
         return [checks.Error("some error", id="tests.checks.E001")]
 
-    @dockerflow.check()
+    @checks.register()
     def warning_check():
         return [checks.Warning("some warning", id="tests.checks.W001")]
 
-    @dockerflow.check(name="warning-check-two")
+    @checks.register(name="warning-check-two")
     async def warning_check2():
         return [checks.Warning("some other warning", id="tests.checks.W002")]
 
@@ -162,8 +158,28 @@ def test_heartbeat_checks(dockerflow, test_client):
     assert "warning-check-two" in details
 
 
+def test_heartbeat_silenced_checks(app, test_client):
+    app = Dockerflow(app, silenced_checks=["tests.checks.E001"])
+
+    @checks.register
+    def error_check():
+        return [checks.Error("some error", id="tests.checks.E001")]
+
+    @checks.register()
+    def warning_check():
+        return [checks.Warning("some warning", id="tests.checks.W001")]
+
+    _, response = test_client.get("/__heartbeat__")
+    assert response.status == 200
+    payload = response.json
+    assert payload["status"] == "warning"
+    details = payload["details"]
+    assert "error_check" not in details
+    assert "warning_check" in details
+
+
 def test_redis_check(dockerflow_redis, mocker, test_client):
-    assert "check_redis_connected" in dockerflow_redis.checks
+    assert "check_redis_connected" in checks.get_checks()
     mocker.patch.object(sanic_redis.core, "from_url", fake_redis)
     _, response = test_client.get("/__heartbeat__")
     assert response.status == 200
@@ -182,7 +198,7 @@ def test_redis_check(dockerflow_redis, mocker, test_client):
     ],
 )
 def test_redis_check_error(dockerflow_redis, mocker, test_client, error, messages):
-    assert "check_redis_connected" in dockerflow_redis.checks
+    assert "check_redis_connected" in checks.get_checks()
     fake_redis_error = functools.partial(fake_redis, error=error)
     mocker.patch.object(sanic_redis.core, "from_url", fake_redis_error)
     _, response = test_client.get("/__heartbeat__")
