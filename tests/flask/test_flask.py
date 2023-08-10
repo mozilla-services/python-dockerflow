@@ -16,8 +16,13 @@ from flask_redis import FlaskRedis
 from flask_sqlalchemy import SQLAlchemy, get_debug_queries
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
-from dockerflow import health
-from dockerflow.flask import Dockerflow, checks
+from dockerflow import checks, health
+from dockerflow.flask import Dockerflow
+from dockerflow.flask.checks import (
+    check_database_connected,
+    check_migrations_applied,
+    check_redis_connected,
+)
 
 
 class MockUser(UserMixin):
@@ -112,20 +117,18 @@ def test_version_callback(dockerflow, app):
 
 def test_heartbeat(app, dockerflow):
     # app.debug = True
-    dockerflow.checks.clear()
-
     response = app.test_client().get("/__heartbeat__")
     assert response.status_code == 200
 
-    @dockerflow.check
+    @checks.register
     def error_check():
         return [checks.Error("some error", id="tests.checks.E001")]
 
-    @dockerflow.check()
+    @checks.register()
     def warning_check():
         return [checks.Warning("some warning", id="tests.checks.W001")]
 
-    @dockerflow.check(name="warning-check-two")
+    @checks.register(name="warning-check-two")
     def warning_check2():
         return [checks.Warning("some other warning", id="tests.checks.W002")]
 
@@ -137,6 +140,26 @@ def test_heartbeat(app, dockerflow):
     assert "error_check" in defaults
     assert "warning_check" in defaults
     assert "warning-check-two" in defaults
+
+
+def test_heartbeat_silenced_checks(app):
+    Dockerflow(app, silenced_checks=["tests.checks.W001"])
+
+    @checks.register
+    def error_check():
+        return [checks.Error("some error", id="tests.checks.E001")]
+
+    @checks.register
+    def warning_check():
+        return [checks.Warning("some warning", id="tests.checks.W001")]
+
+    response = app.test_client().get("/__heartbeat__")
+    assert response.status_code == 500
+    payload = json.loads(response.data.decode())
+    assert payload["status"] == "error"
+    details = payload["details"]
+    assert "error_check" in details
+    assert "warning_check" not in details
 
 
 def test_lbheartbeat_makes_no_db_queries(dockerflow, app):
@@ -151,8 +174,8 @@ def test_full_redis_check(mocker):
     app = Flask("redis-check")
     app.debug = True
     redis_store = FlaskRedis.from_custom_provider(FakeStrictRedis, app)
-    dockerflow = Dockerflow(app, redis=redis_store)
-    assert "check_redis_connected" in dockerflow.checks
+    Dockerflow(app, redis=redis_store)
+    assert "check_redis_connected" in checks.get_checks()
 
     with app.test_client() as test_client:
         response = test_client.get("/__heartbeat__")
@@ -165,8 +188,8 @@ def test_full_redis_check_error(mocker):
     redis_store = FlaskRedis.from_custom_provider(FakeStrictRedis, app)
     ping = mocker.patch.object(redis_store, "ping")
     ping.side_effect = redis.ConnectionError
-    dockerflow = Dockerflow(app, redis=redis_store)
-    assert "check_redis_connected" in dockerflow.checks
+    Dockerflow(app, redis=redis_store)
+    assert "check_redis_connected" in checks.get_checks()
 
     with app.test_client() as test_client:
         response = test_client.get("/__heartbeat__")
@@ -175,8 +198,8 @@ def test_full_redis_check_error(mocker):
 
 
 def test_full_db_check(mocker, app, db, client):
-    dockerflow = Dockerflow(app, db=db)
-    assert "check_database_connected" in dockerflow.checks
+    Dockerflow(app, db=db)
+    assert "check_database_connected" in checks.get_checks()
 
     response = client.get("/__heartbeat__")
     assert response.status_code == 200
@@ -186,8 +209,8 @@ def test_full_db_check(mocker, app, db, client):
 def test_full_db_check_error(mocker, app, db, client):
     with app.app_context():
         mocker.patch.object(db.engine, "connect", side_effect=SQLAlchemyError)
-        dockerflow = Dockerflow(app, db=db)
-        assert "check_database_connected" in dockerflow.checks
+        Dockerflow(app, db=db)
+        assert "check_database_connected" in checks.get_checks()
         response = client.get("/__heartbeat__")
         assert response.status_code == 500
         assert json.loads(response.data.decode())["status"] == "error"
@@ -325,7 +348,7 @@ def test_request_summary_failed_request(caplog, dockerflow, app):
 def test_db_check_sqlalchemy_error(app, mocker, db):
     with app.app_context():
         mocker.patch.object(db.engine, "connect", side_effect=SQLAlchemyError)
-        errors = checks.check_database_connected(db)
+        errors = check_database_connected(db)
     assert len(errors) == 1
     assert errors[0].id == health.ERROR_SQLALCHEMY_EXCEPTION
 
@@ -334,14 +357,14 @@ def test_db_check_dbapi_error(app, mocker, db):
     with app.app_context():
         exception = DBAPIError.instance("", [], Exception(), Exception)
         mocker.patch.object(db.engine, "connect", side_effect=exception)
-        errors = checks.check_database_connected(db)
+        errors = check_database_connected(db)
     assert len(errors) == 1
     assert errors[0].id == health.ERROR_DB_API_EXCEPTION
 
 
 def test_db_check_success(app, db):
     with app.app_context():
-        errors = checks.check_database_connected(db)
+        errors = check_database_connected(db)
     assert errors == []
 
 
@@ -374,7 +397,7 @@ def test_check_migrations_applied_cannot_check_migrations(
 ):
     with app.app_context():
         mocker.patch.object(db.engine, "connect", side_effect=exception)
-        errors = checks.check_migrations_applied(migrate)
+        errors = check_migrations_applied(migrate)
     assert len(errors) == 1
     assert errors[0].id == health.INFO_CANT_CHECK_MIGRATIONS
 
@@ -388,7 +411,7 @@ def test_check_migrations_applied_success(mocker, app, db, migrate):
         return_value=("17164a7d1c2e",),
     )
     with app.app_context():
-        errors = checks.check_migrations_applied(migrate)
+        errors = check_migrations_applied(migrate)
     assert get_heads.called
     assert get_current_heads.called
     assert len(errors) == 0
@@ -403,7 +426,7 @@ def test_check_migrations_applied_unapplied_migrations(mocker, app, db, migrate)
         return_value=("73d96d3120ff",),
     )
     with app.app_context():
-        errors = checks.check_migrations_applied(migrate)
+        errors = check_migrations_applied(migrate)
     assert get_heads.called
     assert get_current_heads.called
     assert len(errors) == 1
@@ -420,7 +443,7 @@ def test_check_migrations_applied_unapplied_migrations(mocker, app, db, migrate)
 def test_check_redis_connected(mocker, redis_store, exception, error):
     ping = mocker.patch.object(redis_store, "ping")
     ping.side_effect = exception
-    errors = checks.check_redis_connected(redis_store)
+    errors = check_redis_connected(redis_store)
     assert len(errors) == 1
     assert errors[0].id == error
 
@@ -428,11 +451,11 @@ def test_check_redis_connected(mocker, redis_store, exception, error):
 def test_check_redis_connected_ping_check(mocker, redis_store):
     ping = mocker.patch.object(redis_store, "ping")
     ping.return_value = True
-    errors = checks.check_redis_connected(redis_store)
+    errors = check_redis_connected(redis_store)
     assert len(errors) == 0
 
     ping.return_value = False
-    errors = checks.check_redis_connected(redis_store)
+    errors = check_redis_connected(redis_store)
     assert len(errors) == 1
     assert errors[0].id == health.ERROR_REDIS_PING_FAILED
 
