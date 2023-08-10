@@ -6,7 +6,6 @@ import logging
 
 import pytest
 import redis
-from django import VERSION as django_version
 from django.core.checks.registry import registry
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
@@ -20,14 +19,11 @@ from dockerflow.django import checks
 from dockerflow.django.middleware import DockerflowMiddleware
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def reset_checks():
-    if django_version[0] < 2:
-        registry.registered_checks = []
-        registry.deployment_checks = []
-    else:
-        registry.registered_checks = set()
-        registry.deployment_checks = set()
+    yield
+    registry.registered_checks = set()
+    registry.deployment_checks = set()
 
 
 @pytest.fixture
