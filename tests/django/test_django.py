@@ -50,9 +50,8 @@ def test_version_missing(dockerflow_middleware, mocker, rf):
 
 
 @pytest.mark.django_db
-def test_heartbeat(dockerflow_middleware, reset_checks, rf, settings):
-    request = rf.get("/__heartbeat__")
-    response = dockerflow_middleware.process_request(request)
+def test_heartbeat(client, settings):
+    response = client.get("/__heartbeat__")
     assert response.status_code == 200
 
     settings.DOCKERFLOW_CHECKS = [
@@ -60,8 +59,46 @@ def test_heartbeat(dockerflow_middleware, reset_checks, rf, settings):
         "tests.django.django_checks.error",
     ]
     checks.register()
-    response = dockerflow_middleware.process_request(request)
+    response = client.get("/__heartbeat__")
     assert response.status_code == 500
+    content = response.json()
+    assert content["status"] == "error"
+    assert content.get("checks") is None
+    assert content.get("details") is None
+
+
+@pytest.mark.django_db
+def test_heartbeat_debug(client, settings):
+    settings.DOCKERFLOW_CHECKS = [
+        "tests.django.django_checks.warning",
+        "tests.django.django_checks.error",
+    ]
+    settings.DEBUG = True
+    checks.register()
+    response = client.get("/__heartbeat__")
+    assert response.status_code == 500
+    content = response.json()
+    assert content["status"]
+    assert content["checks"]
+    assert content["details"]
+
+
+@pytest.mark.django_db
+def test_heartbeat_silenced(client, settings):
+    settings.DOCKERFLOW_CHECKS = [
+        "tests.django.django_checks.warning",
+        "tests.django.django_checks.error",
+    ]
+    settings.SILENCED_SYSTEM_CHECKS.append("tests.checks.E001")
+    settings.DEBUG = True
+    checks.register()
+
+    response = client.get("/__heartbeat__")
+    assert response.status_code == 200
+    content = response.json()
+    assert content["status"] == "warning"
+    assert "warning" in content["details"]
+    assert "error" not in content["details"]
 
 
 @pytest.mark.django_db
@@ -75,11 +112,10 @@ def test_lbheartbeat_makes_no_db_queries(dockerflow_middleware, rf):
 
 
 @pytest.mark.django_db
-def test_redis_check(dockerflow_middleware, reset_checks, rf, settings):
+def test_redis_check(client, settings):
     settings.DOCKERFLOW_CHECKS = ["dockerflow.django.checks.check_redis_connected"]
     checks.register()
-    request = rf.get("/__heartbeat__")
-    response = dockerflow_middleware.process_request(request)
+    response = client.get("/__heartbeat__")
     assert response.status_code == 200
 
 
