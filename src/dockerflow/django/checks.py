@@ -107,7 +107,6 @@ def register():
         [
             "dockerflow.django.checks.check_database_connected",
             "dockerflow.django.checks.check_migrations_applied",
-            # 'dockerflow.django.checks.check_redis_connected',
         ],
     )
     for check_path in check_paths:
