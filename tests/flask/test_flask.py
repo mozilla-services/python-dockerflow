@@ -216,6 +216,36 @@ def test_full_db_check_error(mocker, app, db, client):
         assert json.loads(response.data.decode())["status"] == "error"
 
 
+def test_full_migrate_check(mocker, client, app, db, migrate):
+    mocker.patch(
+        "alembic.script.ScriptDirectory.get_heads", return_value=("17164a7d1c2e",)
+    )
+    mocker.patch(
+        "alembic.migration.MigrationContext.get_current_heads",
+        return_value=("17164a7d1c2e",),
+    )
+    Dockerflow(app, migrate=migrate)
+    with app.app_context():
+        assert "check_migrations_applied" in checks.get_checks()
+        response = client.get("/__heartbeat__")
+        assert response.status_code == 200
+        assert json.loads(response.data.decode())["status"] == "ok"
+
+
+def test_full_migrate_check_error(mocker, client, app, db, migrate):
+    with app.app_context():
+        mocker.patch.object(db.engine, "connect", side_effect=SQLAlchemyError)
+        Dockerflow(app, migrate=migrate)
+        assert "check_migrations_applied" in checks.get_checks()
+        response = client.get("/__heartbeat__")
+        assert response.status_code == 200
+        assert response.json["status"] == "info"
+        assert (
+            health.INFO_CANT_CHECK_MIGRATIONS
+            in response.json["details"]["check_migrations_applied"]["messages"]
+        )
+
+
 def assert_log_record(record, errno=0, level=logging.INFO):
     assert record.levelno == level
     assert record.errno == errno
