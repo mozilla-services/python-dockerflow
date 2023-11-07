@@ -1,1 +1,2 @@
 Flask>=2.2,<2.3
+Werkzeug<3
