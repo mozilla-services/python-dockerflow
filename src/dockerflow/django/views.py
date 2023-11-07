@@ -1,6 +1,8 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
+import logging
+
 from django.conf import settings
 from django.core import checks
 from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
@@ -12,6 +14,9 @@ from .signals import heartbeat_failed, heartbeat_passed
 version_callback = getattr(
     settings, "DOCKERFLOW_VERSION_CALLBACK", "dockerflow.version.get_version"
 )
+
+
+logger = logging.getLogger("dockerflow.django")
 
 
 def version(request):
@@ -51,11 +56,18 @@ def heartbeat(request):
     level = 0
 
     for check in all_checks:
-        detail = heartbeat_check_detail(check)
-        statuses[check.__name__] = detail["status"]
-        level = max(level, detail["level"])
-        if detail["level"] > 0:
-            details[check.__name__] = detail
+        check_level, check_errors = heartbeat_check_detail(check)
+        level_text = level_to_text(check_level)
+        statuses[check.__name__] = level_text
+        level = max(level, check_level)
+        if level > 0:
+            for error in check_errors:
+                logger.log(error.level, f"{error.id}: {error.msg}")
+            details[check.__name__] = {
+                "status": level_text,
+                "level": level,
+                "messages": {e.id: e.msg for e in check_errors},
+            }
 
     if level < checks.messages.ERROR:
         status_code = 200
@@ -75,9 +87,4 @@ def heartbeat_check_detail(check):
     errors = check(app_configs=None)
     errors = list(filter(lambda e: e.id not in settings.SILENCED_SYSTEM_CHECKS, errors))
     level = max([0] + [e.level for e in errors])
-
-    return {
-        "status": level_to_text(level),
-        "level": level,
-        "messages": {e.id: e.msg for e in errors},
-    }
+    return level, errors
