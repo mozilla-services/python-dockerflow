@@ -327,7 +327,7 @@ class Dockerflow(object):
             level = max(level, check_level)
             if check_level > 0:
                 for error in check_errors:
-                    self.logger.log(error.level, f"{error.id}: {error.msg}")
+                    self.logger.log(error.level, "%s: %s", error.id, error.msg)
                 details[name] = {
                     "status": level_text,
                     "level": level,

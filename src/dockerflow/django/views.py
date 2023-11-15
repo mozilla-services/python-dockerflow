@@ -62,7 +62,7 @@ def heartbeat(request):
         level = max(level, check_level)
         if level > 0:
             for error in check_errors:
-                logger.log(error.level, f"{error.id}: {error.msg}")
+                logger.log(error.level, "%s: %s", error.id, error.msg)
             details[check.__name__] = {
                 "status": level_text,
                 "level": level,
