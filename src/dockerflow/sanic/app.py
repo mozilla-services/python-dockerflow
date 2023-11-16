@@ -214,12 +214,7 @@ class Dockerflow(object):
             result = await result
         errors = [e for e in result if e.id not in self.silenced_checks]
         level = max([0] + [e.level for e in errors])
-
-        return {
-            "status": checks.level_to_text(level),
-            "level": level,
-            "messages": {e.id: e.msg for e in errors},
-        }
+        return level, errors
 
     async def _heartbeat_view(self, request):
         """
@@ -234,11 +229,18 @@ class Dockerflow(object):
         level = 0
 
         for name, check in self.checks.items():
-            detail = await self._heartbeat_check_detail(check)
-            statuses[name] = detail["status"]
-            level = max(level, detail["level"])
-            if detail["level"] > 0:
-                details[name] = detail
+            check_level, check_errors = await self._heartbeat_check_detail(check)
+            level_text = checks.level_to_text(check_level)
+            statuses[name] = level_text
+            level = max(level, check_level)
+            if check_level > 0:
+                for error in check_errors:
+                    self.logger.log(error.level, "%s: %s", error.id, error.msg)
+                details[name] = {
+                    "status": level_text,
+                    "level": check_level,
+                    "messages": {e.id: e.msg for e in check_errors},
+                }
 
         payload = {
             "status": checks.level_to_text(level),

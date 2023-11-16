@@ -139,6 +139,25 @@ def test_heartbeat(app, dockerflow):
     assert "warning-check-two" in defaults
 
 
+def test_heartbeat_logging(app, dockerflow, caplog):
+    dockerflow.checks.clear()
+
+    @dockerflow.check
+    def error_check():
+        return [checks.Error("some error", id="tests.checks.E001")]
+
+    @dockerflow.check()
+    def warning_check():
+        return [checks.Warning("some warning", id="tests.checks.W001")]
+
+    with caplog.at_level(logging.INFO, logger="dockerflow.django"):
+        app.test_client().get("/__heartbeat__")
+
+    logged = [(record.levelname, record.message) for record in caplog.records]
+    assert ("ERROR", "tests.checks.E001: some error") in logged
+    assert ("WARNING", "tests.checks.W001: some warning") in logged
+
+
 def test_lbheartbeat_makes_no_db_queries(dockerflow, app):
     with app.app_context():
         assert len(get_debug_queries()) == 0
