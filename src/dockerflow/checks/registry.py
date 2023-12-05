@@ -52,15 +52,14 @@ def register(func=None, name=None):
 
         _REGISTERED_CHECKS[name] = decorated_function_asyc
         return decorated_function_asyc
-    else:
 
-        @functools.wraps(func)
-        def decorated_function(*args, **kwargs):
-            logger.debug("Called Dockerflow check %s", name)
-            return func(*args, **kwargs)
+    @functools.wraps(func)
+    def decorated_function(*args, **kwargs):
+        logger.debug("Called Dockerflow check %s", name)
+        return func(*args, **kwargs)
 
-        _REGISTERED_CHECKS[name] = decorated_function
-        return decorated_function
+    _REGISTERED_CHECKS[name] = decorated_function
+    return decorated_function
 
 
 def init_check(check, obj):
