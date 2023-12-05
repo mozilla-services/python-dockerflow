@@ -32,7 +32,8 @@ def _iscoroutinefunction_or_partial(obj):
 
 def register(func=None, name=None):
     """
-    TODO: This docstring
+    Register a check callback to be executed from
+    the heartbeat endpoint.
     """
     if func is None:
         return functools.partial(register, name=name)
@@ -40,7 +41,7 @@ def register(func=None, name=None):
     if name is None:
         name = func.__name__
 
-    logger.debug("Registered Dockerflow check %s", name)
+    logger.debug("Register Dockerflow check %s", name)
 
     if _iscoroutinefunction_or_partial(func):
 
@@ -64,10 +65,14 @@ def register(func=None, name=None):
 
 def init_check(check, obj):
     """
-    Adds a given check callback with the provided object to the list
-    of checks. Useful for built-ins but also advanced custom checks.
+    Registers a given check callback, that will be called with the provided
+    object as first parameter. For example:
+
+    .. code-block:: python
+
+        init_check(check_redis_connected, redis)
     """
-    logger.debug("Adding extension check %s" % check.__name__)
+    logger.debug("Register Dockerflow check %s with parameter" % check.__name__)
     partial = functools.wraps(check)(functools.partial(check, obj))
     register(func=partial)
 
