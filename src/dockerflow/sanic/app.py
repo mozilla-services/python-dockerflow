@@ -109,7 +109,7 @@ class Dockerflow(object):
             self.init_app(app)
         # Initialize the built-in checks.
         if redis is not None:
-            checks.init_check(check_redis_connected, redis)
+            checks.register_partial(check_redis_connected, redis)
 
     def init_app(self, app):
         """
@@ -259,9 +259,9 @@ class Dockerflow(object):
         """
         Backwards compatibility method.
         """
-        message = "`dockerflow.init_check()` is deprecated, use `checks.init_check()` instead."
+        message = "`dockerflow.init_check()` is deprecated, use `checks.register_partial()` instead."
         warnings.warn(message, DeprecationWarning)
-        return checks.init_check(check, obj)
+        return checks.register_partial(check, obj)
 
     def check(self, func=None, name=None):
         """

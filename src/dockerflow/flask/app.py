@@ -142,11 +142,11 @@ class Dockerflow(object):
             self.init_app(app)
         # Initialize the built-in checks.
         if db:
-            checks.init_check(check_database_connected, db)
+            checks.register_partial(check_database_connected, db)
         if redis:
-            checks.init_check(check_redis_connected, redis)
+            checks.register_partial(check_redis_connected, redis)
         if migrate:
-            checks.init_check(check_migrations_applied, migrate)
+            checks.register_partial(check_migrations_applied, migrate)
 
     def init_app(self, app):
         """
@@ -358,16 +358,16 @@ class Dockerflow(object):
         """
         Backwards compatibility method.
         """
-        message = "`dockerflow.init_check()` is deprecated, use `checks.init_check()` instead."
+        message = "`dockerflow.init_check()` is deprecated, use `checks.register_partial()` instead."
         warnings.warn(message, DeprecationWarning)
-        return checks.init_check(check, obj)
+        return checks.register_partial(check, obj)
 
     def check(self, func=None, name=None):
         """
         Backwards compatibility method.
         """
         message = (
-            "`dockerflow.init_check()` is deprecated, use `checks.register()` instead."
+            "`dockerflow.check()` is deprecated, use `checks.register()` instead."
         )
         warnings.warn(message, DeprecationWarning)
         return checks.register(func, name)

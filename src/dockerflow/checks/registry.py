@@ -62,18 +62,22 @@ def register(func=None, name=None):
     return decorated_function
 
 
-def init_check(check, obj):
+def register_partial(func, *args, name=None):
     """
-    Registers a given check callback, that will be called with the provided
-    object as first parameter. For example:
+    Registers a given check callback that will be called with the provided
+    arguments using `functools.partial()`. For example:
 
     .. code-block:: python
 
-        init_check(check_redis_connected, redis)
+        dockerflow.register_partial(check_redis_connected, redis)
+
     """
-    logger.debug("Register Dockerflow check %s with parameter" % check.__name__)
-    partial = functools.wraps(check)(functools.partial(check, obj))
-    register(func=partial)
+    if name is None:
+        name = func.__name__
+
+    logger.debug("Register Dockerflow check %s with partially applied arguments" % name)
+    partial = functools.wraps(func)(functools.partial(func, *args))
+    return register(func=partial, name=name)
 
 
 def get_checks():

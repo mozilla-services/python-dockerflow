@@ -19,8 +19,8 @@ from .messages import (  # noqa
 from .registry import (  # noqa
     clear_checks,
     get_checks,
-    init_check,
     register,
+    register_partial,
     run_checks,
     run_checks_async,
 )
