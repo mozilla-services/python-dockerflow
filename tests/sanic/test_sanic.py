@@ -178,6 +178,23 @@ def test_heartbeat_silenced_checks(app, test_client):
     assert "warning_check" in details
 
 
+def test_heartbeat_logging(dockerflow, test_client, caplog):
+    @checks.register
+    def error_check():
+        return [checks.Error("some error", id="tests.checks.E001")]
+
+    @checks.register()
+    def warning_check():
+        return [checks.Warning("some warning", id="tests.checks.W001")]
+
+    with caplog.at_level(logging.INFO, logger="dockerflow.checks.registry"):
+        _, response = test_client.get("/__heartbeat__")
+
+    logged = [(record.levelname, record.message) for record in caplog.records]
+    assert ("ERROR", "tests.checks.E001: some error") in logged
+    assert ("WARNING", "tests.checks.W001: some warning") in logged
+
+
 def test_redis_check(dockerflow_redis, mocker, test_client):
     assert "check_redis_connected" in checks.get_checks()
     mocker.patch.object(sanic_redis.core, "from_url", fake_redis)
@@ -259,6 +276,8 @@ def test_request_summary_failed_request(app, caplog, dockerflow, test_client):
 
 
 def test_heartbeat_checks_legacy(dockerflow, test_client):
+    dockerflow.checks.clear()
+
     @dockerflow.check
     def error_check():
         return [checks.Error("some error", id="tests.checks.E001")]

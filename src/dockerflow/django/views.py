@@ -1,6 +1,8 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
+import logging
+
 from django.conf import settings
 from django.core.checks.registry import registry as django_check_registry
 from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
@@ -13,6 +15,9 @@ from .signals import heartbeat_failed, heartbeat_passed
 version_callback = getattr(
     settings, "DOCKERFLOW_VERSION_CALLBACK", "dockerflow.version.get_version"
 )
+
+
+logger = logging.getLogger("dockerflow.django")
 
 
 def version(request):

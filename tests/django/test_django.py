@@ -102,6 +102,22 @@ def test_heartbeat_silenced(client, settings):
 
 
 @pytest.mark.django_db
+def test_heartbeat_logging(dockerflow_middleware, reset_checks, rf, settings, caplog):
+    request = rf.get("/__heartbeat__")
+    settings.DOCKERFLOW_CHECKS = [
+        "tests.django.django_checks.warning",
+        "tests.django.django_checks.error",
+    ]
+    checks.register()
+
+    with caplog.at_level(logging.INFO, logger="dockerflow.checks.registry"):
+        dockerflow_middleware.process_request(request)
+    logged = [(record.levelname, record.message) for record in caplog.records]
+    assert ("ERROR", "tests.checks.E001: some error") in logged
+    assert ("WARNING", "tests.checks.W001: some warning") in logged
+
+
+@pytest.mark.django_db
 def test_lbheartbeat_makes_no_db_queries(dockerflow_middleware, rf):
     queries = CaptureQueriesContext(connection)
     request = rf.get("/__lbheartbeat__")

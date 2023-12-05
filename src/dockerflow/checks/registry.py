@@ -193,6 +193,10 @@ def _build_results_payload(
     max_level = 0
 
     for name, errors in checks_results:
+        # Log check results with appropriate level.
+        for error in errors:
+            logger.log(error.level, "%s: %s", error.id, error.msg)
+
         errors = [e for e in errors if e.id not in silenced_check_ids]
         level = max([0] + [e.level for e in errors])
 

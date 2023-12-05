@@ -255,6 +255,17 @@ class Dockerflow(object):
         """
         self._version_callback = func
 
+    @property
+    def checks(self):
+        """
+        Backwards compatibility alias.
+        """
+        message = (
+            "`dockerflow.checks` is deprecated, use `checks.get_checks()` instead."
+        )
+        warnings.warn(message, DeprecationWarning)
+        return checks.get_checks()
+
     def init_check(self, check, obj):
         """
         Backwards compatibility method.

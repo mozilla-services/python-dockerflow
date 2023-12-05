@@ -162,6 +162,23 @@ def test_heartbeat_silenced_checks(app):
     assert "warning_check" not in details
 
 
+def test_heartbeat_logging(app, dockerflow, caplog):
+    @checks.register
+    def error_check():
+        return [checks.Error("some error", id="tests.checks.E001")]
+
+    @checks.register()
+    def warning_check():
+        return [checks.Warning("some warning", id="tests.checks.W001")]
+
+    with caplog.at_level(logging.INFO, logger="dockerflow.checks.registry"):
+        app.test_client().get("/__heartbeat__")
+
+    logged = [(record.levelname, record.message) for record in caplog.records]
+    assert ("ERROR", "tests.checks.E001: some error") in logged
+    assert ("WARNING", "tests.checks.W001: some warning") in logged
+
+
 def test_lbheartbeat_makes_no_db_queries(dockerflow, app):
     with app.app_context():
         assert len(get_debug_queries()) == 0
@@ -498,6 +515,8 @@ def test_checks_imports():
 
 
 def test_heartbeat_checks_legacy(dockerflow, client):
+    dockerflow.checks.clear()
+
     @dockerflow.check
     def error_check():
         return [checks.Error("some error", id="tests.checks.E001")]
