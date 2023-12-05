@@ -256,3 +256,21 @@ def test_request_summary_failed_request(app, caplog, dockerflow, test_client):
 
     test_client.get(headers=headers)
     assert_log_record(caplog, rid=None, t=None)
+
+
+def test_heartbeat_checks_legacy(dockerflow, test_client):
+    @dockerflow.check
+    def error_check():
+        return [checks.Error("some error", id="tests.checks.E001")]
+
+    def error_check_partial(obj):
+        return [checks.Error(repr(obj), id="tests.checks.E001")]
+
+    dockerflow.init_check(error_check_partial, ("foo", "bar"))
+
+    _, response = test_client.get("/__heartbeat__")
+    assert response.status == 500
+    payload = response.json
+    assert payload["status"] == "error"
+    assert "error_check" in payload["details"]
+    assert "('foo', 'bar')" in str(payload["details"]["error_check_partial"])

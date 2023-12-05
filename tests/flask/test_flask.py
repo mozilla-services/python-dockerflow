@@ -495,3 +495,21 @@ def test_checks_imports():
     from dockerflow.flask.checks.messages import level_to_text as b
 
     assert a == b
+
+
+def test_heartbeat_checks_legacy(dockerflow, client):
+    @dockerflow.check
+    def error_check():
+        return [checks.Error("some error", id="tests.checks.E001")]
+
+    def error_check_partial(obj):
+        return [checks.Error(repr(obj), id="tests.checks.E001")]
+
+    dockerflow.init_check(error_check_partial, ("foo", "bar"))
+
+    response = client.get("/__heartbeat__")
+    assert response.status_code == 500
+    payload = response.json
+    assert payload["status"] == "error"
+    assert "error_check" in payload["details"]
+    assert "('foo', 'bar')" in str(payload["details"]["error_check_partial"])

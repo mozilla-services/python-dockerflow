@@ -5,7 +5,21 @@
 This module contains built-in checks for the Sanic integration.
 """
 from .. import health
-from ..checks import Error
+from ..checks import (  # noqa
+    CRITICAL,
+    DEBUG,
+    ERROR,
+    INFO,
+    STATUSES,
+    WARNING,
+    CheckMessage,
+    Critical,
+    Debug,
+    Error,
+    Info,
+    Warning,
+    level_to_text,
+)
 
 
 async def check_redis_connected(redis_client):

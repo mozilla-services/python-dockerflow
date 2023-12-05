@@ -5,6 +5,7 @@ import logging
 import os
 import time
 import uuid
+import warnings
 
 import flask
 from werkzeug.exceptions import InternalServerError
@@ -352,3 +353,21 @@ class Dockerflow(object):
 
         """
         self._version_callback = func
+
+    def init_check(self, check, obj):
+        """
+        Backwards compatibility method.
+        """
+        message = "`dockerflow.init_check()` is deprecated, use `checks.init_check()` instead."
+        warnings.warn(message, DeprecationWarning)
+        return checks.init_check(check, obj)
+
+    def check(self, func=None, name=None):
+        """
+        Backwards compatibility method.
+        """
+        message = (
+            "`dockerflow.init_check()` is deprecated, use `checks.register()` instead."
+        )
+        warnings.warn(message, DeprecationWarning)
+        return checks.register(func, name)
