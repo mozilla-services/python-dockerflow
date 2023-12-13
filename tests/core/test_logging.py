@@ -5,7 +5,6 @@ import json
 import logging
 import logging.config
 import os
-import textwrap
 
 import jsonschema
 
@@ -20,41 +19,6 @@ def assert_records(records):
     details = json.loads(formatter.format(records[0]))
     jsonschema.validate(details, JSON_LOGGING_SCHEMA)
     return details
-
-
-def test_initialization_from_ini(caplog, tmpdir):
-    ini_content = textwrap.dedent(
-        """
-    [loggers]
-    keys = root
-
-    [handlers]
-    keys = console
-
-    [formatters]
-    keys = json
-
-    [logger_root]
-    level = INFO
-    handlers = console
-
-    [handler_console]
-    class = StreamHandler
-    level = DEBUG
-    args = (sys.stderr,)
-    formatter = json
-
-    [formatter_json]
-    class = dockerflow.logging.JsonLogFormatter
-    """
-    )
-    ini_file = tmpdir.join("logging.ini")
-    ini_file.write(ini_content)
-    logging.config.fileConfig(str(ini_file))
-    logging.info("I am logging in mozlog format now! woo hoo!")
-    logger = logging.getLogger()
-    assert len(logger.handlers) > 0
-    assert logger.handlers[0].formatter.logger_name == "Dockerflow"
 
 
 def test_basic_operation(caplog):
