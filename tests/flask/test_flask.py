@@ -53,6 +53,12 @@ def dockerflow(app):
     return Dockerflow(app)
 
 
+@pytest.fixture()
+def setup_request_summary_logger(dockerflow):
+    dockerflow.summary_logger.addHandler(logging.NullHandler())
+    dockerflow.summary_logger.setLevel(logging.INFO)
+
+
 @pytest.fixture
 def db(app):
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
@@ -277,7 +283,7 @@ def assert_log_record(record, errno=0, level=logging.INFO):
 headers = {"User-Agent": "dockerflow/tests", "Accept-Language": "tlh"}
 
 
-def test_request_summary(caplog, app, dockerflow, client):
+def test_request_summary(caplog, app, client, setup_request_summary_logger):
     caplog.set_level(logging.INFO)
     with app.test_request_context("/"):
         client.get("/", headers=headers)

@@ -26,6 +26,12 @@ def reset_checks():
     registry.deployment_checks = set()
 
 
+@pytest.fixture(autouse=True)
+def setup_request_summary_logger(dockerflow_middleware):
+    dockerflow_middleware.summary_logger.addHandler(logging.NullHandler())
+    dockerflow_middleware.summary_logger.setLevel(logging.INFO)
+
+
 @pytest.fixture
 def dockerflow_middleware():
     return DockerflowMiddleware(get_response=HttpResponse())

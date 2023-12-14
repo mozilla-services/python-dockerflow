@@ -69,6 +69,12 @@ def dockerflow(app):
     return Dockerflow(app)
 
 
+@pytest.fixture()
+def setup_request_summary_logger(dockerflow):
+    dockerflow.summary_logger.addHandler(logging.NullHandler())
+    dockerflow.summary_logger.setLevel(logging.INFO)
+
+
 @pytest.fixture
 def dockerflow_redis(app):
     app.config["REDIS"] = {"address": "redis://:password@localhost:6379/0"}
@@ -245,7 +251,7 @@ def assert_log_record(caplog, errno=0, level=logging.INFO, rid=None, t=int, path
 headers = {"User-Agent": "dockerflow/tests", "Accept-Language": "tlh"}
 
 
-def test_request_summary(caplog, dockerflow, test_client):
+def test_request_summary(caplog, setup_request_summary_logger, test_client):
     request, _ = test_client.get(headers=headers)
     assert isinstance(request.ctx.start_timestamp, float)
     assert request.ctx.id is not None
@@ -264,7 +270,9 @@ def test_request_summary_exception(app, caplog, dockerflow, test_client):
     assert record.getMessage() == "exception message"
 
 
-def test_request_summary_failed_request(app, caplog, dockerflow, test_client):
+def test_request_summary_failed_request(
+    app, caplog, setup_request_summary_logger, test_client
+):
     @app.middleware
     def hostile_callback(request):
         # simulating resetting request changes
