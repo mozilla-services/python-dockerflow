@@ -32,8 +32,7 @@ def assert_records(records):
 
 
 def test_initialization_from_ini(reset_logging, caplog, tmpdir):
-    ini_content = textwrap.dedent(
-        """
+    ini_content = textwrap.dedent("""
     [loggers]
     keys = root
 
@@ -55,8 +54,7 @@ def test_initialization_from_ini(reset_logging, caplog, tmpdir):
 
     [formatter_json]
     class = dockerflow.logging.JsonLogFormatter
-    """
-    )
+    """)
     ini_file = tmpdir.join("logging.ini")
     ini_file.write(ini_content)
     logging.config.fileConfig(str(ini_file))
@@ -156,8 +154,7 @@ def test_ignore_json_message(caplog):
 
 
 # https://mana.mozilla.org/wiki/pages/viewpage.action?pageId=42895640
-JSON_LOGGING_SCHEMA = json.loads(
-    """
+JSON_LOGGING_SCHEMA = json.loads("""
 {
     "type":"object",
     "required":["Timestamp"],
@@ -229,7 +226,4 @@ JSON_LOGGING_SCHEMA = json.loads(
         }
     }
 }
-""".replace(
-        "\\", "\\\\"
-    )
-)  # HACK: Fix escaping for easy copy/paste
+""".replace("\\", "\\\\"))  # HACK: Fix escaping for easy copy/paste
