@@ -6,10 +6,19 @@ import logging
 import logging.config
 import os
 import textwrap
+from importlib import reload
 
 import jsonschema
+import pytest
 
 from dockerflow.logging import JsonLogFormatter
+
+
+@pytest.fixture()
+def reset_logging():
+    logging.shutdown()
+    reload(logging)
+
 
 logger_name = "tests"
 formatter = JsonLogFormatter(logger_name=logger_name)
@@ -22,7 +31,7 @@ def assert_records(records):
     return details
 
 
-def test_initialization_from_ini(caplog, tmpdir):
+def test_initialization_from_ini(reset_logging, caplog, tmpdir):
     ini_content = textwrap.dedent(
         """
     [loggers]
