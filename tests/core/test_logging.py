@@ -6,10 +6,19 @@ import logging
 import logging.config
 import os
 import textwrap
+from importlib import reload
 
 import jsonschema
+import pytest
 
 from dockerflow.logging import JsonLogFormatter
+
+
+@pytest.fixture()
+def reset_logging():
+    logging.shutdown()
+    reload(logging)
+
 
 logger_name = "tests"
 formatter = JsonLogFormatter(logger_name=logger_name)
@@ -22,9 +31,8 @@ def assert_records(records):
     return details
 
 
-def test_initialization_from_ini(caplog, tmpdir):
-    ini_content = textwrap.dedent(
-        """
+def test_initialization_from_ini(reset_logging, caplog, tmpdir):
+    ini_content = textwrap.dedent("""
     [loggers]
     keys = root
 
@@ -46,8 +54,7 @@ def test_initialization_from_ini(caplog, tmpdir):
 
     [formatter_json]
     class = dockerflow.logging.JsonLogFormatter
-    """
-    )
+    """)
     ini_file = tmpdir.join("logging.ini")
     ini_file.write(ini_content)
     logging.config.fileConfig(str(ini_file))
@@ -147,8 +154,7 @@ def test_ignore_json_message(caplog):
 
 
 # https://mana.mozilla.org/wiki/pages/viewpage.action?pageId=42895640
-JSON_LOGGING_SCHEMA = json.loads(
-    """
+JSON_LOGGING_SCHEMA = json.loads("""
 {
     "type":"object",
     "required":["Timestamp"],
@@ -220,7 +226,4 @@ JSON_LOGGING_SCHEMA = json.loads(
         }
     }
 }
-""".replace(
-        "\\", "\\\\"
-    )
-)  # HACK: Fix escaping for easy copy/paste
+""".replace("\\", "\\\\"))  # HACK: Fix escaping for easy copy/paste

@@ -4,11 +4,12 @@
 import logging
 
 from django.conf import settings
-from django.core import checks
+from django.core.checks.registry import registry as django_check_registry
 from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
 from django.utils.module_loading import import_string
 
-from .checks import level_to_text
+from dockerflow import checks
+
 from .signals import heartbeat_failed, heartbeat_passed
 
 version_callback = getattr(
@@ -47,44 +48,25 @@ def heartbeat(request):
     Any check that returns a warning or worse (error, critical) will
     return a 500 response.
     """
-    all_checks = checks.registry.registry.get_checks(
-        include_deployment_checks=not settings.DEBUG
+    checks_to_run = (
+        (check.__name__, lambda: check(app_configs=None))
+        for check in django_check_registry.get_checks(
+            include_deployment_checks=not settings.DEBUG
+        )
     )
-
-    details = {}
-    statuses = {}
-    level = 0
-
-    for check in all_checks:
-        check_level, check_errors = heartbeat_check_detail(check)
-        level_text = level_to_text(check_level)
-        statuses[check.__name__] = level_text
-        level = max(level, check_level)
-        if level > 0:
-            for error in check_errors:
-                logger.log(error.level, "%s: %s", error.id, error.msg)
-            details[check.__name__] = {
-                "status": level_text,
-                "level": level,
-                "messages": {e.id: e.msg for e in check_errors},
-            }
-
-    if level < checks.messages.ERROR:
+    check_results = checks.run_checks(
+        checks_to_run,
+        silenced_check_ids=settings.SILENCED_SYSTEM_CHECKS,
+    )
+    if check_results.level < checks.ERROR:
         status_code = 200
-        heartbeat_passed.send(sender=heartbeat, level=level)
+        heartbeat_passed.send(sender=heartbeat, level=check_results.level)
     else:
         status_code = 500
-        heartbeat_failed.send(sender=heartbeat, level=level)
+        heartbeat_failed.send(sender=heartbeat, level=check_results.level)
 
-    payload = {"status": level_to_text(level)}
+    payload = {"status": checks.level_to_text(check_results.level)}
     if settings.DEBUG:
-        payload["checks"] = statuses
-        payload["details"] = details
+        payload["checks"] = check_results.statuses
+        payload["details"] = check_results.details
     return JsonResponse(payload, status=status_code)
-
-
-def heartbeat_check_detail(check):
-    errors = check(app_configs=None)
-    errors = list(filter(lambda e: e.id not in settings.SILENCED_SYSTEM_CHECKS, errors))
-    level = max([0] + [e.level for e in errors])
-    return level, errors
