@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-2023.12.0
+2024.1.0
 ~~~~~~~~~~~~~~~~~~~~~
 
 - Log checks messages in heartbeat view (#86)
