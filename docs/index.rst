@@ -64,6 +64,7 @@ Contents
    :maxdepth: 2
    :glob:
 
+   development
    authors
    changelog
    logging

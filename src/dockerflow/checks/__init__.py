@@ -16,3 +16,11 @@ from .messages import (  # noqa
     Warning,
     level_to_text,
 )
+from .registry import (  # noqa
+    clear_checks,
+    get_checks,
+    register,
+    register_partial,
+    run_checks,
+    run_checks_async,
+)

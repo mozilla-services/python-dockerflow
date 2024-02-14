@@ -30,6 +30,8 @@ setup(
         "Framework :: Django :: 3.2",
         "Framework :: Django :: 4.0",
         "Framework :: Django :: 4.1",
+        "Framework :: Django :: 4.2",
+        "Framework :: Django :: 5.0",
         "Framework :: Flask",
         "Framework :: FastAPI",
         "Intended Audience :: Developers",

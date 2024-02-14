@@ -3,6 +3,8 @@
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 import pytest
 
+import dockerflow.checks.registry
+
 
 @pytest.fixture
 def version_content():
@@ -15,3 +17,9 @@ def version_content():
         "commit": "<git hash>",
         "build": "uri to CI build job",
     }
+
+
+@pytest.fixture(autouse=True)
+def clear_checks():
+    yield
+    dockerflow.checks.registry.clear_checks()

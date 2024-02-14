@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+2024.1.0
+~~~~~~~~~~~~~~~~~~~~~
+
+- Log checks messages in heartbeat view (#86)
+
+- Adjust supported framework versions, add support for Python 3.11 (#76)
+
+- Centralize check registration / running logic (#85)
+
 2023.8.0
 ~~~~~~~~~~~~~~~~~~~~~
 

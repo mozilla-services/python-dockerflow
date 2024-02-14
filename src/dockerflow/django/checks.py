@@ -11,18 +11,6 @@ from django.utils.module_loading import import_string
 from .. import health
 
 
-def level_to_text(level):
-    statuses = {
-        0: "ok",
-        checks.messages.DEBUG: "debug",
-        checks.messages.INFO: "info",
-        checks.messages.WARNING: "warning",
-        checks.messages.ERROR: "error",
-        checks.messages.CRITICAL: "critical",
-    }
-    return statuses.get(level, "unknown")
-
-
 def check_database_connected(app_configs, **kwargs):
     """
     A Django check to see if connecting to the configured default
@@ -119,7 +107,6 @@ def register():
         [
             "dockerflow.django.checks.check_database_connected",
             "dockerflow.django.checks.check_migrations_applied",
-            # 'dockerflow.django.checks.check_redis_connected',
         ],
     )
     for check_path in check_paths:

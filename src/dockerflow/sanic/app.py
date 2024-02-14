@@ -2,17 +2,18 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
-import functools
 import logging
 import time
 import uuid
-from collections import OrderedDict
+import warnings
 from inspect import isawaitable
 
 from sanic import response
 
+from dockerflow import checks
+
 from .. import version
-from . import checks
+from .checks import check_redis_connected
 
 
 class Dockerflow(object):
@@ -94,9 +95,6 @@ class Dockerflow(object):
         # without pre-configuration. See docs for how to set it up.
         self.summary_logger = logging.getLogger("request.summary")
 
-        # An ordered dictionary for storing custom Dockerflow checks in.
-        self.checks = OrderedDict()
-
         # A list of IDs of custom Dockerflow checks to ignore in case they
         # show up.
         self.silenced_checks = silenced_checks or []
@@ -111,16 +109,7 @@ class Dockerflow(object):
             self.init_app(app)
         # Initialize the built-in checks.
         if redis is not None:
-            self.init_check(checks.check_redis_connected, redis)
-
-    def init_check(self, check, obj):
-        """
-        Adds a given check callback with the provided object to the list
-        of checks. Useful for built-ins but also advanced custom checks.
-        """
-        self.logger.info("Adding extension check %s" % check.__name__)
-        partial = functools.wraps(check)(functools.partial(check, obj))
-        self.check(func=partial)
+            checks.register_partial(check_redis_connected, redis)
 
     def init_app(self, app):
         """
@@ -157,7 +146,7 @@ class Dockerflow(object):
         """
         extra = self.summary_extra(request)
         extra["errno"] = 500
-        self.summary_logger.error(str(exception), extra=extra)
+        self.summary_logger.error(str(exception), extra=extra, exc_info=exception)
         request.ctx.logged = True
 
     def summary_extra(self, request):
@@ -208,19 +197,6 @@ class Dockerflow(object):
         """
         return response.raw(b"", 200)
 
-    async def _heartbeat_check_detail(self, check):
-        result = check()
-        if isawaitable(result):
-            result = await result
-        errors = [e for e in result if e.id not in self.silenced_checks]
-        level = max([0] + [e.level for e in errors])
-
-        return {
-            "status": checks.level_to_text(level),
-            "level": level,
-            "messages": {e.id: e.msg for e in errors},
-        }
-
     async def _heartbeat_view(self, request):
         """
         Runs all the registered checks and returns a JSON response with either
@@ -229,24 +205,19 @@ class Dockerflow(object):
         Any check that returns a warning or worse (error, critical) will
         return a 500 response.
         """
-        details = {}
-        statuses = {}
-        level = 0
 
-        for name, check in self.checks.items():
-            detail = await self._heartbeat_check_detail(check)
-            statuses[name] = detail["status"]
-            level = max(level, detail["level"])
-            if detail["level"] > 0:
-                details[name] = detail
+        check_results = await checks.run_checks_async(
+            checks.get_checks().items(),
+            silenced_check_ids=self.silenced_checks,
+        )
 
         payload = {
-            "status": checks.level_to_text(level),
-            "checks": statuses,
-            "details": details,
+            "status": checks.level_to_text(check_results.level),
+            "checks": check_results.statuses,
+            "details": check_results.details,
         }
 
-        if level < checks.ERROR:
+        if check_results.level < checks.ERROR:
             status_code = 200
         else:
             status_code = 500
@@ -284,47 +255,29 @@ class Dockerflow(object):
         """
         self._version_callback = func
 
+    @property
+    def checks(self):
+        """
+        Backwards compatibility alias.
+        """
+        message = (
+            "`dockerflow.checks` is deprecated, use `checks.get_checks()` instead."
+        )
+        warnings.warn(message, DeprecationWarning)
+        return checks.get_checks()
+
+    def init_check(self, check, obj):
+        """
+        Backwards compatibility method.
+        """
+        message = "`dockerflow.init_check()` is deprecated, use `checks.register_partial()` instead."
+        warnings.warn(message, DeprecationWarning)
+        return checks.register_partial(check, obj)
+
     def check(self, func=None, name=None):
         """
-        A decorator to register a new Dockerflow check to be run
-        when the /__heartbeat__ endpoint is called., e.g.::
-
-            from dockerflow.sanic import checks
-
-            @dockerflow.check
-            async def storage_reachable():
-                try:
-                    acme.storage.ping()
-                except SlowConnectionException as exc:
-                    return [checks.Warning(exc.msg, id='acme.health.0002')]
-                except StorageException as exc:
-                    return [checks.Error(exc.msg, id='acme.health.0001')]
-
-        also works without async::
-
-            @dockerflow.check
-            def storage_reachable():
-                # ...
-
-        or using a custom name::
-
-            @dockerflow.check(name='acme-storage-check')
-            async def storage_reachable():
-                # ...
-
+        Backwards compatibility method.
         """
-        if func is None:
-            return functools.partial(self.check, name=name)
-
-        if name is None:
-            name = func.__name__
-
-        self.logger.info("Registered Dockerflow check %s", name)
-
-        @functools.wraps(func)
-        def decorated_function(*args, **kwargs):
-            self.logger.info("Called Dockerflow check %s", name)
-            return func(*args, **kwargs)
-
-        self.checks[name] = decorated_function
-        return decorated_function
+        message = "`dockerflow.check()` is deprecated, use `checks.register()` instead."
+        warnings.warn(message, DeprecationWarning)
+        return checks.register(func, name)
