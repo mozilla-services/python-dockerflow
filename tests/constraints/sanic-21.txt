@@ -1,3 +1,4 @@
 Sanic>=21,<22
 websockets<11
 sanic-testing<22
+sanic-redis<0.5

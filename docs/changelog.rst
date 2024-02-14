@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+2024.X.X (unreleased)
+~~~~~~~~~~~~~~~~~~~~~
+
+- Drop support of Python 3.7
+
+
 2024.1.0
 ~~~~~~~~~~~~~~~~~~~~~
 
