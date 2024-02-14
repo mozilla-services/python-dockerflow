@@ -24,14 +24,13 @@ class MozlogRequestSummaryLogger:
     ) -> None:
         self.app = app
         if logger is None:
-            self.logger = logging.getLogger("request.summary")
-            self.logger.setLevel(logging.INFO)
+            logger = logging.getLogger("request.summary")
+            logger.setLevel(logging.INFO)
             handler = logging.StreamHandler(sys.stdout)
             handler.setLevel(logging.INFO)
             handler.setFormatter(JsonLogFormatter)
-            self.logger.addHandler(handler)
-        else:
-            self.logger = logger
+            logger.addHandler(handler)
+        self.logger = logger
 
     async def __call__(
         self, scope: HTTPScope, receive: ASGIReceiveCallable, send: ASGISendCallable

@@ -56,8 +56,19 @@ def test_mozlog(client, caplog):
     assert record.agent == "dockerflow/tests"
     assert record.lang == "en-US"
     assert record.method == "GET"
+    assert record.code == 200
     assert record.path == "/__lbheartbeat__"
     assert isinstance(record.t, int)
+
+
+def test_mozlog_failure(client, mocker, caplog):
+    mocker.patch("dockerflow.fastapi.views.get_version", side_effect=ValueError("crash"))
+
+    with pytest.raises(ValueError):
+        client.get("/__version__")
+
+    record = caplog.records[0]
+    assert record.code == 500
 
 
 VERSION_CONTENT = {"foo": "bar"}
@@ -116,10 +127,11 @@ def test_heartbeat_get(client):
 
 def test_heartbeat_head(client):
     @checks.register
-    def return_error():
-        return [checks.Error("BOOM", id="foo")]
+    def return_sucess():
+        return [checks.Info("Nice", id="foo")]
 
     response = client.head("/__heartbeat__")
+    assert response.status_code == 200
     assert response.content == b""
 
 
