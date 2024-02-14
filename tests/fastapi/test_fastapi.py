@@ -62,7 +62,9 @@ def test_mozlog(client, caplog):
 
 
 def test_mozlog_failure(client, mocker, caplog):
-    mocker.patch("dockerflow.fastapi.views.get_version", side_effect=ValueError("crash"))
+    mocker.patch(
+        "dockerflow.fastapi.views.get_version", side_effect=ValueError("crash")
+    )
 
     with pytest.raises(ValueError):
         client.get("/__version__")
