@@ -5,7 +5,6 @@ from fastapi import Request, Response
 from dockerflow import checks
 
 from ..version import get_version
-from .checks import run_heartbeat_checks
 
 
 def lbheartbeat():
@@ -13,27 +12,22 @@ def lbheartbeat():
 
 
 def heartbeat(response: Response):
-    check_results = run_heartbeat_checks()
-    details = {}
-    statuses = {}
-    level = 0
+    check_results = checks.run_checks(
+        checks.get_checks().items(),
+    )
 
-    for name, detail in check_results:
-        statuses[name] = detail.status
-        level = max(level, detail.level)
-        if detail.level > 0:
-            details[name] = detail
+    payload = {
+        "status": checks.level_to_text(check_results.level),
+        "checks": check_results.statuses,
+        "details": check_results.details,
+    }
 
-    if level < checks.ERROR:
+    if check_results.level < checks.ERROR:
         response.status_code = 200
     else:
         response.status_code = 500
 
-    return {
-        "status": checks.level_to_text(level),
-        "checks": statuses,
-        "details": details,
-    }
+    return payload
 
 
 def version(request: Request):

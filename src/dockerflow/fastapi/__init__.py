@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 from fastapi.routing import APIRoute
 
-from .checks import register_heartbeat_check  # noqa
 from .views import heartbeat, lbheartbeat, version
 
 router = APIRouter(
