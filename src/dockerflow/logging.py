@@ -65,6 +65,7 @@ class JsonLogFormatter(logging.Formatter):
             "processName",
             "relativeCreated",
             "stack_info",
+            "taskName",
             "thread",
             "threadName",
         )
