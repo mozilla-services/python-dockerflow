@@ -11,3 +11,4 @@ router = APIRouter(
         APIRoute("/__version__", endpoint=version, methods=["GET"]),
     ],
 )
+"""This router adds the Dockerflow views."""
