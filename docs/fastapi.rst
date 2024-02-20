@@ -6,7 +6,7 @@ The package ``dockerflow.fastapi`` package implements various tools to support
 
 - A Python logging formatter following the `mozlog`_ format.
 
-- A Flask extension implements:
+- A FastAPI extension implements:
 
   - Emitting of `request.summary`_ log records based on request specific data.
 
