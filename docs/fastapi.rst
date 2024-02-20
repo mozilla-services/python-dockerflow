@@ -135,6 +135,11 @@ Dockerflow requires writing a `version object`_ to the file
 ``/app/version.json`` as seen from the docker container to be served under
 the URL path ``/__version__``.
 
+.. note::
+
+    The default ``/app`` location can be customized using the ``APP_DIR``
+    environment variable.
+
 To facilitate this python-dockerflow comes with a FastAPI view to read the
 file under path the parent directory of the app root. See the
 :class:`FastAPI API docs <~fastapi.FastAPI>` for more information about the
