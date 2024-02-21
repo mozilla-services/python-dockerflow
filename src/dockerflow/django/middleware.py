@@ -1,6 +1,7 @@
 import logging
 import re
 import time
+import typing
 import uuid
 
 from django.utils.deprecation import MiddlewareMixin
@@ -14,7 +15,7 @@ class DockerflowMiddleware(MiddlewareMixin):
     https://github.com/mozilla-services/Dockerflow/blob/main/docs/mozlog.md
     """
 
-    viewpatterns = [
+    viewpatterns: typing.ClassVar = [
         (re.compile(r"/__version__/?$"), views.version),
         (re.compile(r"/__heartbeat__/?$"), views.heartbeat),
         (re.compile(r"/__lbheartbeat__/?$"), views.lbheartbeat),

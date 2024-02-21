@@ -16,7 +16,7 @@ select = [
     # eradicate commented code
     "ERA",
     # ruff lint
-    # "RUF",
+    "RUF",
 ]
 ignore = [
     # `format` will wrap lines.

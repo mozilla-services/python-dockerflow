@@ -4,7 +4,7 @@ import logging
 from logging.config import fileConfig
 
 from alembic import context  # no:qa
-from flask import current_app  # noqa
+from flask import current_app
 from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
