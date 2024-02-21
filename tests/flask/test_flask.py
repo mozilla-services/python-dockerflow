@@ -34,7 +34,7 @@ def load_user(user_id):
     return MockUser(user_id)
 
 
-@pytest.fixture
+@pytest.fixture()
 def app():
     app = Flask("dockerflow")
     app.secret_key = "super sekrit"
@@ -48,31 +48,31 @@ def client(app):
     return app.test_client()
 
 
-@pytest.fixture
+@pytest.fixture()
 def dockerflow(app):
     return Dockerflow(app)
 
 
 @pytest.fixture()
-def setup_request_summary_logger(dockerflow):
+def _setup_request_summary_logger(dockerflow):
     dockerflow.summary_logger.addHandler(logging.NullHandler())
     dockerflow.summary_logger.setLevel(logging.INFO)
 
 
-@pytest.fixture
+@pytest.fixture()
 def db(app):
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     return SQLAlchemy(app)
 
 
-@pytest.fixture
+@pytest.fixture()
 def migrate(app, db):
     test_migrations = os.path.join(os.path.dirname(__file__), "migrations")
     return Migrate(app, db, directory=test_migrations)
 
 
-@pytest.fixture
+@pytest.fixture()
 def redis_store(app):
     return FlaskRedis.from_custom_provider(FakeStrictRedis, app)
 
@@ -283,7 +283,8 @@ def assert_log_record(record, errno=0, level=logging.INFO):
 headers = {"User-Agent": "dockerflow/tests", "Accept-Language": "tlh"}
 
 
-def test_request_summary(caplog, app, client, setup_request_summary_logger):
+@pytest.mark.usefixtures("_setup_request_summary_logger")
+def test_request_summary(caplog, app, client):
     caplog.set_level(logging.INFO)
     with app.test_request_context("/"):
         client.get("/", headers=headers)
@@ -487,7 +488,7 @@ def test_check_migrations_applied_unapplied_migrations(mocker, app, db, migrate)
 
 
 @pytest.mark.parametrize(
-    "exception,error",
+    ("exception", "error"),
     [
         (redis.ConnectionError, health.ERROR_CANNOT_CONNECT_REDIS),
         (redis.RedisError, health.ERROR_REDIS_EXCEPTION),

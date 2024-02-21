@@ -20,19 +20,19 @@ from dockerflow.django.middleware import DockerflowMiddleware
 
 
 @pytest.fixture(autouse=True)
-def reset_checks():
+def _reset_checks():
     yield
     registry.registered_checks = set()
     registry.deployment_checks = set()
 
 
 @pytest.fixture(autouse=True)
-def setup_request_summary_logger(dockerflow_middleware):
+def _setup_request_summary_logger(dockerflow_middleware):
     dockerflow_middleware.summary_logger.addHandler(logging.NullHandler())
     dockerflow_middleware.summary_logger.setLevel(logging.INFO)
 
 
-@pytest.fixture
+@pytest.fixture()
 def dockerflow_middleware():
     return DockerflowMiddleware(get_response=HttpResponse())
 
@@ -55,7 +55,7 @@ def test_version_missing(dockerflow_middleware, mocker, rf):
     assert response.status_code == 404
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_heartbeat(client, settings):
     response = client.get("/__heartbeat__")
     assert response.status_code == 200
@@ -73,7 +73,7 @@ def test_heartbeat(client, settings):
     assert content.get("details") is None
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_heartbeat_debug(client, settings):
     settings.DOCKERFLOW_CHECKS = [
         "tests.django.django_checks.warning",
@@ -89,7 +89,7 @@ def test_heartbeat_debug(client, settings):
     assert content["details"]
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_heartbeat_silenced(client, settings):
     settings.DOCKERFLOW_CHECKS = [
         "tests.django.django_checks.warning",
@@ -107,8 +107,9 @@ def test_heartbeat_silenced(client, settings):
     assert "error" not in content["details"]
 
 
-@pytest.mark.django_db
-def test_heartbeat_logging(dockerflow_middleware, reset_checks, rf, settings, caplog):
+@pytest.mark.django_db()
+@pytest.mark.usefixtures("_reset_checks")
+def test_heartbeat_logging(dockerflow_middleware, rf, settings, caplog):
     request = rf.get("/__heartbeat__")
     settings.DOCKERFLOW_CHECKS = [
         "tests.django.django_checks.warning",
@@ -123,7 +124,7 @@ def test_heartbeat_logging(dockerflow_middleware, reset_checks, rf, settings, ca
     assert ("WARNING", "tests.checks.W001: some warning") in logged
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_lbheartbeat_makes_no_db_queries(dockerflow_middleware, rf):
     queries = CaptureQueriesContext(connection)
     request = rf.get("/__lbheartbeat__")
@@ -133,7 +134,7 @@ def test_lbheartbeat_makes_no_db_queries(dockerflow_middleware, rf):
     assert len(queries) == 0
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_redis_check(client, settings):
     settings.DOCKERFLOW_CHECKS = ["dockerflow.django.checks.check_redis_connected"]
     checks.register()
@@ -152,7 +153,7 @@ def assert_log_record(request, record, errno=0, level=logging.INFO):
     assert isinstance(record.t, int)
 
 
-@pytest.fixture
+@pytest.fixture()
 def dockerflow_request(rf):
     return rf.get("/", HTTP_USER_AGENT="dockerflow/tests", HTTP_ACCEPT_LANGUAGE="tlh")
 
@@ -233,7 +234,7 @@ def test_check_database_connected_misconfigured(mocker):
     assert errors[0].id == health.ERROR_MISCONFIGURED_DATABASE
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_check_database_connected_unsuable(mocker):
     mocker.patch("django.db.connection.is_usable", return_value=False)
     errors = checks.check_database_connected([])
@@ -241,7 +242,7 @@ def test_check_database_connected_unsuable(mocker):
     assert errors[0].id == health.ERROR_UNUSABLE_DATABASE
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_check_database_connected_success(mocker):
     errors = checks.check_database_connected([])
     assert errors == []
@@ -257,7 +258,7 @@ def test_check_migrations_applied_cannot_check_migrations(exception, mocker):
     assert errors[0].id == health.INFO_CANT_CHECK_MIGRATIONS
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_check_migrations_applied_unapplied_migrations(mocker):
     mock_loader = mocker.patch("django.db.migrations.loader.MigrationLoader")
     mock_loader.return_value.applied_migrations = ["spam", "eggs"]
@@ -291,7 +292,7 @@ def test_check_migrations_applied_unapplied_migrations(mocker):
 
 
 @pytest.mark.parametrize(
-    "exception,error",
+    ("exception", "error"),
     [
         (redis.ConnectionError, health.ERROR_CANNOT_CONNECT_REDIS),
         (NotImplementedError, health.ERROR_MISSING_REDIS_CLIENT),

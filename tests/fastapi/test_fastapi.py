@@ -20,12 +20,12 @@ def create_app():
     return app
 
 
-@pytest.fixture
+@pytest.fixture()
 def app():
     return create_app()
 
 
-@pytest.fixture
+@pytest.fixture()
 def client(app):
     return TestClient(app)
 
@@ -66,7 +66,7 @@ def test_mozlog_failure(client, mocker, caplog):
         "dockerflow.fastapi.views.get_version", side_effect=ValueError("crash")
     )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(expected_exception=ValueError):
         client.get("/__version__")
 
     record = caplog.records[0]

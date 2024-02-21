@@ -12,7 +12,7 @@ select = [
     # isort
     "I",
     # pytest style
-    # "PT",
+    "PT",
     # eradicate commented code
     # "ERA",
     # ruff lint
