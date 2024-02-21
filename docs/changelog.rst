@@ -1,11 +1,16 @@
 Changelog
 ---------
 
-2024.X.X (unreleased)
+2024.2.0
 ~~~~~~~~~~~~~~~~~~~~~
 
-- Drop support of Python 3.7
+- Stop testing Python 3.7 (#94)
 
+- Add support for Python 3.12 (#93)
+
+- Add support for FastAPI >= 0.100 (#81)
+
+- Add developer docs and fix release process (#92)
 
 2024.1.0
 ~~~~~~~~~~~~~~~~~~~~~
