@@ -1,6 +1,7 @@
 import logging
 import re
 import time
+import urllib
 import uuid
 
 from django.utils.deprecation import MiddlewareMixin
@@ -42,6 +43,7 @@ class DockerflowMiddleware(MiddlewareMixin):
             "lang": request.META.get("HTTP_ACCEPT_LANGUAGE", ""),
             "method": request.method,
             "path": request.path,
+            "querystring": urllib.parse.unquote(request.META.get("QUERY_STRING", "")),
         }
 
         # HACK: It's possible some other middleware has replaced the request we

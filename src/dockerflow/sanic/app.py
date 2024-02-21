@@ -4,6 +4,7 @@
 
 import logging
 import time
+import urllib
 import uuid
 import warnings
 from inspect import isawaitable
@@ -159,6 +160,7 @@ class Dockerflow(object):
             "lang": request.headers.get("Accept-Language", ""),
             "method": request.method,
             "path": request.path,
+            "querystring": urllib.parse.unquote(request.query_string),
             "uid": "",
         }
 

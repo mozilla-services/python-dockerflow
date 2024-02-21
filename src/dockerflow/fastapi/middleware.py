@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import sys
 import time
+import urllib
 from typing import Any, Dict
 
 from asgiref.typing import (
@@ -73,4 +74,5 @@ class MozlogRequestSummaryLogger:
             "code": info["response"]["status"],
             "lang": info["request_headers"].get("accept-language"),
             "t": int(request_duration_ms),
+            "querystring": urllib.parse.unquote(scope["query_string"].decode()),
         }

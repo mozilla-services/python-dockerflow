@@ -169,6 +169,17 @@ def test_request_summary(admin_user, caplog, dockerflow_middleware, dockerflow_r
     assert getattr(dockerflow_request, "uid", None) is None
 
 
+def test_request_summary_querystring(admin_user, caplog, dockerflow_middleware, rf):
+    request = rf.get("/?x=%D8%B4%D9%83%D8%B1")
+    response = dockerflow_middleware.process_request(request)
+    response = dockerflow_middleware.process_response(request, response)
+
+    assert len(caplog.records) == 1
+    record = caplog.records[0]
+    assert record.querystring == "x=شكر"
+    assert isinstance(record.t, int)
+
+
 def test_request_summary_admin_user(
     admin_user, caplog, dockerflow_middleware, dockerflow_request
 ):
