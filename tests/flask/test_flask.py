@@ -122,7 +122,6 @@ def test_version_callback(dockerflow, app):
 
 
 def test_heartbeat(app, dockerflow):
-    # app.debug = True
     response = app.test_client().get("/__heartbeat__")
     assert response.status_code == 200
 

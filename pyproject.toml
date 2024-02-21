@@ -14,7 +14,7 @@ select = [
     # pytest style
     "PT",
     # eradicate commented code
-    # "ERA",
+    "ERA",
     # ruff lint
     # "RUF",
 ]
