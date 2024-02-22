@@ -12,6 +12,11 @@ from dockerflow import checks
 
 from .signals import heartbeat_failed, heartbeat_passed
 
+HEARTBEAT_FAILED_STATUS_CODE = int(
+    getattr(settings, "DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE", "500")
+)
+
+
 version_callback = getattr(
     settings, "DOCKERFLOW_VERSION_CALLBACK", "dockerflow.version.get_version"
 )
@@ -62,7 +67,7 @@ def heartbeat(request):
         status_code = 200
         heartbeat_passed.send(sender=heartbeat, level=check_results.level)
     else:
-        status_code = 500
+        status_code = HEARTBEAT_FAILED_STATUS_CODE
         heartbeat_failed.send(sender=heartbeat, level=check_results.level)
 
     payload = {"status": checks.level_to_text(check_results.level)}
