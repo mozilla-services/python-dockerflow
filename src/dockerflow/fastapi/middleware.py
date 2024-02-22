@@ -66,7 +66,7 @@ class MozlogRequestSummaryLogger:
             info["request_headers"][header_key] = header_val
 
         request_duration_ms = (info["end_time"] - info["start_time"]) * 1000.0
-        return {
+        fields = {
             "agent": info["request_headers"].get("user-agent", ""),
             "path": scope["path"],
             "method": scope["method"],
@@ -74,3 +74,10 @@ class MozlogRequestSummaryLogger:
             "lang": info["request_headers"].get("accept-language"),
             "t": int(request_duration_ms),
         }
+        try:
+            # Log the request ID if it's set by the reverse proxy
+            # or by a library like `asgi-correlation-id`.
+            fields["rid"] = info["request_headers"]["x-request-id"]
+        except KeyError:
+            pass
+        return fields

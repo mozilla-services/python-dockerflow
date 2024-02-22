@@ -61,6 +61,18 @@ def test_mozlog(client, caplog):
     assert isinstance(record.t, int)
 
 
+def test_mozlog_request_id(client, caplog):
+    client.get(
+        "/__lbheartbeat__",
+        headers={
+            "X-Request-ID": "tracked-value",
+        },
+    )
+    record = caplog.records[0]
+
+    assert record.rid == "tracked-value"
+
+
 def test_mozlog_failure(client, mocker, caplog):
     mocker.patch(
         "dockerflow.fastapi.views.get_version", side_effect=ValueError("crash")
