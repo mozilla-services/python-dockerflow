@@ -4,6 +4,7 @@
 
 import logging
 import time
+import urllib
 import uuid
 import warnings
 from inspect import isawaitable
@@ -161,6 +162,9 @@ class Dockerflow(object):
             "path": request.path,
             "uid": "",
         }
+
+        if request.app.config.get("DOCKERFLOW_SUMMARY_LOG_QUERYSTRING", False):
+            out["querystring"] = urllib.parse.unquote(request.query_string)
 
         # the rid value to the current request ID
         try:

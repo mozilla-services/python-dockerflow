@@ -42,9 +42,11 @@ def test_lbheartbeat_head(client):
     assert response.content == b""
 
 
-def test_mozlog(client, caplog):
+def test_mozlog(app, client, caplog):
+    app.state.DOCKERFLOW_SUMMARY_LOG_QUERYSTRING = True
+
     client.get(
-        "/__lbheartbeat__",
+        "/__lbheartbeat__?x=شكر",
         headers={
             "User-Agent": "dockerflow/tests",
             "Accept-Language": "en-US",
@@ -58,6 +60,7 @@ def test_mozlog(client, caplog):
     assert record.method == "GET"
     assert record.code == 200
     assert record.path == "/__lbheartbeat__"
+    assert record.querystring == "x=شكر"
     assert isinstance(record.t, int)
 
 

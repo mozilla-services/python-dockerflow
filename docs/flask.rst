@@ -453,6 +453,10 @@ for at least the ``request.summary`` logger::
         }
     })
 
+In order to include querystrings in the request summary log, set this flag in :ref:`configuration <flask-config>`::
+
+    DOCKERFLOW_SUMMARY_LOG_QUERYSTRING = True
+
 .. _flask-static:
 
 Static content

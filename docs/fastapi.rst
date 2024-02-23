@@ -307,6 +307,15 @@ for at least the ``request.summary`` logger:
         }
     })
 
+
+In order to include querystrings in the request summary log, set this flag in the application state:
+
+.. code-block:: python
+
+    app.state.DOCKERFLOW_SUMMARY_LOG_QUERYSTRING = True
+
+
+
 .. _fastapi-static:
 
 Static content
