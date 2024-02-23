@@ -259,6 +259,16 @@ def test_request_summary(caplog, test_client):
     assert_log_record(caplog, rid=request.ctx.id)
 
 
+@pytest.mark.usefixtures("_setup_request_summary_logger")
+def test_request_summary_querystring(app, caplog, test_client):
+    app.config["DOCKERFLOW_SUMMARY_LOG_QUERYSTRING"] = True
+    _, _ = test_client.get("/?x=شكر", headers=headers)
+    records = [r for r in caplog.records if r.name == "request.summary"]
+    assert len(records) == 1
+    record = caplog.records[0]
+    assert record.querystring == "x=شكر"
+
+
 def test_request_summary_exception(app, caplog, dockerflow, test_client):
     @app.route("/exception")
     def exception_raiser(request):
