@@ -298,6 +298,7 @@ def test_request_summary(caplog, app, client, setup_request_summary_logger):
 
 
 def test_request_summary_querystring(caplog, app, client, setup_request_summary_logger):
+    app.config["DOCKERFLOW_SUMMARY_LOG_QUERYSTRING"] = True
     caplog.set_level(logging.INFO)
     with app.test_request_context("/"):
         client.get("/?x=شكر", headers=headers)

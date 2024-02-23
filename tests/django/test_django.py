@@ -169,7 +169,11 @@ def test_request_summary(admin_user, caplog, dockerflow_middleware, dockerflow_r
     assert getattr(dockerflow_request, "uid", None) is None
 
 
-def test_request_summary_querystring(admin_user, caplog, dockerflow_middleware, rf):
+def test_request_summary_querystring(
+    settings, admin_user, caplog, dockerflow_middleware, rf
+):
+    settings.DOCKERFLOW_SUMMARY_LOG_QUERYSTRING = True
+
     request = rf.get("/?x=%D8%B4%D9%83%D8%B1")
     response = dockerflow_middleware.process_request(request)
     response = dockerflow_middleware.process_response(request, response)

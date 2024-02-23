@@ -160,9 +160,11 @@ class Dockerflow(object):
             "lang": request.headers.get("Accept-Language", ""),
             "method": request.method,
             "path": request.path,
-            "querystring": urllib.parse.unquote(request.query_string),
             "uid": "",
         }
+
+        if request.app.config.get("DOCKERFLOW_SUMMARY_LOG_QUERYSTRING", False):
+            out["querystring"] = urllib.parse.unquote(request.query_string)
 
         # the rid value to the current request ID
         try:

@@ -257,8 +257,10 @@ class Dockerflow(object):
             "lang": flask.request.headers.get("Accept-Language", ""),
             "method": flask.request.method,
             "path": flask.request.path,
-            "querystring": flask.request.query_string.decode(),
         }
+
+        if flask.current_app.config.get("DOCKERFLOW_SUMMARY_LOG_QUERYSTRING", False):
+            out["querystring"] = flask.request.query_string.decode()
 
         # set the uid value to the current user ID
         user_id = self.user_id()

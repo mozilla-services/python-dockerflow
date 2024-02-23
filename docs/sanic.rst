@@ -452,6 +452,11 @@ Alternatively you can also pass the same logging config dictionary to the
 
     sanic = Sanic(__name__)
 
+In order to include querystrings in the request summary log, set this flag in :ref:`configuration <sanic-config>`::
+
+    DOCKERFLOW_SUMMARY_LOG_QUERYSTRING = True
+
+
 .. _sanic-static:
 
 Static content

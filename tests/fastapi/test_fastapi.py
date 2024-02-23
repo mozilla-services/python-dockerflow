@@ -42,7 +42,9 @@ def test_lbheartbeat_head(client):
     assert response.content == b""
 
 
-def test_mozlog(client, caplog):
+def test_mozlog(app, client, caplog):
+    app.state.DOCKERFLOW_SUMMARY_LOG_QUERYSTRING = True
+
     client.get(
         "/__lbheartbeat__?x=شكر",
         headers={
