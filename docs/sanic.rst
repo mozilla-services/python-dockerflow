@@ -369,8 +369,8 @@ spec:
         }
       }
 
-   :statuscode 200: no error
-   :statuscode 500: there was a warning or error
+   :statuscode 200: no error, with potential warnings
+   :statuscode 500: there was an error
 
 .. http:get:: /__lbheartbeat__
 
