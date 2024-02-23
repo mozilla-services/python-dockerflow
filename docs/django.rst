@@ -287,7 +287,7 @@ spec:
 .. http:get:: /__heartbeat__
 
    The heartbeat view will go through the list of configured Dockerflow
-   checks in the :ref:`DOCKERFLOW_CHECKS` setting, run each check, and, if 
+   checks in the :ref:`DOCKERFLOW_CHECKS` setting, run each check, and, if
    `settings.DEBUG` is `True`, add their results to a JSON response.
 
    The view will return HTTP responses with either a status code of 200 if
