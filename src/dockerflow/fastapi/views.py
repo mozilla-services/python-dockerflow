@@ -11,7 +11,11 @@ def lbheartbeat():
     return {"status": "ok"}
 
 
-def heartbeat(response: Response):
+def heartbeat(request: Request, response: Response):
+    FAILED_STATUS_CODE = int(
+        getattr(request.app.state, "DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE", "500")
+    )
+
     check_results = checks.run_checks(
         checks.get_checks().items(),
     )
@@ -25,7 +29,7 @@ def heartbeat(response: Response):
     if check_results.level < checks.ERROR:
         response.status_code = 200
     else:
-        response.status_code = 500
+        response.status_code = FAILED_STATUS_CODE
 
     return payload
 

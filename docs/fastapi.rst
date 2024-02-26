@@ -244,6 +244,9 @@ spec:
    :statuscode 200: no error
    :statuscode 500: there was an error
 
+   .. note:: Failed status code can be configured with the ``app.state.DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE``
+             attribute (eg. 503 instead of 500)
+
 .. http:get:: /__lbheartbeat__
 
    The view that simply returns a successful HTTP response so that a load
