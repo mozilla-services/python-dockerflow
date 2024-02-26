@@ -241,7 +241,7 @@ spec:
         }
       }
 
-   :statuscode 200: no error
+   :statuscode 200: no error, with potential warnings
    :statuscode 500: there was an error
 
    .. note:: Failed status code can be configured with the ``app.state.DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE``
