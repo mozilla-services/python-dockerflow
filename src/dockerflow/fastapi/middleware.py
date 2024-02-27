@@ -5,6 +5,7 @@ import sys
 import time
 from typing import Any, Dict
 
+from asgi_correlation_id import CorrelationIdMiddleware, correlation_id  # noqa
 from asgiref.typing import (
     ASGI3Application,
     ASGIReceiveCallable,
@@ -66,18 +67,12 @@ class MozlogRequestSummaryLogger:
             info["request_headers"][header_key] = header_val
 
         request_duration_ms = (info["end_time"] - info["start_time"]) * 1000.0
-        fields = {
+        return {
             "agent": info["request_headers"].get("user-agent", ""),
             "path": scope["path"],
             "method": scope["method"],
             "code": info["response"]["status"],
             "lang": info["request_headers"].get("accept-language"),
             "t": int(request_duration_ms),
+            "rid": correlation_id.get(),
         }
-        try:
-            # Log the request ID if it's set by the reverse proxy
-            # or by a library like `asgi-correlation-id`.
-            fields["rid"] = info["request_headers"]["x-request-id"]
-        except KeyError:
-            pass
-        return fields

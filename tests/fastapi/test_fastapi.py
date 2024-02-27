@@ -10,13 +10,17 @@ from fastapi.testclient import TestClient
 
 from dockerflow import checks
 from dockerflow.fastapi import router as dockerflow_router
-from dockerflow.fastapi.middleware import MozlogRequestSummaryLogger
+from dockerflow.fastapi.middleware import (
+    CorrelationIdMiddleware,
+    MozlogRequestSummaryLogger,
+)
 
 
 def create_app():
     app = FastAPI()
     app.include_router(dockerflow_router)
     app.add_middleware(MozlogRequestSummaryLogger)
+    app.add_middleware(CorrelationIdMiddleware, validator=None)
     return app
 
 
