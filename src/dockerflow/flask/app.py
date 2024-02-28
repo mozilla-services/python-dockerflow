@@ -259,6 +259,9 @@ class Dockerflow(object):
             "path": flask.request.path,
         }
 
+        if flask.current_app.config.get("DOCKERFLOW_SUMMARY_LOG_QUERYSTRING", False):
+            out["querystring"] = flask.request.query_string.decode()
+
         # set the uid value to the current user ID
         user_id = self.user_id()
         if user_id is None:
@@ -304,6 +307,11 @@ class Dockerflow(object):
         Any check that returns a warning or worse (error, critical) will
         return a 500 response.
         """
+        FAILED_STATUS_CODE = int(
+            flask.current_app.config.get(
+                "DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE", "500"
+            )
+        )
 
         check_results = checks.run_checks(
             checks.get_checks().items(),
@@ -324,7 +332,7 @@ class Dockerflow(object):
             heartbeat_passed.send(self, level=check_results.level)
             return render(status_code)
         else:
-            status_code = 500
+            status_code = FAILED_STATUS_CODE
             heartbeat_failed.send(self, level=check_results.level)
             raise HeartbeatFailure(response=render(status_code))
 

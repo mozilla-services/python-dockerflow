@@ -242,8 +242,11 @@ spec:
         }
       }
 
-   :statuscode 200: no error
+   :statuscode 200: no error, with potential warnings
    :statuscode 500: there was an error
+
+   .. note:: Failed status code can be configured with the ``app.state.DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE``
+             attribute (eg. 503 instead of 500)
 
 .. http:get:: /__lbheartbeat__
 
@@ -315,7 +318,13 @@ for at least the ``request.summary`` logger:
     })
 
 
-A unique ID is added to each log message, using the `asgi-correlation-id <https://github.com/snok/asgi-correlation-id>`_ package.
+In order to include querystrings in the request summary log, set this flag in the application state:
+
+.. code-block:: python
+
+    app.state.DOCKERFLOW_SUMMARY_LOG_QUERYSTRING = True
+
+A unique ID is added to each log message, using the `asgi-correlation-id <https://github.com/snok/asgi-correlation-id>`_ package and with the `RequestIdFilter` added in logging configuration as shown above.
 
 .. _fastapi-static:
 

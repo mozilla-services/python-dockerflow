@@ -389,8 +389,11 @@ spec:
         }
       }
 
-   :statuscode 200: no error
-   :statuscode 500: there was a warning or error
+   :statuscode 200: no error, with potential warnings
+   :statuscode 500: there was an error
+
+   .. note:: Failed status code can be configured with the ``DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE``
+             setting (eg. 503 instead of 500)
 
 .. http:get:: /__lbheartbeat__
 
@@ -452,6 +455,10 @@ for at least the ``request.summary`` logger::
             },
         }
     })
+
+In order to include querystrings in the request summary log, set this flag in :ref:`configuration <flask-config>`::
+
+    DOCKERFLOW_SUMMARY_LOG_QUERYSTRING = True
 
 .. _flask-static:
 

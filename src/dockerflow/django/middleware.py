@@ -1,8 +1,10 @@
 import logging
 import re
 import time
+import urllib
 import uuid
 
+from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
 
 from . import views
@@ -43,6 +45,11 @@ class DockerflowMiddleware(MiddlewareMixin):
             "method": request.method,
             "path": request.path,
         }
+
+        if getattr(settings, "DOCKERFLOW_SUMMARY_LOG_QUERYSTRING", False):
+            out["querystring"] = urllib.parse.unquote(
+                request.META.get("QUERY_STRING", "")
+            )
 
         # HACK: It's possible some other middleware has replaced the request we
         # modified earlier, so be sure to check for existence of these

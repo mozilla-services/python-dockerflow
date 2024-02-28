@@ -297,6 +297,17 @@ def test_request_summary(caplog, app, client, setup_request_summary_logger):
         assert getattr(request, "uid", None) is None
 
 
+def test_request_summary_querystring(caplog, app, client, setup_request_summary_logger):
+    app.config["DOCKERFLOW_SUMMARY_LOG_QUERYSTRING"] = True
+    caplog.set_level(logging.INFO)
+    with app.test_request_context("/"):
+        client.get("/?x=شكر", headers=headers)
+
+        assert len(caplog.records) == 1
+        record = caplog.records[0]
+        assert record.querystring == "x=شكر"
+
+
 def test_preserves_existing_request_id(dockerflow, app):
     with app.test_client() as test_client:
 

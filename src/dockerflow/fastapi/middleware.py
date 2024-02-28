@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import sys
 import time
+import urllib
 from typing import Any, Dict
 
 from asgi_correlation_id import CorrelationIdMiddleware, correlation_id  # noqa
@@ -67,7 +68,7 @@ class MozlogRequestSummaryLogger:
             info["request_headers"][header_key] = header_val
 
         request_duration_ms = (info["end_time"] - info["start_time"]) * 1000.0
-        return {
+        fields = {
             "agent": info["request_headers"].get("user-agent", ""),
             "path": scope["path"],
             "method": scope["method"],
@@ -76,3 +77,7 @@ class MozlogRequestSummaryLogger:
             "t": int(request_duration_ms),
             "rid": correlation_id.get(),
         }
+
+        if getattr(scope["app"].state, "DOCKERFLOW_SUMMARY_LOG_QUERYSTRING", False):
+            fields["querystring"] = urllib.parse.unquote(scope["query_string"].decode())
+        return fields

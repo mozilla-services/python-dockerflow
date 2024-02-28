@@ -4,6 +4,7 @@
 
 import logging
 import time
+import urllib
 import uuid
 import warnings
 from inspect import isawaitable
@@ -162,6 +163,9 @@ class Dockerflow(object):
             "uid": "",
         }
 
+        if request.app.config.get("DOCKERFLOW_SUMMARY_LOG_QUERYSTRING", False):
+            out["querystring"] = urllib.parse.unquote(request.query_string)
+
         # the rid value to the current request ID
         try:
             out["rid"] = request.ctx.id
@@ -205,6 +209,9 @@ class Dockerflow(object):
         Any check that returns a warning or worse (error, critical) will
         return a 500 response.
         """
+        FAILED_STATUS_CODE = int(
+            request.app.config.get("DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE", "500")
+        )
 
         check_results = await checks.run_checks_async(
             checks.get_checks().items(),
@@ -220,7 +227,7 @@ class Dockerflow(object):
         if check_results.level < checks.ERROR:
             status_code = 200
         else:
-            status_code = 500
+            status_code = FAILED_STATUS_CODE
 
         return response.json(payload, status_code)
 

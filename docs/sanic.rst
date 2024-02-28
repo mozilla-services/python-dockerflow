@@ -369,8 +369,11 @@ spec:
         }
       }
 
-   :statuscode 200: no error
-   :statuscode 500: there was a warning or error
+   :statuscode 200: no error, with potential warnings
+   :statuscode 500: there was an error
+
+   .. note:: Failed status code can be configured with the ``DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE``
+             setting (eg. 503 instead of 500)
 
 .. http:get:: /__lbheartbeat__
 
@@ -451,6 +454,11 @@ Alternatively you can also pass the same logging config dictionary to the
     dictConfig(log_config)
 
     sanic = Sanic(__name__)
+
+In order to include querystrings in the request summary log, set this flag in :ref:`configuration <sanic-config>`::
+
+    DOCKERFLOW_SUMMARY_LOG_QUERYSTRING = True
+
 
 .. _sanic-static:
 
