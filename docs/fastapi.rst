@@ -293,10 +293,16 @@ for at least the ``request.summary`` logger:
                 'logger_name': 'myproject'
             }
         },
+        'filters': {
+            'request_id': {
+                '()': 'dockerflow.fastapi.RequestIdFilter',
+            },
+        },
         'handlers': {
             'console': {
                 'level': 'DEBUG',
                 'class': 'logging.StreamHandler',
+                'filters': ['request_id'],
                 'formatter': 'json'
             },
         },
