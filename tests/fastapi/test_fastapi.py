@@ -9,14 +9,19 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from dockerflow import checks
+from dockerflow.fastapi import RequestIdLogFilter
 from dockerflow.fastapi import router as dockerflow_router
-from dockerflow.fastapi.middleware import MozlogRequestSummaryLogger
+from dockerflow.fastapi.middleware import (
+    CorrelationIdMiddleware,
+    MozlogRequestSummaryLogger,
+)
 
 
 def create_app():
     app = FastAPI()
     app.include_router(dockerflow_router)
     app.add_middleware(MozlogRequestSummaryLogger)
+    app.add_middleware(CorrelationIdMiddleware, validator=None)
     return app
 
 
@@ -62,6 +67,52 @@ def test_mozlog(app, client, caplog):
     assert record.path == "/__lbheartbeat__"
     assert record.querystring == "x=شكر"
     assert isinstance(record.t, int)
+
+
+def test_mozlog_request_id(client, caplog):
+    client.get(
+        "/__lbheartbeat__",
+        headers={
+            "X-Request-ID": "tracked-value",
+        },
+    )
+    record = caplog.records[0]
+
+    assert record.rid == "tracked-value"
+
+
+def test_mozlog_without_correlation_id_middleware(client, caplog):
+    app = FastAPI()
+    app.include_router(dockerflow_router)
+    app.add_middleware(MozlogRequestSummaryLogger)
+    client = TestClient(app)
+
+    client.get("/__lbheartbeat__")
+    record = caplog.records[0]
+
+    assert record.rid is None
+
+
+def test_request_id_passed_to_all_log_messages(caplog):
+    handler = logging.StreamHandler()
+    handler.addFilter(RequestIdLogFilter())
+    _logger = logging.getLogger("some_logger")
+    _logger.addHandler(handler)
+
+    app = create_app()
+
+    @app.get("/ping")
+    def ping():
+        logger = logging.getLogger("some_logger")
+        logger.info("returning pong")
+        return "pong"
+
+    client = TestClient(app)
+
+    client.get("/ping")
+
+    log_message = next(r for r in caplog.records if r.name == "some_logger")
+    assert log_message.rid is not None
 
 
 def test_mozlog_failure(client, mocker, caplog):

@@ -6,6 +6,7 @@ import time
 import urllib
 from typing import Any, Dict
 
+from asgi_correlation_id import CorrelationIdMiddleware, correlation_id  # noqa
 from asgiref.typing import (
     ASGI3Application,
     ASGIReceiveCallable,
@@ -74,6 +75,7 @@ class MozlogRequestSummaryLogger:
             "code": info["response"]["status"],
             "lang": info["request_headers"].get("accept-language"),
             "t": int(request_duration_ms),
+            "rid": correlation_id.get(),
         }
 
         if getattr(scope["app"].state, "DOCKERFLOW_SUMMARY_LOG_QUERYSTRING", False):
