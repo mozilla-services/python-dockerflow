@@ -6,7 +6,7 @@ import pytest
 import dockerflow.checks.registry
 
 
-@pytest.fixture
+@pytest.fixture()
 def version_content():
     """
     as documented on https://github.com/mozilla-services/Dockerflow/blob/main/docs/version_object.md
@@ -20,6 +20,6 @@ def version_content():
 
 
 @pytest.fixture(autouse=True)
-def clear_checks():
+def _clear_checks():
     yield
     dockerflow.checks.registry.clear_checks()

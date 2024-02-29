@@ -15,7 +15,7 @@ from dockerflow.logging import JsonLogFormatter
 
 
 @pytest.fixture()
-def reset_logging():
+def _reset_logging():
     logging.shutdown()
     reload(logging)
 
@@ -31,7 +31,8 @@ def assert_records(records):
     return details
 
 
-def test_initialization_from_ini(reset_logging, caplog, tmpdir):
+@pytest.mark.usefixtures("_reset_logging")
+def test_initialization_from_ini(caplog, tmpdir):
     ini_content = textwrap.dedent(
         """
     [loggers]
@@ -229,7 +230,5 @@ JSON_LOGGING_SCHEMA = json.loads(
         }
     }
 }
-""".replace(
-        "\\", "\\\\"
-    )
+""".replace("\\", "\\\\")
 )  # HACK: Fix escaping for easy copy/paste
