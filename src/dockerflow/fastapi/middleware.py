@@ -6,7 +6,6 @@ import time
 import urllib
 from typing import Any, Dict
 
-from asgi_correlation_id import CorrelationIdMiddleware, correlation_id  # noqa
 from asgiref.typing import (
     ASGI3Application,
     ASGIReceiveCallable,
@@ -15,7 +14,37 @@ from asgiref.typing import (
     HTTPScope,
 )
 
-from ..logging import JsonLogFormatter
+from ..logging import JsonLogFormatter, get_or_generate_request_id, request_id_context
+
+
+class RequestIdMiddleware:
+    def __init__(
+        self,
+        app: ASGI3Application,
+    ) -> None:
+        self.app = app
+
+    async def __call__(
+        self, scope: HTTPScope, receive: ASGIReceiveCallable, send: ASGISendCallable
+    ) -> None:
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+
+        headers = {}
+        for name, value in scope["headers"]:
+            header_key = name.decode("latin1").lower()
+            header_val = value.decode("latin1")
+            headers[header_key] = header_val
+
+        rid = get_or_generate_request_id(
+            headers,
+            header_name=getattr(
+                scope["app"].state, "DOCKERFLOW_REQUEST_ID_HEADER_NAME", None
+            ),
+        )
+        request_id_context.set(rid)
+
+        await self.app(scope, receive, send)
 
 
 class MozlogRequestSummaryLogger:
@@ -75,7 +104,7 @@ class MozlogRequestSummaryLogger:
             "code": info["response"]["status"],
             "lang": info["request_headers"].get("accept-language"),
             "t": int(request_duration_ms),
-            "rid": correlation_id.get(),
+            "rid": request_id_context.get(),
         }
 
         if getattr(scope["app"].state, "DOCKERFLOW_SUMMARY_LOG_QUERYSTRING", False):

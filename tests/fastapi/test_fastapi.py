@@ -1,6 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
+import io
 import json
 import logging
 
@@ -9,19 +10,19 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from dockerflow import checks
-from dockerflow.fastapi import RequestIdLogFilter
 from dockerflow.fastapi import router as dockerflow_router
 from dockerflow.fastapi.middleware import (
-    CorrelationIdMiddleware,
     MozlogRequestSummaryLogger,
+    RequestIdMiddleware,
 )
+from dockerflow.logging import JsonLogFormatter, RequestIdLogFilter
 
 
 def create_app():
     app = FastAPI()
     app.include_router(dockerflow_router)
     app.add_middleware(MozlogRequestSummaryLogger)
-    app.add_middleware(CorrelationIdMiddleware, validator=None)
+    app.add_middleware(RequestIdMiddleware)
     return app
 
 
@@ -94,8 +95,11 @@ def test_mozlog_without_correlation_id_middleware(client, caplog):
 
 
 def test_request_id_passed_to_all_log_messages(caplog):
-    handler = logging.StreamHandler()
+    buffer = io.StringIO()
+    handler = logging.StreamHandler(stream=buffer)
     handler.addFilter(RequestIdLogFilter())
+    handler.setFormatter(JsonLogFormatter())
+
     _logger = logging.getLogger("some_logger")
     _logger.addHandler(handler)
 
@@ -111,8 +115,10 @@ def test_request_id_passed_to_all_log_messages(caplog):
 
     client.get("/ping")
 
+    parsed_log = json.parse(buffer.getvalue())
     log_message = next(r for r in caplog.records if r.name == "some_logger")
     assert log_message.rid is not None
+    assert "rid" in parsed_log["Fields"]
 
 
 def test_mozlog_failure(client, mocker, caplog):

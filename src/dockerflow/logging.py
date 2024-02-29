@@ -8,6 +8,9 @@ import logging
 import socket
 import sys
 import traceback
+import uuid
+from contextvars import ContextVar
+from typing import Optional
 
 
 class SafeJSONEncoder(json.JSONEncoder):
@@ -153,3 +156,28 @@ def safer_format_traceback(exc_typ, exc_val, exc_tb):
     lines.append("%r\n" % (exc_typ,))
     lines.append("%r\n" % (exc_val,))
     return "".join(lines)
+
+
+request_id_context: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
+
+
+def get_or_generate_request_id(headers: dict, header_name: Optional[str] = None) -> str:
+    """
+    Read the request ID from the headers, and generate one if missing.
+    """
+    header_name = header_name or "x-request-id"
+    rid = headers.get(header_name, "")
+    if not rid:
+        rid = str(uuid.uuid4())
+    return rid
+
+
+class RequestIdLogFilter(logging.Filter):
+    """Logging filter to attach request IDs to log records"""
+
+    def filter(self, record: "logging.LogRecord") -> bool:
+        """
+        Attach the request ID to the log record.
+        """
+        record.rid = request_id_context.get(None)
+        return True

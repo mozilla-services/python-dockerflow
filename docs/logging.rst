@@ -39,11 +39,17 @@ this::
                 'logger_name': 'myproject'
             }
         },
+        'filters': {
+            'request_id': {
+                '()': 'dockerflow.logging.RequestIdFilter',
+            },
+        },
         'handlers': {
             'console': {
                 'level': 'DEBUG',
                 'class': 'logging.StreamHandler',
-                'formatter': 'json'
+                'formatter': 'json',
+                'filters': ['request_id']
             },
         },
         'loggers': {
@@ -80,6 +86,12 @@ thing as the dictionary based configuratio above:
     [formatters]
     keys = json
 
+    [filters]
+    keys = request_id
+
+    [filter_request_id]
+    class = dockerflow.logging.RequestIdFilter
+
     [logger_root]
     level = INFO
     handlers = console
@@ -94,6 +106,7 @@ thing as the dictionary based configuratio above:
     level = DEBUG
     args = (sys.stdout,)
     formatter = json
+    filters = request_id
 
     [formatter_json]
     class = dockerflow.logging.JsonLogFormatter

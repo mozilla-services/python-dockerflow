@@ -4,13 +4,13 @@
 import logging
 import os
 import time
-import uuid
 import warnings
 
 import flask
 from werkzeug.exceptions import InternalServerError
 
 from dockerflow import checks
+from dockerflow.logging import get_or_generate_request_id, request_id_context
 
 from .. import version
 from .checks import (
@@ -37,6 +37,20 @@ except ImportError:
 
 class HeartbeatFailure(InternalServerError):
     pass
+
+
+def extract_request_id(request):
+    """Extract request ID from request."""
+    rid = get_or_generate_request_id(
+        flask.request.headers,
+        header_name=flask.current_app.config.get(
+            "DOCKERFLOW_REQUEST_ID_HEADER_NAME", None
+        ),
+    )
+    request_id_context.set(rid)
+    flask.g._request_id = rid  # For retro-compatibility and tests.
+    if not hasattr(flask.g, "request_id"):
+        flask.g.request_id = rid
 
 
 class Dockerflow(object):
@@ -188,9 +202,7 @@ class Dockerflow(object):
         """
         The before_request callback.
         """
-        flask.g._request_id = str(uuid.uuid4())
-        if not hasattr(flask.g, "request_id"):
-            flask.g.request_id = flask.g._request_id
+        extract_request_id(flask.request)
         flask.g._start_timestamp = time.time()
 
     def _after_request(self, response):
@@ -269,9 +281,7 @@ class Dockerflow(object):
         out["uid"] = user_id
 
         # the rid value to the current request ID
-        request_id = flask.g.get("_request_id", None)
-        if request_id is not None:
-            out["rid"] = request_id
+        out["rid"] = request_id_context.get()
 
         # and the t value to the time it took to render
         start_timestamp = flask.g.get("_start_timestamp", None)

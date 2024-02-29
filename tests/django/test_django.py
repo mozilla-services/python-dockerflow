@@ -214,8 +214,8 @@ def test_request_summary_failed_request(
 ):
     class HostileMiddleware(MiddlewareMixin):
         def process_request(self, request):
-            # simulating resetting request changes
             delattr(request, "_id")
+            # simulating resetting request changes
             delattr(request, "_start_timestamp")
 
         def process_response(self, request, response):
@@ -228,7 +228,7 @@ def test_request_summary_failed_request(
     dockerflow_middleware.process_response(dockerflow_request, response)
     assert len(caplog.records) == 1
     record = caplog.records[0]
-    assert getattr(record, "rid", None) is None
+    assert getattr(record, "rid", None) is not None
     assert getattr(record, "t", None) is None
 
 

@@ -1,4 +1,3 @@
 fastapi
 asgiref
-asgi-correlation-id
 httpx
