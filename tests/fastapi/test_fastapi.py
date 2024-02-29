@@ -115,7 +115,7 @@ def test_request_id_passed_to_all_log_messages(caplog):
 
     client.get("/ping")
 
-    parsed_log = json.parse(buffer.getvalue())
+    parsed_log = json.loads(buffer.getvalue())
     log_message = next(r for r in caplog.records if r.name == "some_logger")
     assert log_message.rid is not None
     assert "rid" in parsed_log["Fields"]
