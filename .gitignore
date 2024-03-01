@@ -10,5 +10,6 @@ build
 dist
 *.pyc
 .pytest_cache/
+.ruff_cache/
 # dump.rdb is created by redis-server, needed to run tests
 dump.rdb

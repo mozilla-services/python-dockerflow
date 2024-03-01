@@ -51,7 +51,7 @@ async def fake_redis(*args, **kw):
     return FakeRedis(*args, **kw)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def app():
     app = Sanic(f"dockerflow-{uuid.uuid4().hex}")
 
@@ -64,24 +64,24 @@ def app():
     return app
 
 
-@pytest.fixture
+@pytest.fixture()
 def dockerflow(app):
     return Dockerflow(app)
 
 
 @pytest.fixture()
-def setup_request_summary_logger(dockerflow):
+def _setup_request_summary_logger(dockerflow):
     dockerflow.summary_logger.addHandler(logging.NullHandler())
     dockerflow.summary_logger.setLevel(logging.INFO)
 
 
-@pytest.fixture
+@pytest.fixture()
 def dockerflow_redis(app):
     app.config["REDIS"] = {"address": "redis://:password@localhost:6379/0"}
     return Dockerflow(app, redis=SanicRedis(app))
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_client(app):
     return SanicTestClient(app)
 
@@ -210,7 +210,7 @@ def test_redis_check(dockerflow_redis, mocker, test_client):
 
 
 @pytest.mark.parametrize(
-    "error,messages",
+    ("error", "messages"),
     [
         (
             "connection",
@@ -251,16 +251,16 @@ def assert_log_record(caplog, errno=0, level=logging.INFO, rid=None, t=int, path
 headers = {"User-Agent": "dockerflow/tests", "Accept-Language": "tlh"}
 
 
-def test_request_summary(caplog, setup_request_summary_logger, test_client):
+@pytest.mark.usefixtures("_setup_request_summary_logger")
+def test_request_summary(caplog, test_client):
     request, _ = test_client.get(headers=headers)
     assert isinstance(request.ctx.start_timestamp, float)
     assert request.ctx.id is not None
     assert_log_record(caplog, rid=request.ctx.id)
 
 
-def test_request_summary_querystring(
-    app, caplog, setup_request_summary_logger, test_client
-):
+@pytest.mark.usefixtures("_setup_request_summary_logger")
+def test_request_summary_querystring(app, caplog, test_client):
     app.config["DOCKERFLOW_SUMMARY_LOG_QUERYSTRING"] = True
     _, _ = test_client.get("/?x=شكر", headers=headers)
     records = [r for r in caplog.records if r.name == "request.summary"]
@@ -281,9 +281,8 @@ def test_request_summary_exception(app, caplog, dockerflow, test_client):
     assert record.getMessage() == "exception message"
 
 
-def test_request_summary_failed_request(
-    app, caplog, setup_request_summary_logger, test_client
-):
+@pytest.mark.usefixtures("_setup_request_summary_logger")
+def test_request_summary_failed_request(app, caplog, test_client):
     @app.middleware
     def hostile_callback(request):
         del request.ctx.id
