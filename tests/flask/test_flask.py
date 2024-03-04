@@ -13,7 +13,12 @@ from flask_login import LoginManager, current_user, login_user
 from flask_login.mixins import UserMixin
 from flask_migrate import Migrate
 from flask_redis import FlaskRedis
-from flask_sqlalchemy import SQLAlchemy, get_debug_queries
+from flask_sqlalchemy import SQLAlchemy
+try:
+    from flask_sqlalchemy.record_queries import get_recorded_queries
+except ImportError as e:
+    # flask-sqlalchemy < 3
+    from flask_sqlalchemy import get_debug_queries as get_recorded_queries
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
 from dockerflow import checks, health
@@ -186,10 +191,10 @@ def test_heartbeat_logging(app, dockerflow, caplog):
 
 def test_lbheartbeat_makes_no_db_queries(dockerflow, app):
     with app.app_context():
-        assert len(get_debug_queries()) == 0
+        assert len(get_recorded_queries()) == 0
         response = app.test_client().get("/__lbheartbeat__")
         assert response.status_code == 200
-        assert len(get_debug_queries()) == 0
+        assert len(get_recorded_queries()) == 0
 
 
 def test_full_redis_check(mocker):
