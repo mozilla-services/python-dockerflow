@@ -1,7 +1,6 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
-import io
 import json
 import logging
 
@@ -95,13 +94,8 @@ def test_mozlog_without_correlation_id_middleware(client, caplog):
 
 
 def test_request_id_passed_to_all_log_messages(caplog):
-    buffer = io.StringIO()
-    handler = logging.StreamHandler(stream=buffer)
-    handler.addFilter(RequestIdLogFilter())
-    handler.setFormatter(JsonLogFormatter())
-
-    _logger = logging.getLogger("some_logger")
-    _logger.addHandler(handler)
+    caplog.handler.addFilter(RequestIdLogFilter())
+    caplog.handler.setFormatter(JsonLogFormatter())
 
     app = create_app()
 
@@ -115,9 +109,9 @@ def test_request_id_passed_to_all_log_messages(caplog):
 
     client.get("/ping")
 
-    parsed_log = json.loads(buffer.getvalue())
     log_message = next(r for r in caplog.records if r.name == "some_logger")
     assert log_message.rid is not None
+    parsed_log = json.loads(caplog.text.splitlines()[0])
     assert "rid" in parsed_log["Fields"]
 
 
