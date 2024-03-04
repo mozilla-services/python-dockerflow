@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-2024.2.1
+2024.3.0
 ~~~~~~~~~~~~~~~~~~~~~
 
 - Add request correlation ID support (#101).
