@@ -5,6 +5,7 @@
 This is a minor port of the Django checks system messages to be used
 for Dockerflow checks of the Flask and Sanic extensions.
 """
+
 # Levels
 DEBUG = 10
 INFO = 20

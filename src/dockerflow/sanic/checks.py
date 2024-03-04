@@ -4,6 +4,7 @@
 """
 This module contains built-in checks for the Sanic integration.
 """
+
 from .. import health
 from ..checks import (  # noqa
     CRITICAL,

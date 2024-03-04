@@ -14,11 +14,6 @@ from flask_login.mixins import UserMixin
 from flask_migrate import Migrate
 from flask_redis import FlaskRedis
 from flask_sqlalchemy import SQLAlchemy
-try:
-    from flask_sqlalchemy.record_queries import get_recorded_queries
-except ImportError as e:
-    # flask-sqlalchemy < 3
-    from flask_sqlalchemy import get_debug_queries as get_recorded_queries
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
 from dockerflow import checks, health
@@ -28,6 +23,12 @@ from dockerflow.flask.checks import (
     check_migrations_applied,
     check_redis_connected,
 )
+
+try:
+    from flask_sqlalchemy.record_queries import get_recorded_queries
+except ImportError:
+    # flask-sqlalchemy < 3
+    from flask_sqlalchemy import get_debug_queries as get_recorded_queries
 
 
 class MockUser(UserMixin):
