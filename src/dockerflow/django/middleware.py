@@ -3,12 +3,23 @@ import re
 import time
 import typing
 import urllib
-import uuid
 
 from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
 
+from dockerflow.logging import get_or_generate_request_id, request_id_context
+
 from . import views
+
+
+def extract_request_id(request):
+    """Extract request ID from request."""
+    rid = get_or_generate_request_id(
+        request.headers,
+        header_name=getattr(settings, "DOCKERFLOW_REQUEST_ID_HEADER_NAME", None),
+    )
+    request_id_context.set(rid)
+    request._id = rid  # Used in tests.
 
 
 class DockerflowMiddleware(MiddlewareMixin):
@@ -34,7 +45,8 @@ class DockerflowMiddleware(MiddlewareMixin):
             if pattern.match(request.path_info):
                 return view(request)
 
-        request._id = str(uuid.uuid4())
+        extract_request_id(request)
+
         request._start_timestamp = time.time()
         return None
 
@@ -57,8 +69,7 @@ class DockerflowMiddleware(MiddlewareMixin):
         # attributes before trying to use them.
         if hasattr(request, "user"):
             out["uid"] = request.user.is_authenticated and request.user.pk or ""
-        if hasattr(request, "_id"):
-            out["rid"] = request._id
+        out["rid"] = request_id_context.get()
         if hasattr(request, "_start_timestamp"):
             # Duration of request, in milliseconds.
             out["t"] = int(1000 * (time.time() - request._start_timestamp))

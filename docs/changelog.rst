@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+2024.2.1
+~~~~~~~~~~~~~~~~~~~~~
+
+- Add request correlation ID support (#101).
+  In order to add a ``rid`` field to all log messages, add the ``dockerflow.logging.RequestIdLogFilter`` filter to your logging handlers.
+  See: :ref:`Django <django-logging>`, :ref:`FastAPI <fastapi-logging>`, :ref:`Flask <flask-logging>`, :ref:`Sanic <sanic-logging>` for details.
+
+
 2024.2.0
 ~~~~~~~~~~~~~~~~~~~~~
 

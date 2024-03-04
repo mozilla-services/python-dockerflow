@@ -285,12 +285,12 @@ def test_request_summary_exception(app, caplog, dockerflow, test_client):
 def test_request_summary_failed_request(app, caplog, test_client):
     @app.middleware
     def hostile_callback(request):
-        # simulating resetting request changes
         del request.ctx.id
+        # simulating resetting request changes
         del request.ctx.start_timestamp
 
-    test_client.get(headers=headers)
-    assert_log_record(caplog, rid=None, t=None)
+    test_client.get(headers={"X-Request-ID": "tracked", **headers})
+    assert_log_record(caplog, rid="tracked", t=None)
 
 
 def test_heartbeat_checks_legacy(dockerflow, test_client):

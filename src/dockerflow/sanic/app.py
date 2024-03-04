@@ -5,16 +5,26 @@
 import logging
 import time
 import urllib
-import uuid
 import warnings
 from inspect import isawaitable
 
 from sanic import response
 
 from dockerflow import checks
+from dockerflow.logging import get_or_generate_request_id, request_id_context
 
 from .. import version
 from .checks import check_redis_connected
+
+
+def extract_request_id(request):
+    """Extract request ID from request."""
+    rid = get_or_generate_request_id(
+        request.headers,
+        header_name=request.app.config.get("DOCKERFLOW_REQUEST_ID_HEADER_NAME", None),
+    )
+    request_id_context.set(rid)
+    request.ctx.id = rid  # For retro-compatibility and tests.
 
 
 class Dockerflow(object):
@@ -122,6 +132,7 @@ class Dockerflow(object):
             ("/__lbheartbeat__", "lbheartbeat", self._lbheartbeat_view),
         ):
             app.add_route(handler, uri, name="dockerflow." + name)
+        app.middleware("request")(extract_request_id)
         app.middleware("request")(self._request_middleware)
         app.middleware("response")(self._response_middleware)
         app.exception(Exception)(self._exception_handler)
@@ -130,7 +141,6 @@ class Dockerflow(object):
         """
         The request middleware.
         """
-        request.ctx.id = str(uuid.uuid4())
         request.ctx.start_timestamp = time.time()
 
     def _response_middleware(self, request, response):
@@ -167,10 +177,7 @@ class Dockerflow(object):
             out["querystring"] = urllib.parse.unquote(request.query_string)
 
         # the rid value to the current request ID
-        try:
-            out["rid"] = request.ctx.id
-        except AttributeError:
-            pass
+        out["rid"] = request_id_context.get()
 
         # and the t value to the time it took to render
         try:

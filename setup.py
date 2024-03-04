@@ -50,7 +50,7 @@ setup(
         "django": ["django"],
         "flask": ["flask", "blinker"],
         "sanic": ["sanic"],
-        "fastapi": ["fastapi", "asgiref", "asgi-correlation-id"],
+        "fastapi": ["fastapi", "asgiref"],
     },
     zip_safe=False,
     python_requires=">=3.7,<4",

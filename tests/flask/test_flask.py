@@ -287,7 +287,6 @@ def test_request_summary(caplog, app, client):
     caplog.set_level(logging.INFO)
     with app.test_request_context("/"):
         client.get("/", headers=headers)
-        assert getattr(g, "_request_id") is not None
         assert getattr(g, "request_id") is not None
         assert isinstance(getattr(g, "_start_timestamp"), float)
 
@@ -399,14 +398,14 @@ def test_request_summary_failed_request(caplog, dockerflow, app):
 
     @app.before_request
     def hostile_callback():
-        # simulating resetting request changes
         delattr(g, "_request_id")
+        # simulating resetting request changes
         delattr(g, "_start_timestamp")
 
     app.test_client().get("/", headers=headers)
     assert len(caplog.records) == 1
     record = caplog.records[0]
-    assert getattr(record, "rid", None) is None
+    assert getattr(record, "rid", None) is not None
     assert getattr(record, "t", None) is None
 
 

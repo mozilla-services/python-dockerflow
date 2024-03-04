@@ -421,11 +421,17 @@ for at least the ``request.summary`` logger::
                 'logger_name': 'myproject'
             }
         },
+        'filters': {
+            'request_id': {
+                '()': 'dockerflow.logging.RequestIdFilter',
+            },
+        },
         'handlers': {
             'console': {
                 'level': 'DEBUG',
                 'class': 'logging.StreamHandler',
-                'formatter': 'json'
+                'formatter': 'json',
+                'filters': ['request_id']
             },
         },
         'loggers': {
@@ -458,6 +464,16 @@ Alternatively you can also pass the same logging config dictionary to the
 In order to include querystrings in the request summary log, set this flag in :ref:`configuration <sanic-config>`::
 
     DOCKERFLOW_SUMMARY_LOG_QUERYSTRING = True
+
+A unique request ID is read from the `X-Request-ID` request header, and a UUID4 value is generated if unset.
+
+Leveraging the `RequestIdFilter` in logging configuration as shown above will add a ``rid`` attribute to all log messages.
+
+The header name to obtain the request ID can be customized in settings:
+
+.. code-block:: python
+
+    DOCKERFLOW_REQUEST_ID_HEADER_NAME = "X-Cloud-Trace-Context"
 
 
 .. _sanic-static:
