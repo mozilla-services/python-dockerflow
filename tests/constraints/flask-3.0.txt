@@ -1,0 +1,3 @@
+Flask>=3,<4
+Flask-SQLAlchemy<4
+Werkzeug>=3,<4

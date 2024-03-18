@@ -4,6 +4,7 @@
 """
 This module contains a few built-in checks for the Flask integration.
 """
+
 from sqlalchemy import text
 
 from ... import health
