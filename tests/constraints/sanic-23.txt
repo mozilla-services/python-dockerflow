@@ -1,0 +1,2 @@
+Sanic>=23,<24
+sanic-redis<0.5
