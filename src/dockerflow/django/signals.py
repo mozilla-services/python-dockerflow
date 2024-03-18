@@ -33,6 +33,7 @@ E.g. to hook into those signals to send data to statsd, do this:
     def heartbeat_failed_handler(sender, level, **kwargs):
         statsd.incr('heartbeat.fail')
 """
+
 from django.dispatch import Signal
 
 heartbeat_passed = Signal()

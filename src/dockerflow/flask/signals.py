@@ -33,6 +33,7 @@ E.g. to hook into those signals to send data to statsd, do this:
         statsd.incr('heartbeat.fail')
 
 """
+
 from flask.signals import Namespace
 
 dockerflow_signals = Namespace()
