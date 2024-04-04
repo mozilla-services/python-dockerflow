@@ -59,7 +59,7 @@ class MozlogRequestSummaryLogger:
             logger.setLevel(logging.INFO)
             handler = logging.StreamHandler(sys.stdout)
             handler.setLevel(logging.INFO)
-            handler.setFormatter(JsonLogFormatter)
+            handler.setFormatter(JsonLogFormatter())
             logger.addHandler(handler)
         self.logger = logger
 
