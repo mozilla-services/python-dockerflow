@@ -2,11 +2,21 @@ Changelog
 ---------
 
 
-2024.3.1 (unreleased)
+2024.4.1
+~~~~~~~~~~~~~~~~~~~~~
+- Update this changelog
+  The changelog entry for ``2024.4.0`` was missing from that release
+
+2024.4.0
 ~~~~~~~~~~~~~~~~~~~~~
 
 - Add support for Flask 2.3 and 3.0 (#103)
 
+- Add support for Sanic 23 (#104)
+
+- Document extra log fields (#105)
+
+- Bugfix: Initialize JsonLogFormatter to pass to handler (#107)
 
 2024.3.0
 ~~~~~~~~~~~~~~~~~~~~~
@@ -14,7 +24,6 @@ Changelog
 - Add request correlation ID support (#101).
   In order to add a ``rid`` field to all log messages, add the ``dockerflow.logging.RequestIdLogFilter`` filter to your logging handlers.
   See: :ref:`Django <django-logging>`, :ref:`FastAPI <fastapi-logging>`, :ref:`Flask <flask-logging>`, :ref:`Sanic <sanic-logging>` for details.
-
 
 2024.2.0
 ~~~~~~~~~~~~~~~~~~~~~
