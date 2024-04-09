@@ -464,9 +464,9 @@ in your Django projet:
 
        STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-#. Add the middleware to your ``MIDDLEWARE`` (or ``MIDDLEWARE_CLASSES``) setting::
+#. Add the middleware to your ``MIDDLEWARE`` setting::
 
-       MIDDLEWARE_CLASSES = [
+       MIDDLEWARE = [
            # 'django.middleware.security.SecurityMiddleware',
            'whitenoise.middleware.WhiteNoiseMiddleware',
            # ...
