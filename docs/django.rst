@@ -407,7 +407,8 @@ configure **at least** the ``request.summary`` logger that way::
         }
     }
 
-In order to include querystrings in the request summary log, set this flag in settings:
+In order to include querystrings in the request summary log, set
+:ref:`this flag <DOCKERFLOW_SUMMARY_LOG_QUERYSTRING>` in settings:
 
 .. code-block:: python
 
@@ -524,6 +525,15 @@ A good value is the header name used by your deployment infrastructure.
 For example, the Google Cloud Platform sets the W3C standard ``traceparent``
 header as well as a legacy ``X-Cloud-Trace-Context`` header for
 `trace context <cloud.google.com/trace/docs/trace-context>`_.
+
+.. _DOCKERFLOW_SUMMARY_LOG_QUERYSTRING:
+
+``DOCKERFLOW_SUMMARY_LOG_QUERYSTRING``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If set to ``True``, then the request summary log will include the querystring.
+This defaults to ``False``, in case there is user-sensitive information in
+some querystrings.
 
 .. _DOCKERFLOW_VERSION_CALLBACK:
 
