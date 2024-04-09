@@ -561,3 +561,11 @@ The dotted import path for the callable that takes a
 `HttpRequest <https://docs.djangoproject.com/en/stable/ref/request-response/#httprequest-objects>`_
 and returns the :ref:`version content<django-versions>` to return under
 :ref:`__version__<http_get_version>`. This defaults to ``dockerflow.version.get_version``.
+
+``SILENCED_SYSTEM_CHECKS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The standard Django setting SILENCED_SYSTEM_CHECKS_ is used by the
+:ref:`__heartbeat__<http_get_heartbeat>` view to omit the named checks.
+
+.. _SILENCED_SYSTEM_CHECKS: https://docs.djangoproject.com/en/stable/ref/settings/#silenced-system-checks
