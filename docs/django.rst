@@ -295,6 +295,14 @@ spec:
    all checks ran successfully or 500 if there was one or more warnings or
    errors returned by the checks.
 
+   The check processes will log to ``dockerflow.checks.register``. Failed
+   checks that cause the heartbeat to fail are logged at ``ERROR`` level
+   or higher. Successful checks are logged at ``INFO`` level and higher.
+   The check setup process is logged at the ``DEBUG`` level. Since failure
+   details are omitted with ``DEBUG=False``, this logger should emit logs
+   at ``WARNING`` or ``ERROR`` level in production, so that the logs can
+   be used to diagnose heartbear failures.
+
    **Custom Dockerflow checks:**
 
    To write your own custom Dockerflow checks, please follow the documentation
@@ -312,7 +320,7 @@ spec:
       GET /__heartbeat__ HTTP/1.1
       Host: example.com
 
-   **Example response**:
+   **Example response, DEBUG=True**:
 
    .. sourcecode:: http
 
@@ -335,6 +343,18 @@ spec:
             }
           }
         }
+      }
+
+   **Example response, DEBUG=False**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 500 Internal Server Error
+      Vary: Accept-Encoding
+      Content-Type: application/json
+
+      {
+        "status": "warning"
       }
 
    :statuscode 200: no error, with potential warnings
@@ -404,6 +424,10 @@ configure **at least** the ``request.summary`` logger that way::
             'request.summary': {
                 'handlers': ['console'],
                 'level': 'DEBUG',
+            },
+            'dockerflow.checks.register': {
+                'handlers': ['console'],
+                'level': 'WARNING',
             },
         }
     }
