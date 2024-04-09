@@ -7,9 +7,6 @@ Django projects that want to follow the Dockerflow specs:
 - A Python logging formatter following the `mozlog`_ format to be used in
   the ``LOGGING`` setting.
 
-- A middleware to emit `request.summary`_ log records based on request specific
-  data.
-
 - Views for health monitoring:
 
   - ``/__version__`` - Serves a ``version.json`` file
@@ -19,6 +16,8 @@ Django projects that want to follow the Dockerflow specs:
 
   - ``/__lbheartbeat__`` - Retuns a HTTP 200 response
 
+- A middleware to emit `request.summary`_ log records based on request specific
+  data, and to serve the health monitoring views.
 
 - Signals for passed and failed heartbeats.
 
