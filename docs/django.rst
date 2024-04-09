@@ -425,7 +425,7 @@ configure **at least** the ``request.summary`` logger that way::
                 'handlers': ['console'],
                 'level': 'DEBUG',
             },
-            'dockerflow.checks.register': {
+            'dockerflow': {
                 'handlers': ['console'],
                 'level': 'WARNING',
             },
