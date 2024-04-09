@@ -427,6 +427,7 @@ The *MozLog* formatter will output ``Fields`` application-specific fields. It ca
         extra={"phase": "started", "host": host, "port": port}
     )
 
+.. _requests_correlation_id:
 
 Requests Correlation ID
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -435,7 +436,8 @@ A unique request ID is read from the ``X-Request-ID`` request header, and a UUID
 
 Leveraging the ``RequestIdFilter`` in logging configuration as shown above will add a ``rid`` field into the ``Fields`` entry of all log messages.
 
-The header name to obtain the request ID can be customized in settings:
+The header name to obtain the request ID can be
+`customized in settings <DOCKERFLOW_REQUEST_ID_HEADER_NAME>`_:
 
 .. code-block:: python
 
@@ -507,7 +509,24 @@ Defaults to:
         'dockerflow.django.checks.check_migrations_applied',
     ]
 
+.. _DOCKERFLOW_REQUEST_ID_HEADER_NAME:
+
+``DOCKERFLOW_REQUEST_ID_HEADER_NAME``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The case-insenstive name of the HTTP header referenced for identifying a
+request.  The default is `X-Request-ID`, used by the
+`Heroku router <https://devcenter.heroku.com/articles/http-request-id#how-it-works>`_.
+If the header is not set by the incoming request, a UUID is generated
+for the :ref:`requests correlation ID<requests_correlation_id>`.
+
+A good value is the header name used by your deployment infrastructure.
+For example, the Google Cloud Platform sets the W3C standard ``traceparent``
+header as well as a legacy ``X-Cloud-Trace-Context`` header for
+`trace context <cloud.google.com/trace/docs/trace-context>`_.
+
 .. _DOCKERFLOW_VERSION_CALLBACK:
+
 
 ``DOCKERFLOW_VERSION_CALLBACK``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
