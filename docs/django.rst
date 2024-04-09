@@ -284,11 +284,12 @@ spec:
    :statuscode 200: no error
    :statuscode 404: a version.json wasn't found
 
+.. _http_get_heartbeat:
 .. http:get:: /__heartbeat__
 
    The heartbeat view will go through the list of configured Dockerflow
    checks in the :ref:`DOCKERFLOW_CHECKS` setting, run each check, and, if
-   `settings.DEBUG` is `True`, add their results to a JSON response.
+   ``settings.DEBUG`` is ``True``, add their results to a JSON response.
 
    The view will return HTTP responses with either a status code of 200 if
    all checks ran successfully or 500 if there was one or more warnings or
@@ -494,13 +495,28 @@ the section about `Using WhiteNoise with Django`_ in its documentation.
 Settings
 --------
 
+``DEBUG``
+~~~~~~~~~
+
+The standard Django setting DEBUG_ is referenced by the
+:ref:`__heartbeat__<http_get_heartbeat>` view. If it is set to ``True``, then:
+
+- Django's deployment checks are run. These are the additional checks ran by
+  including the ``--deploy`` flag, such as ``python manage.py check --deploy``.
+
+- The ``checks`` and ``details`` objects are omitted from the JSON response,
+  leaving only the ``status`` of ``ok``, ``warning`` or ``error``.
+
+.. _DEBUG: https://docs.djangoproject.com/en/stable/ref/settings/#debug
+
 .. _DOCKERFLOW_CHECKS:
 
 ``DOCKERFLOW_CHECKS``
 ~~~~~~~~~~~~~~~~~~~~~
 
 A list of dotted import paths to register during
-Django setup, to be used in the rendering of the ``/__heartbeat__`` view.
+Django setup, to be used in the rendering of the
+:ref:`__heartbeat__<http_get_heartbeat>` view.
 Defaults to:
 
 .. code-block:: python
