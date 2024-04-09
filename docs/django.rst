@@ -526,6 +526,15 @@ Defaults to:
         'dockerflow.django.checks.check_migrations_applied',
     ]
 
+.. _DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE:
+
+``DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the :ref:`__heartbeat__<http_get_heartbeat>` view, this setting
+is used to set the status code when a check fails at ``error`` or higher.
+If unset, the default is ``500`` for an Internal Server Error.
+
 .. _DOCKERFLOW_REQUEST_ID_HEADER_NAME:
 
 ``DOCKERFLOW_REQUEST_ID_HEADER_NAME``
