@@ -254,6 +254,7 @@ Health monitoring
 Health monitoring happens via three different views following the Dockerflow_
 spec:
 
+.. _http_get_version:
 .. http:get:: /__version__
 
    The view that serves the :ref:`version information <django-versions>`.
@@ -490,17 +491,6 @@ the section about `Using WhiteNoise with Django`_ in its documentation.
 Settings
 --------
 
-.. _DOCKERFLOW_VERSION_CALLBACK:
-
-``DOCKERFLOW_VERSION_CALLBACK``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The dotted import path for the callable that
-returns the content to return under ``/__version__``.
-
-Defaults to ``'dockerflow.version.get_version'`` which will be passed the
-``BASE_DIR`` setting by default.
-
 .. _DOCKERFLOW_CHECKS:
 
 ``DOCKERFLOW_CHECKS``
@@ -516,3 +506,13 @@ Defaults to:
         'dockerflow.django.checks.check_database_connected',
         'dockerflow.django.checks.check_migrations_applied',
     ]
+
+.. _DOCKERFLOW_VERSION_CALLBACK:
+
+``DOCKERFLOW_VERSION_CALLBACK``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The dotted import path for the callable that takes a
+`HttpRequest <https://docs.djangoproject.com/en/stable/ref/request-response/#httprequest-objects>`_
+and returns the :ref:`version content<django-versions>` to return under
+:ref:`__version__<http_get_version>`. This defaults to ``dockerflow.version.get_version``.
