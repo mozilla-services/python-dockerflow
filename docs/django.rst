@@ -409,7 +409,7 @@ configure **at least** the ``request.summary`` logger that way::
         },
         'filters': {
             'request_id': {
-                '()': 'dockerflow.logging.RequestIdFilter',
+                '()': 'dockerflow.logging.RequestIdLogFilter',
             },
         },
         'handlers': {
