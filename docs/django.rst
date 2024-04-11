@@ -51,10 +51,22 @@ To install ``python-dockerflow``'s Django support please follow these steps:
         # ...
     )
 
+#. (Optional) Add the healthcheck views to SECURE_REDIRECT_EXEMPT_, so they can
+   be used as `Kubernetes liveness checks`_::
+
+    SECURE_REDIRECT_EXEMPT = [
+        r"^__version__/?$",
+        r"^__heartbeat__/?$",
+        r"^__lbheartbeat__/?$",
+    ]
+
 #. :ref:`Configure logging <django-logging>` to use the
    :class:`~dockerflow.logging.JsonLogFormatter`
    logging formatter for the ``request.summary`` logger (you may have to
    extend your existing logging configuration!).
+
+.. _`Kubernetes liveness checks`: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+.. _SECURE_REDIRECT_EXEMPT: https://docs.djangoproject.com/en/stable/ref/settings/#secure-redirect-exempt
 
 .. _django-config:
 
