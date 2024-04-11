@@ -42,14 +42,14 @@ To install ``python-dockerflow``'s Django support please follow these steps:
 
    .. seealso:: :ref:`django-versions` for more information
 
-#. Add the ``DockerflowMiddleware`` to your ``MIDDLEWARE_CLASSES`` or
-   ``MIDDLEWARE`` setting::
+#. Add the ``DockerflowMiddleware`` to your ``MIDDLEWARE`` setting::
 
-    MIDDLEWARE_CLASSES = (
+    MIDDLEWARE = [
         # ...
+        # 'django.middleware.security.SecurityMiddleware',
         'dockerflow.django.middleware.DockerflowMiddleware',
         # ...
-    )
+    ]
 
 #. (Optional) Add the healthcheck views to SECURE_REDIRECT_EXEMPT_, so they can
    be used as `Kubernetes liveness checks`_::
