@@ -314,8 +314,8 @@ class Dockerflow(object):
         Runs all the registered checks and returns a JSON response with either
         a status code of 200 or 500 depending on the results of the checks.
 
-        Any check that returns a warning or worse (error, critical) will
-        return a 500 response.
+        Any check that returns an error or worse (critical) will return
+        a 500 response.
         """
         FAILED_STATUS_CODE = int(
             flask.current_app.config.get(

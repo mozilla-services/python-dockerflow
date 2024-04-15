@@ -50,8 +50,8 @@ def heartbeat(request):
     Runs all the Django checks and returns a JsonResponse with either
     a status code of 200 or 500 depending on the results of the checks.
 
-    Any check that returns a warning or worse (error, critical) will
-    return a 500 response.
+    Any check that returns an error or worse (critical) will return
+    a 500 response.
     """
     checks_to_run = (
         (check.__name__, lambda: check(app_configs=None))
