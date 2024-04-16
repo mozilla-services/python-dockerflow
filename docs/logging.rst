@@ -41,7 +41,7 @@ this::
         },
         'filters': {
             'request_id': {
-                '()': 'dockerflow.logging.RequestIdFilter',
+                '()': 'dockerflow.logging.RequestIdLogFilter',
             },
         },
         'handlers': {
@@ -90,7 +90,7 @@ thing as the dictionary based configuratio above:
     keys = request_id
 
     [filter_request_id]
-    class = dockerflow.logging.RequestIdFilter
+    class = dockerflow.logging.RequestIdLogFilter
 
     [logger_root]
     level = INFO
