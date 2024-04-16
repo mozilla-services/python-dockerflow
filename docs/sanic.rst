@@ -423,7 +423,7 @@ for at least the ``request.summary`` logger::
         },
         'filters': {
             'request_id': {
-                '()': 'dockerflow.logging.RequestIdFilter',
+                '()': 'dockerflow.logging.RequestIdLogFilter',
             },
         },
         'handlers': {
@@ -485,7 +485,7 @@ Requests Correlation ID
 
 A unique request ID is read from the ``X-Request-ID`` request header, and a UUID4 value is generated if unset.
 
-Leveraging the ``RequestIdFilter`` in logging configuration as shown above will add a ``rid`` field into the ``Fields`` entry of all log messages.
+Leveraging the ``RequestIdLogFilter`` in logging configuration as shown above will add a ``rid`` field into the ``Fields`` entry of all log messages.
 
 The header name to obtain the request ID can be customized in settings:
 

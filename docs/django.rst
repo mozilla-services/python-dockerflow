@@ -7,9 +7,6 @@ Django projects that want to follow the Dockerflow specs:
 - A Python logging formatter following the `mozlog`_ format to be used in
   the ``LOGGING`` setting.
 
-- A middleware to emit `request.summary`_ log records based on request specific
-  data.
-
 - Views for health monitoring:
 
   - ``/__version__`` - Serves a ``version.json`` file
@@ -19,6 +16,8 @@ Django projects that want to follow the Dockerflow specs:
 
   - ``/__lbheartbeat__`` - Retuns a HTTP 200 response
 
+- A middleware to emit `request.summary`_ log records based on request specific
+  data, and to serve the health monitoring views.
 
 - Signals for passed and failed heartbeats.
 
@@ -43,19 +42,31 @@ To install ``python-dockerflow``'s Django support please follow these steps:
 
    .. seealso:: :ref:`django-versions` for more information
 
-#. Add the ``DockerflowMiddleware`` to your ``MIDDLEWARE_CLASSES`` or
-   ``MIDDLEWARE`` setting::
+#. Add the ``DockerflowMiddleware`` to your ``MIDDLEWARE`` setting::
 
-    MIDDLEWARE_CLASSES = (
+    MIDDLEWARE = [
         # ...
+        # 'django.middleware.security.SecurityMiddleware',
         'dockerflow.django.middleware.DockerflowMiddleware',
         # ...
-    )
+    ]
+
+#. (Optional) Add the healthcheck views to SECURE_REDIRECT_EXEMPT_, so they can
+   be used as `Kubernetes liveness checks`_::
+
+    SECURE_REDIRECT_EXEMPT = [
+        r"^__version__/?$",
+        r"^__heartbeat__/?$",
+        r"^__lbheartbeat__/?$",
+    ]
 
 #. :ref:`Configure logging <django-logging>` to use the
    :class:`~dockerflow.logging.JsonLogFormatter`
    logging formatter for the ``request.summary`` logger (you may have to
    extend your existing logging configuration!).
+
+.. _`Kubernetes liveness checks`: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+.. _SECURE_REDIRECT_EXEMPT: https://docs.djangoproject.com/en/stable/ref/settings/#secure-redirect-exempt
 
 .. _django-config:
 
@@ -255,6 +266,7 @@ Health monitoring
 Health monitoring happens via three different views following the Dockerflow_
 spec:
 
+.. _http_get_version:
 .. http:get:: /__version__
 
    The view that serves the :ref:`version information <django-versions>`.
@@ -284,15 +296,24 @@ spec:
    :statuscode 200: no error
    :statuscode 404: a version.json wasn't found
 
+.. _http_get_heartbeat:
 .. http:get:: /__heartbeat__
 
    The heartbeat view will go through the list of configured Dockerflow
    checks in the :ref:`DOCKERFLOW_CHECKS` setting, run each check, and, if
-   `settings.DEBUG` is `True`, add their results to a JSON response.
+   ``settings.DEBUG`` is ``True``, add their results to a JSON response.
 
    The view will return HTTP responses with either a status code of 200 if
    all checks ran successfully or 500 if there was one or more warnings or
    errors returned by the checks.
+
+   The check processes will log to ``dockerflow.checks.register``. Failed
+   checks that cause the heartbeat to fail are logged at ``ERROR`` level
+   or higher. Successful checks are logged at ``INFO`` level and higher.
+   The check setup process is logged at the ``DEBUG`` level. Since failure
+   details are omitted with ``DEBUG=False``, this logger should emit logs
+   at ``WARNING`` or ``ERROR`` level in production, so that the logs can
+   be used to diagnose heartbeat failures.
 
    **Custom Dockerflow checks:**
 
@@ -311,7 +332,7 @@ spec:
       GET /__heartbeat__ HTTP/1.1
       Host: example.com
 
-   **Example response**:
+   **Example response, DEBUG=True**:
 
    .. sourcecode:: http
 
@@ -334,6 +355,18 @@ spec:
             }
           }
         }
+      }
+
+   **Example response, DEBUG=False**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 500 Internal Server Error
+      Vary: Accept-Encoding
+      Content-Type: application/json
+
+      {
+        "status": "warning"
       }
 
    :statuscode 200: no error, with potential warnings
@@ -388,7 +421,7 @@ configure **at least** the ``request.summary`` logger that way::
         },
         'filters': {
             'request_id': {
-                '()': 'dockerflow.logging.RequestIdFilter',
+                '()': 'dockerflow.logging.RequestIdLogFilter',
             },
         },
         'handlers': {
@@ -404,10 +437,15 @@ configure **at least** the ``request.summary`` logger that way::
                 'handlers': ['console'],
                 'level': 'DEBUG',
             },
+            'dockerflow': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+            },
         }
     }
 
-In order to include querystrings in the request summary log, set this flag in settings:
+In order to include querystrings in the request summary log, set
+:ref:`this flag <DOCKERFLOW_SUMMARY_LOG_QUERYSTRING>` in settings:
 
 .. code-block:: python
 
@@ -427,15 +465,17 @@ The *MozLog* formatter will output ``Fields`` application-specific fields. It ca
         extra={"phase": "started", "host": host, "port": port}
     )
 
+.. _requests_correlation_id:
 
 Requests Correlation ID
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 A unique request ID is read from the ``X-Request-ID`` request header, and a UUID4 value is generated if unset.
 
-Leveraging the ``RequestIdFilter`` in logging configuration as shown above will add a ``rid`` field into the ``Fields`` entry of all log messages.
+Leveraging the ``RequestIdLogFilter`` in logging configuration as shown above will add a ``rid`` field into the ``Fields`` entry of all log messages.
 
-The header name to obtain the request ID can be customized in settings:
+The header name to obtain the request ID can be
+`customized in settings <DOCKERFLOW_REQUEST_ID_HEADER_NAME>`_:
 
 .. code-block:: python
 
@@ -460,9 +500,9 @@ in your Django projet:
 
        STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-#. Add the middleware to your ``MIDDLEWARE`` (or ``MIDDLEWARE_CLASSES``) setting::
+#. Add the middleware to your ``MIDDLEWARE`` setting::
 
-       MIDDLEWARE_CLASSES = [
+       MIDDLEWARE = [
            # 'django.middleware.security.SecurityMiddleware',
            'whitenoise.middleware.WhiteNoiseMiddleware',
            # ...
@@ -491,16 +531,19 @@ the section about `Using WhiteNoise with Django`_ in its documentation.
 Settings
 --------
 
-.. _DOCKERFLOW_VERSION_CALLBACK:
+``DEBUG``
+~~~~~~~~~
 
-``DOCKERFLOW_VERSION_CALLBACK``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The standard Django setting DEBUG_ is referenced by the
+:ref:`__heartbeat__<http_get_heartbeat>` view. If it is set to ``True``, then:
 
-The dotted import path for the callable that
-returns the content to return under ``/__version__``.
+- Django's deployment checks are run. These are the additional checks ran by
+  including the ``--deploy`` flag, such as ``python manage.py check --deploy``.
 
-Defaults to ``'dockerflow.version.get_version'`` which will be passed the
-``BASE_DIR`` setting by default.
+- The ``checks`` and ``details`` objects are omitted from the JSON response,
+  leaving only the ``status`` of ``ok``, ``warning`` or ``error``.
+
+.. _DEBUG: https://docs.djangoproject.com/en/stable/ref/settings/#debug
 
 .. _DOCKERFLOW_CHECKS:
 
@@ -508,7 +551,8 @@ Defaults to ``'dockerflow.version.get_version'`` which will be passed the
 ~~~~~~~~~~~~~~~~~~~~~
 
 A list of dotted import paths to register during
-Django setup, to be used in the rendering of the ``/__heartbeat__`` view.
+Django setup, to be used in the rendering of the
+:ref:`__heartbeat__<http_get_heartbeat>` view.
 Defaults to:
 
 .. code-block:: python
@@ -517,3 +561,56 @@ Defaults to:
         'dockerflow.django.checks.check_database_connected',
         'dockerflow.django.checks.check_migrations_applied',
     ]
+
+.. _DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE:
+
+``DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the :ref:`__heartbeat__<http_get_heartbeat>` view, this setting
+is used to set the status code when a check fails at ``error`` or higher.
+If unset, the default is ``500`` for an Internal Server Error.
+
+.. _DOCKERFLOW_REQUEST_ID_HEADER_NAME:
+
+``DOCKERFLOW_REQUEST_ID_HEADER_NAME``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The case-insenstive name of the HTTP header referenced for identifying a
+request.  The default is `X-Request-ID`, used by the
+`Heroku router <https://devcenter.heroku.com/articles/http-request-id#how-it-works>`_.
+If the header is not set by the incoming request, a UUID is generated
+for the :ref:`requests correlation ID<requests_correlation_id>`.
+
+A good value is the header name used by your deployment infrastructure.
+For example, the Google Cloud Platform sets the W3C standard ``traceparent``
+header as well as a legacy ``X-Cloud-Trace-Context`` header for
+`trace context <cloud.google.com/trace/docs/trace-context>`_.
+
+.. _DOCKERFLOW_SUMMARY_LOG_QUERYSTRING:
+
+``DOCKERFLOW_SUMMARY_LOG_QUERYSTRING``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If set to ``True``, then the request summary log will include the querystring.
+This defaults to ``False``, in case there is user-sensitive information in
+some querystrings.
+
+.. _DOCKERFLOW_VERSION_CALLBACK:
+
+
+``DOCKERFLOW_VERSION_CALLBACK``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The dotted import path for the callable that takes a
+`HttpRequest <https://docs.djangoproject.com/en/stable/ref/request-response/#httprequest-objects>`_
+and returns the :ref:`version content<django-versions>` to return under
+:ref:`__version__<http_get_version>`. This defaults to ``dockerflow.version.get_version``.
+
+``SILENCED_SYSTEM_CHECKS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The standard Django setting SILENCED_SYSTEM_CHECKS_ is used by the
+:ref:`__heartbeat__<http_get_heartbeat>` view to omit the named checks.
+
+.. _SILENCED_SYSTEM_CHECKS: https://docs.djangoproject.com/en/stable/ref/settings/#silenced-system-checks
