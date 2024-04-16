@@ -313,7 +313,7 @@ spec:
    The check setup process is logged at the ``DEBUG`` level. Since failure
    details are omitted with ``DEBUG=False``, this logger should emit logs
    at ``WARNING`` or ``ERROR`` level in production, so that the logs can
-   be used to diagnose heartbear failures.
+   be used to diagnose heartbeat failures.
 
    **Custom Dockerflow checks:**
 
