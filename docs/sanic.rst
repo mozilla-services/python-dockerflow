@@ -53,7 +53,7 @@ To install ``python-dockerflow``'s Sanic support please follow these steps:
 
    .. seealso:: :ref:`sanic-versions` for more information
 
-#. Configure logging to use the ``JsonLogFormatter`` logging formatter for the
+#. Configure logging to use the ``MozlogHandler`` logging handler for the
    ``request.summary`` logger (you may have to extend your existing logging
    configuration), see :ref:`sanic-logging` for more information.
 
@@ -405,8 +405,8 @@ spec:
 Logging
 -------
 
-Dockerflow provides a :class:`~dockerflow.logging.JsonLogFormatter` Python
-logging formatter class.
+Dockerflow provides a :class:`~dockerflow.logging.MozlogFormatter` Python
+logging handler class.
 
 To use it, pass something like this to your Sanic app when it is initialized
 for at least the ``request.summary`` logger::
@@ -415,12 +415,6 @@ for at least the ``request.summary`` logger::
 
     log_config = {
         'version': 1,
-        'formatters': {
-            'json': {
-                '()': 'dockerflow.logging.JsonLogFormatter',
-                'logger_name': 'myproject'
-            }
-        },
         'filters': {
             'request_id': {
                 '()': 'dockerflow.logging.RequestIdLogFilter',
@@ -429,8 +423,7 @@ for at least the ``request.summary`` logger::
         'handlers': {
             'console': {
                 'level': 'DEBUG',
-                'class': 'logging.StreamHandler',
-                'formatter': 'json',
+                'class': 'dockerflow.logging.MozlogHandler',
                 'filters': ['request_id']
             },
         },
@@ -440,7 +433,7 @@ for at least the ``request.summary`` logger::
                 'level': 'DEBUG',
             },
         }
-    })
+    }
 
     sanic = Sanic(__name__, log_config=log)
 

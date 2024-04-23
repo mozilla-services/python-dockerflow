@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import sys
 import time
 import urllib
 from typing import Any, Dict
@@ -14,7 +13,7 @@ from asgiref.typing import (
     HTTPScope,
 )
 
-from ..logging import JsonLogFormatter, get_or_generate_request_id, request_id_context
+from ..logging import MozlogHandler, get_or_generate_request_id, request_id_context
 
 
 class RequestIdMiddleware:
@@ -57,9 +56,8 @@ class MozlogRequestSummaryLogger:
         if logger is None:
             logger = logging.getLogger("request.summary")
             logger.setLevel(logging.INFO)
-            handler = logging.StreamHandler(sys.stdout)
+            handler = MozlogHandler()
             handler.setLevel(logging.INFO)
-            handler.setFormatter(JsonLogFormatter())
             logger.addHandler(handler)
         self.logger = logger
 

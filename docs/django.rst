@@ -61,8 +61,8 @@ To install ``python-dockerflow``'s Django support please follow these steps:
     ]
 
 #. :ref:`Configure logging <django-logging>` to use the
-   :class:`~dockerflow.logging.JsonLogFormatter`
-   logging formatter for the ``request.summary`` logger (you may have to
+   :class:`~dockerflow.logging.MozlogHandler`
+   logging handler for the ``request.summary`` logger (you may have to
    extend your existing logging configuration!).
 
 .. _`Kubernetes liveness checks`: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
@@ -405,20 +405,15 @@ spec:
 Logging
 -------
 
-Dockerflow provides a :class:`~dockerflow.logging.JsonLogFormatter` Python
-logging formatter class.
+Dockerflow provides a :class:`~dockerflow.logging.MozlogHandler` Python
+logging handler class. This handler formats logs according to the Mozlog schema
+and emits them to stdout.
 
 To use it, put something like this in your Django ``settings`` file and
 configure **at least** the ``request.summary`` logger that way::
 
     LOGGING = {
         'version': 1,
-        'formatters': {
-            'json': {
-                '()': 'dockerflow.logging.JsonLogFormatter',
-                'logger_name': 'myproject'
-            }
-        },
         'filters': {
             'request_id': {
                 '()': 'dockerflow.logging.RequestIdLogFilter',
@@ -427,8 +422,7 @@ configure **at least** the ``request.summary`` logger that way::
         'handlers': {
             'console': {
                 'level': 'DEBUG',
-                'class': 'logging.StreamHandler',
-                'formatter': 'json',
+                'class': 'dockerflow.logging.MozlogHandler',
                 'filters': ['request_id']
             },
         },

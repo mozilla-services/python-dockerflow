@@ -3,8 +3,8 @@
 Logging
 =======
 
-python-dockerflow provides a :class:`~dockerflow.logging.JsonLogFormatter`
-Python logging formatter that produces messages following the JSON schema
+python-dockerflow provides a :class:`~dockerflow.logging.MozlogHandler`
+Python logging handler that produces messages following the JSON schema
 for a common application logging format defined by the illustrious
 Mozilla Cloud Services group.
 
@@ -33,12 +33,6 @@ this::
 
     cfg = {
         'version': 1,
-        'formatters': {
-            'json': {
-                '()': 'dockerflow.logging.JsonLogFormatter',
-                'logger_name': 'myproject'
-            }
-        },
         'filters': {
             'request_id': {
                 '()': 'dockerflow.logging.RequestIdLogFilter',
@@ -47,8 +41,7 @@ this::
         'handlers': {
             'console': {
                 'level': 'DEBUG',
-                'class': 'logging.StreamHandler',
-                'formatter': 'json',
+                'class': 'dockerflow.logging.MozlogHandler',
                 'filters': ['request_id']
             },
         },
@@ -109,7 +102,7 @@ thing as the dictionary based configuratio above:
     filters = request_id
 
     [formatter_json]
-    class = dockerflow.logging.JsonLogFormatter
+    class = dockerflow.logging.MozlogFormatter
 
 Then load the ini file using the :mod:`logging` module function
 :func:`logging.config.fileConfig`:

@@ -11,7 +11,7 @@ from importlib import reload
 import jsonschema
 import pytest
 
-from dockerflow.logging import JsonLogFormatter
+from dockerflow.logging import JsonLogFormatter, MozlogFormatter, MozlogHandler
 
 
 @pytest.fixture()
@@ -21,12 +21,13 @@ def _reset_logging():
 
 
 logger_name = "tests"
-formatter = JsonLogFormatter(logger_name=logger_name)
+handler = MozlogHandler(name=logger_name)
+formatter = MozlogFormatter(logger_name=logger_name)
 
 
 def assert_records(records):
     assert len(records) == 1
-    details = json.loads(formatter.format(records[0]))
+    details = json.loads(handler.format(records[0]))
     jsonschema.validate(details, JSON_LOGGING_SCHEMA)
     return details
 
@@ -42,29 +43,25 @@ def test_initialization_from_ini(caplog, tmpdir):
     keys = console
 
     [formatters]
-    keys = json
+    keys =
 
     [logger_root]
     level = INFO
     handlers = console
 
     [handler_console]
-    class = StreamHandler
     level = DEBUG
-    args = (sys.stderr,)
-    formatter = json
-
-    [formatter_json]
-    class = dockerflow.logging.JsonLogFormatter
+    class = dockerflow.logging.MozlogHandler
+    args = (sys.stdout, 'tests')
     """
     )
     ini_file = tmpdir.join("logging.ini")
     ini_file.write(ini_content)
     logging.config.fileConfig(str(ini_file))
-    logging.info("I am logging in mozlog format now! woo hoo!")
     logger = logging.getLogger()
     assert len(logger.handlers) > 0
-    assert logger.handlers[0].formatter.logger_name == "Dockerflow"
+    assert logger.handlers[0].logger_name == "tests"
+    assert isinstance(logger.handlers[0].formatter, MozlogFormatter)
 
 
 def test_basic_operation(caplog):
@@ -154,6 +151,13 @@ def test_ignore_json_message(caplog):
     assert formatter.is_value_jsonlike('{"spam": "eggs"}')
     assert not formatter.is_value_jsonlike('{"spam": "eggs"')
     assert not formatter.is_value_jsonlike('"spam": "eggs"}')
+
+
+def test_JsonLogFormatter_emits_warning(caplog):
+    """Initializing a JsonLogFormatter should emit a deprecation warning"""
+
+    with pytest.deprecated_call():
+        JsonLogFormatter(logger_name="deprecated")
 
 
 # https://mana.mozilla.org/wiki/pages/viewpage.action?pageId=42895640

@@ -56,7 +56,7 @@ To install ``python-dockerflow``'s Flask support please follow these steps:
 
    .. seealso:: :ref:`flask-versions` for more information
 
-#. Configure logging to use the ``JsonLogFormatter`` logging formatter for the
+#. Configure logging to use the ``MozlogHandler`` logging handler for the
    ``request.summary`` logger (you may have to extend your existing logging
    configuration), see :ref:`flask-logging` for more information.
 
@@ -425,8 +425,8 @@ spec:
 Logging
 -------
 
-Dockerflow provides a :class:`~dockerflow.logging.JsonLogFormatter` Python
-logging formatter class.
+Dockerflow provides a :class:`~dockerflow.logging.MozlogHandler` Python
+logging handler class.
 
 To use it, put something like this **BEFORE** your Flask app is initialized
 for at least the ``request.summary`` logger::
@@ -435,12 +435,6 @@ for at least the ``request.summary`` logger::
 
     dictConfig({
         'version': 1,
-        'formatters': {
-            'json': {
-                '()': 'dockerflow.logging.JsonLogFormatter',
-                'logger_name': 'myproject'
-            }
-        },
         'filters': {
             'request_id': {
                 '()': 'dockerflow.logging.RequestIdLogFilter',
@@ -449,8 +443,7 @@ for at least the ``request.summary`` logger::
         'handlers': {
             'console': {
                 'level': 'DEBUG',
-                'class': 'logging.StreamHandler',
-                'formatter': 'json',
+                'class': 'dockerflow.logging.MozlogHandler',
                 'filters': ['request_id']
             },
         },
