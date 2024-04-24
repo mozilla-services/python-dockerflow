@@ -194,6 +194,53 @@ def test_heartbeat_get(client):
         },
     }
 
+def test_heartbeat_sync(client):
+    @checks.register
+    def sync_ok():
+        return []
+
+    response = client.get("/__heartbeat__")
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok",
+        "checks": {"sync_ok": "ok"},
+        "details": {},
+    }
+
+
+def test_heartbeat_async(client):
+    @checks.register
+    async def async_ok():
+        return []
+
+    response = client.get("/__heartbeat__")
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok",
+        "checks": {"async_ok": "ok"},
+        "details": {},
+    }
+
+
+def test_heartbeat_mixed_sync(client):
+    @checks.register
+    def sync_ok():
+        return []
+    @checks.register
+    async def async_ok():
+        return []
+
+    response = client.get("/__heartbeat__")
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok",
+        "checks": {
+            "sync_ok": "ok",
+            "async_ok": "ok",
+        },
+        "details": {},
+    }
+
 
 def test_heartbeat_head(client):
     @checks.register

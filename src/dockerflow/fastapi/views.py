@@ -11,12 +11,12 @@ def lbheartbeat():
     return {"status": "ok"}
 
 
-def heartbeat(request: Request, response: Response):
+async def heartbeat(request: Request, response: Response):
     FAILED_STATUS_CODE = int(
         getattr(request.app.state, "DOCKERFLOW_HEARTBEAT_FAILED_STATUS_CODE", "500")
     )
 
-    check_results = checks.run_checks(
+    check_results = await checks.run_checks_async(
         checks.get_checks().items(),
     )
 
