@@ -210,7 +210,7 @@ def test_heartbeat_sync(client):
 
 def test_heartbeat_async(client):
     @checks.register
-    def async_ok():
+    async def async_ok():
         return []
 
     response = client.get("/__heartbeat__")
@@ -227,7 +227,7 @@ def test_heartbeat_mixed_sync(client):
     def sync_ok():
         return []
     @checks.register
-    def async_ok():
+    async def async_ok():
         return []
 
     response = client.get("/__heartbeat__")
