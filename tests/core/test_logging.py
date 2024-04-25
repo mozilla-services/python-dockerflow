@@ -22,11 +22,12 @@ def _reset_logging():
 
 pytestmark = pytest.mark.usefixtures("_reset_logging")
 
-logger_name = "tests"
+LOGGER_NAME = "tests"
+
 
 @pytest.fixture()
 def formatter():
-    return MozlogFormatter(logger_name=logger_name)
+    return MozlogFormatter(logger_name=LOGGER_NAME)
 
 
 def assert_records(formatter, records):
@@ -63,21 +64,28 @@ def test_initialization_from_ini(tmpdir):
     logging.config.fileConfig(str(ini_file))
     logger = logging.getLogger()
     assert len(logger.handlers) > 0
-    assert logger.handlers[0].logger_name == logger_name
+    assert logger.handlers[0].logger_name == LOGGER_NAME
     assert isinstance(logger.handlers[0].formatter, MozlogFormatter)
 
+
 def test_set_logger_name_through_handler(caplog):
+    logger_name = "logger_name_handler"
     handler = MozlogHandler(name="logger_name_handler")
     logger = logging.getLogger("test")
     logger.addHandler(handler)
+
     logger.warning("hey")
     [record] = caplog.records
-    record.logger_name = "logger_name_handler"
+
+    assert record.logger_name == logger_name
+    formatted_record = json.loads(handler.format(record))
+    assert formatted_record["Logger"] == logger_name
 
 
 def test_set_logger_name_through_formatter(caplog):
+    logger_name = "logger_name_formatter"
     handler = logging.StreamHandler()
-    formatter = MozlogFormatter(logger_name="logger_name_formatter")
+    formatter = MozlogFormatter(logger_name=logger_name)
     handler.setFormatter(formatter)
 
     logger = logging.getLogger("test")
@@ -85,11 +93,15 @@ def test_set_logger_name_through_formatter(caplog):
 
     logger.warning("hey")
     [record] = caplog.records
-    record.logger_name = "logger_name_formatter"
+
+    assert not hasattr(record, "logger_name")
+    formatted_record = json.loads(handler.format(record))
+    assert formatted_record["Logger"] == logger_name
 
 
 def test_handler_precedence_logger_name(caplog):
-    handler = MozlogHandler(name="logger_name_handler")
+    logger_name = "logger_name_handler"
+    handler = MozlogHandler(name=logger_name)
     formatter = MozlogFormatter(logger_name="logger_name_formatter")
     handler.setFormatter(formatter)
 
@@ -98,7 +110,10 @@ def test_handler_precedence_logger_name(caplog):
 
     logger.warning("hey")
     [record] = caplog.records
-    record.logger_name = "logger_name_handler"
+
+    assert record.logger_name == logger_name
+    formatted_record = json.loads(handler.format(record))
+    assert formatted_record["Logger"] == logger_name
 
 
 def test_basic_operation(caplog, formatter):
@@ -115,7 +130,7 @@ def test_basic_operation(caplog, formatter):
     assert details["Severity"] == 7
     assert details["Type"] == "root"
     assert details["Pid"] == os.getpid()
-    assert details["Logger"] == logger_name
+    assert details["Logger"] == LOGGER_NAME
     assert details["EnvVersion"] == formatter.LOGGING_FORMAT_VERSION
     assert details["Fields"]["msg"] == message_text
 
