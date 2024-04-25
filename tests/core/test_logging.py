@@ -33,7 +33,7 @@ def assert_records(records):
 
 
 @pytest.mark.usefixtures("_reset_logging")
-def test_initialization_from_ini(caplog, tmpdir):
+def test_initialization_from_ini(tmpdir):
     ini_content = textwrap.dedent(
         """
     [loggers]
