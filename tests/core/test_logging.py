@@ -19,20 +19,26 @@ def _reset_logging():
     logging.shutdown()
     reload(logging)
 
+pytest.mark.usefixtures = _reset_logging
 
 logger_name = "tests"
-handler = MozlogHandler(name=logger_name)
-formatter = MozlogFormatter(logger_name=logger_name)
+
+@pytest.fixture()
+def handler():
+    return MozlogHandler(name=logger_name)
+
+@pytest.fixture()
+def formatter():
+    return MozlogFormatter(logger_name=logger_name)
 
 
-def assert_records(records):
+def assert_records(handler, records):
     assert len(records) == 1
     details = json.loads(handler.format(records[0]))
     jsonschema.validate(details, JSON_LOGGING_SCHEMA)
     return details
 
 
-@pytest.mark.usefixtures("_reset_logging")
 def test_initialization_from_ini(tmpdir):
     ini_content = textwrap.dedent(
         """
@@ -64,12 +70,12 @@ def test_initialization_from_ini(tmpdir):
     assert isinstance(logger.handlers[0].formatter, MozlogFormatter)
 
 
-def test_basic_operation(caplog):
+def test_basic_operation(caplog, handler, formatter):
     """Ensure log formatter contains all the expected fields and values"""
     message_text = "simple test"
     caplog.set_level(logging.DEBUG)
     logging.debug(message_text)
-    details = assert_records(caplog.records)
+    details = assert_records(handler, caplog.records)
     assert details == formatter.convert_record(caplog.records[0])
 
     assert "Timestamp" in details
@@ -81,12 +87,11 @@ def test_basic_operation(caplog):
     assert details["EnvVersion"] == formatter.LOGGING_FORMAT_VERSION
     assert details["Fields"]["msg"] == message_text
 
-
-def test_custom_paramters(caplog):
+def test_custom_paramters(caplog, handler, formatter):
     """Ensure log formatter can handle custom parameters"""
     logger = logging.getLogger("tests.test_logging")
     logger.warning("custom test %s", "one", extra={"more": "stuff"})
-    details = assert_records(caplog.records)
+    details = assert_records(handler, caplog.records)
     assert details == formatter.convert_record(caplog.records[0])
 
     assert details["Type"] == "tests.test_logging"
@@ -95,13 +100,13 @@ def test_custom_paramters(caplog):
     assert details["Fields"]["more"] == "stuff"
 
 
-def test_non_json_serializable_parameters_are_converted(caplog):
+def test_non_json_serializable_parameters_are_converted(caplog, handler):
     """Ensure log formatter doesn't fail with non json-serializable params."""
     foo = object()
     foo_repr = repr(foo)
     logger = logging.getLogger("tests.test_logging")
     logger.warning("custom test %s", "hello", extra={"foo": foo})
-    details = assert_records(caplog.records)
+    details = assert_records(handler, caplog.records)
 
     assert details["Type"] == "tests.test_logging"
     assert details["Severity"] == 4
@@ -109,13 +114,13 @@ def test_non_json_serializable_parameters_are_converted(caplog):
     assert details["Fields"]["foo"] == foo_repr
 
 
-def test_logging_error_tracebacks(caplog):
+def test_logging_error_tracebacks(caplog, handler):
     """Ensure log formatter includes exception traceback information"""
     try:
         raise ValueError("\n")
     except Exception:
         logging.exception("there was an error")
-    details = assert_records(caplog.records)
+    details = assert_records(handler, caplog.records)
 
     assert details["Severity"] == 3
     assert details["Fields"]["msg"] == "there was an error"
@@ -124,14 +129,14 @@ def test_logging_error_tracebacks(caplog):
     assert "ValueError" in details["Fields"]["traceback"]
 
 
-def test_logging_exc_info_false(caplog):
+def test_logging_exc_info_false(caplog, handler):
     """Ensure log formatter does not fail and does not include exception
     traceback information when exc_info is False"""
     try:
         raise ValueError("\n")
     except Exception:
         logging.exception("there was an error", exc_info=False)
-    details = assert_records(caplog.records)
+    details = assert_records(handler, caplog.records)
 
     assert details["Severity"] == 3
     assert details["Fields"]["msg"] == "there was an error"
@@ -139,13 +144,13 @@ def test_logging_exc_info_false(caplog):
     assert "traceback" not in details["Fields"]
 
 
-def test_ignore_json_message(caplog):
+def test_ignore_json_message(caplog, handler, formatter):
     """Ensure log formatter ignores messages that are JSON already"""
     try:
         raise ValueError("\n")
     except Exception:
         logging.exception(json.dumps({"spam": "eggs"}))
-    details = assert_records(caplog.records)
+    details = assert_records(handler, caplog.records)
     assert "msg" not in details["Fields"]
 
     assert formatter.is_value_jsonlike('{"spam": "eggs"}')
