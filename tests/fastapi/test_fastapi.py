@@ -108,6 +108,7 @@ def test_mozlog_without_correlation_id_middleware(client, caplog):
 
 
 def test_request_id_passed_to_all_log_messages(caplog):
+    caplog.set_level(logging.INFO)
     caplog.handler.addFilter(RequestIdLogFilter())
     caplog.handler.setFormatter(MozlogFormatter())
 
