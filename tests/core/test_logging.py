@@ -69,6 +69,37 @@ def test_initialization_from_ini(tmpdir):
     assert logger.handlers[0].logger_name == "tests"
     assert isinstance(logger.handlers[0].formatter, MozlogFormatter)
 
+def test_set_logger_name_through_handler(caplog):
+    handler = MozlogHandler(name="logger_name_handler")
+    logger = logging.getLogger("test")
+    logger.addHandler(handler)
+    logger.warning("hey")
+    [record] = caplog.records
+    record.logger_name = "logger_name_handler"
+
+def test_set_logger_name_through_formatter(caplog):
+    handler = logging.StreamHandler()
+    formatter = MozlogFormatter(logger_name="logger_name_formatter")
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger("test")
+    logger.addHandler(handler)
+
+    logger.warning("hey")
+    [record] = caplog.records
+    record.logger_name = "logger_name_formatter"
+
+def test_handler_precedence_logger_name(caplog):
+    handler = MozlogHandler(name="logger_name_handler")
+    formatter = MozlogFormatter(logger_name="logger_name_formatter")
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger("test")
+    logger.addHandler(handler)
+
+    logger.warning("hey")
+    [record] = caplog.records
+    record.logger_name = "logger_name_handler"
 
 def test_basic_operation(caplog, handler, formatter):
     """Ensure log formatter contains all the expected fields and values"""
