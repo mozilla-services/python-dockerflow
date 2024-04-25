@@ -194,6 +194,7 @@ def test_heartbeat_get(client):
         },
     }
 
+
 def test_heartbeat_sync(client):
     @checks.register
     def sync_ok():
@@ -226,6 +227,7 @@ def test_heartbeat_mixed_sync(client):
     @checks.register
     def sync_ok():
         return []
+
     @checks.register
     async def async_ok():
         return []

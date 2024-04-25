@@ -19,13 +19,16 @@ def _reset_logging():
     logging.shutdown()
     reload(logging)
 
+
 pytest.mark.usefixtures = _reset_logging
 
 logger_name = "tests"
 
+
 @pytest.fixture()
 def handler():
     return MozlogHandler(name=logger_name)
+
 
 @pytest.fixture()
 def formatter():
@@ -69,6 +72,7 @@ def test_initialization_from_ini(tmpdir):
     assert logger.handlers[0].logger_name == "tests"
     assert isinstance(logger.handlers[0].formatter, MozlogFormatter)
 
+
 def test_set_logger_name_through_handler(caplog):
     handler = MozlogHandler(name="logger_name_handler")
     logger = logging.getLogger("test")
@@ -76,6 +80,7 @@ def test_set_logger_name_through_handler(caplog):
     logger.warning("hey")
     [record] = caplog.records
     record.logger_name = "logger_name_handler"
+
 
 def test_set_logger_name_through_formatter(caplog):
     handler = logging.StreamHandler()
@@ -89,6 +94,7 @@ def test_set_logger_name_through_formatter(caplog):
     [record] = caplog.records
     record.logger_name = "logger_name_formatter"
 
+
 def test_handler_precedence_logger_name(caplog):
     handler = MozlogHandler(name="logger_name_handler")
     formatter = MozlogFormatter(logger_name="logger_name_formatter")
@@ -100,6 +106,7 @@ def test_handler_precedence_logger_name(caplog):
     logger.warning("hey")
     [record] = caplog.records
     record.logger_name = "logger_name_handler"
+
 
 def test_basic_operation(caplog, handler, formatter):
     """Ensure log formatter contains all the expected fields and values"""
@@ -117,6 +124,7 @@ def test_basic_operation(caplog, handler, formatter):
     assert details["Logger"] == logger_name
     assert details["EnvVersion"] == formatter.LOGGING_FORMAT_VERSION
     assert details["Fields"]["msg"] == message_text
+
 
 def test_custom_paramters(caplog, handler, formatter):
     """Ensure log formatter can handle custom parameters"""
