@@ -17,19 +17,6 @@ CheckFn = Callable[..., List[CheckMessage]]
 _REGISTERED_CHECKS = {}
 
 
-def _iscoroutinefunction_or_partial(obj):
-    """
-    Determine if the provided object is a coroutine function or a partial function
-    that wraps a coroutine function.
-
-    This function should be removed when we drop support for Python 3.7, as this is
-    handled directly by `inspect.iscoroutinefunction` in Python 3.8.
-    """
-    while isinstance(obj, functools.partial):
-        obj = obj.func
-    return inspect.iscoroutinefunction(obj)
-
-
 def register(func=None, name=None):
     """
     Register a check callback to be executed from
@@ -43,7 +30,7 @@ def register(func=None, name=None):
 
     logger.debug("Register Dockerflow check %s", name)
 
-    if _iscoroutinefunction_or_partial(func):
+    if inspect.iscoroutinefunction(func):
 
         @functools.wraps(func)
         async def decorated_function_asyc(*args, **kwargs):
@@ -116,7 +103,7 @@ class ChecksResults:
 
 async def _run_check_async(check):
     name, check_fn = check
-    if _iscoroutinefunction_or_partial(check_fn):
+    if inspect.iscoroutinefunction(check_fn):
         errors = await check_fn()
     else:
         loop = asyncio.get_event_loop()
