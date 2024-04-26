@@ -54,14 +54,11 @@ TEMPLATES = [
 
 LOGGING = {
     "version": 1,
-    "formatters": {
-        "json": {"()": "dockerflow.logging.JsonLogFormatter", "logger_name": "tests"}
-    },
     "handlers": {
         "console": {
             "level": "DEBUG",
-            "class": "logging.StreamHandler",
-            "formatter": "json",
+            "class": "dockerflow.logging.MozlogHandler",
+            "name": "tests",
         }
     },
     "loggers": {"request.summary": {"handlers": ["console"], "level": "DEBUG"}},

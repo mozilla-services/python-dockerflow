@@ -9,8 +9,22 @@ import socket
 import sys
 import traceback
 import uuid
+import warnings
 from contextvars import ContextVar
 from typing import ClassVar, Optional
+
+
+class MozlogHandler(logging.StreamHandler):
+    def __init__(self, stream=None, name="Dockerflow"):
+        if stream is None:
+            stream = sys.stdout
+        super().__init__(stream=stream)
+        self.logger_name = name
+        self.setFormatter(MozlogFormatter())
+
+    def emit(self, record):
+        record.logger_name = self.logger_name
+        super().emit(record)
 
 
 class SafeJSONEncoder(json.JSONEncoder):
@@ -18,8 +32,8 @@ class SafeJSONEncoder(json.JSONEncoder):
         return repr(o)
 
 
-class JsonLogFormatter(logging.Formatter):
-    """Log formatter that outputs machine-readable json.
+class MozlogFormatter(logging.Formatter):
+    """Log formatter that outputs json structured according to the Mozlog schema.
 
     This log formatter outputs JSON format messages that are compatible with
     Mozilla's standard heka-based log aggregation infrastructure.
@@ -58,9 +72,10 @@ class JsonLogFormatter(logging.Formatter):
             "levelname",
             "levelno",
             "lineno",
+            "logger_name",
+            "message",
             "module",
             "msecs",
-            "message",
             "msg",
             "name",
             "pathname",
@@ -75,15 +90,7 @@ class JsonLogFormatter(logging.Formatter):
     )
 
     def __init__(self, fmt=None, datefmt=None, style="%", logger_name="Dockerflow"):
-        parent_init = logging.Formatter.__init__
-        # The style argument was added in Python 3.1 and since
-        # the logging configuration via config (ini) files uses
-        # positional arguments we have to do a version check here
-        # to decide whether to pass the style argument or not.
-        if sys.version_info[:2] < (3, 1):
-            parent_init(self, fmt, datefmt)
-        else:
-            parent_init(self, fmt=fmt, datefmt=datefmt, style=style)
+        super().__init__(fmt=fmt, datefmt=datefmt, style=style)
         self.logger_name = logger_name
         self.hostname = socket.gethostname()
 
@@ -104,7 +111,7 @@ class JsonLogFormatter(logging.Formatter):
         out = {
             "Timestamp": int(record.created * 1e9),
             "Type": record.name,
-            "Logger": self.logger_name,
+            "Logger": getattr(record, "logger_name", self.logger_name),
             "Hostname": self.hostname,
             "EnvVersion": self.LOGGING_FORMAT_VERSION,
             "Severity": self.SYSLOG_LEVEL_MAP.get(
@@ -141,6 +148,15 @@ class JsonLogFormatter(logging.Formatter):
         """
         out = self.convert_record(record)
         return json.dumps(out, cls=SafeJSONEncoder)
+
+
+class JsonLogFormatter(MozlogFormatter):
+    def __init__(self, *args, **kwargs):
+        warnings.warn(
+            "JsonLogFormatter has been deprecated. Use MozlogFormatter instead",
+            DeprecationWarning,
+        )
+        super().__init__(*args, **kwargs)
 
 
 def safer_format_traceback(exc_typ, exc_val, exc_tb):

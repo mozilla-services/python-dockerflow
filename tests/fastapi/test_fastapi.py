@@ -14,7 +14,7 @@ from dockerflow.fastapi.middleware import (
     MozlogRequestSummaryLogger,
     RequestIdMiddleware,
 )
-from dockerflow.logging import JsonLogFormatter, RequestIdLogFilter
+from dockerflow.logging import MozlogFormatter, RequestIdLogFilter
 
 
 def create_app():
@@ -108,8 +108,9 @@ def test_mozlog_without_correlation_id_middleware(client, caplog):
 
 
 def test_request_id_passed_to_all_log_messages(caplog):
+    caplog.set_level(logging.INFO)
     caplog.handler.addFilter(RequestIdLogFilter())
-    caplog.handler.setFormatter(JsonLogFormatter())
+    caplog.handler.setFormatter(MozlogFormatter())
 
     app = create_app()
 
@@ -194,6 +195,7 @@ def test_heartbeat_get(client):
         },
     }
 
+
 def test_heartbeat_sync(client):
     @checks.register
     def sync_ok():
@@ -226,6 +228,7 @@ def test_heartbeat_mixed_sync(client):
     @checks.register
     def sync_ok():
         return []
+
     @checks.register
     async def async_ok():
         return []
