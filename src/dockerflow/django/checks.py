@@ -24,7 +24,7 @@ def check_database_connected(app_configs, **kwargs):
         msg = "Could not connect to database: {!s}".format(e)
         errors.append(checks.Error(msg, id=health.ERROR_CANNOT_CONNECT_DATABASE))
     except ImproperlyConfigured as e:
-        msg = 'Datbase misconfigured: "{!s}"'.format(e)
+        msg = 'Database misconfigured: "{!s}"'.format(e)
         errors.append(checks.Error(msg, id=health.ERROR_MISCONFIGURED_DATABASE))
     else:
         if not connection.is_usable():
