@@ -15,6 +15,10 @@ jobs:
       envlist: ${{ steps.generate-tox-envlist.outputs.envlist }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+          cache: pip
       - run: pip install tox tox-gh-matrix
       - id: generate-tox-envlist
         run: python -m tox --gh-matrix
@@ -43,14 +47,15 @@ jobs:
           # Maps port 6379 on service container to the host
           - 6379:6379
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup Python ${{ matrix.tox.python.version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.tox.python.spec }}
-    - name: Install dependencies
-      run: pip install tox codecov
-    - name: Tox tests
-      run: python -m tox -v -e ${{ matrix.tox.name }}
-    - name: Upload coverage
-      run: python -m codecov --name "Python ${{ matrix.tox.python.spec }}"
+      - uses: actions/checkout@v4
+      - name: Setup Python ${{ matrix.tox.python.version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.tox.python.spec }}
+          cache: pip
+      - name: Install dependencies
+        run: pip install tox codecov
+      - name: Tox tests
+        run: python -m tox -v -e ${{ matrix.tox.name }}
+      - name: Upload coverage
+        run: python -m codecov --name "Python ${{ matrix.tox.python.spec }}"
