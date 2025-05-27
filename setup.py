@@ -19,8 +19,8 @@ setup(
     description="Python tools and helpers for Mozilla's Dockerflow",
     long_description=read("README.rst"),
     long_description_content_type="text/x-rst",
-    author="Mozilla Foundation",
-    author_email="dev-webdev@lists.mozilla.org",
+    author="Mozilla Services Engineering",
+    author_email="services-engineering+code@mozilla.com",
     url="https://github.com/mozilla-services/python-dockerflow",
     license="MPL 2.0",
     classifiers=[
@@ -28,10 +28,9 @@ setup(
         "Environment :: Web Environment :: Mozilla",
         "Framework :: Django",
         "Framework :: Django :: 3.2",
-        "Framework :: Django :: 4.0",
-        "Framework :: Django :: 4.1",
         "Framework :: Django :: 4.2",
-        "Framework :: Django :: 5.0",
+        "Framework :: Django :: 5.1",
+        "Framework :: Django :: 5.2",
         "Framework :: Flask",
         "Framework :: FastAPI",
         "Intended Audience :: Developers",
@@ -44,6 +43,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Topic :: Internet :: WWW/HTTP",
     ],
     extras_require={
@@ -53,5 +53,5 @@ setup(
         "fastapi": ["fastapi", "asgiref"],
     },
     zip_safe=False,
-    python_requires=">=3.7,<4",
+    python_requires=">=3.8,<4",
 )
