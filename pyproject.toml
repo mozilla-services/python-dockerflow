@@ -28,6 +28,8 @@ ignore = [
     "PT011",
     # FIXME: parenthesize-chained-operators
     "RUF021",
+    # FIXME: unused-unpacked-variable
+    "RUF059",
 ]
 
 [tool.ruff.lint.isort]

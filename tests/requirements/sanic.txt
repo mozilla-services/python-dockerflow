@@ -3,6 +3,6 @@
 aiohttp
 Sanic
 sanic_redis
-sanic-testing
+sanic-testing<23.6
 uvloop>=0.14.0rc1
 setuptools
