@@ -134,6 +134,17 @@ def test_lbheartbeat_makes_no_db_queries(dockerflow_middleware, rf):
     assert len(queries) == 0
 
 
+def test_error_returns_500_and_logs_error(dockerflow_middleware, rf, caplog):
+    request = rf.get("/__error__")
+    with caplog.at_level(logging.INFO, logger="dockerflow.django"):
+        with pytest.raises(Exception, match="__error__ endpoint"):
+            dockerflow_middleware.process_request(request)
+    assert len(caplog.records) == 1
+    record = caplog.records[0]
+    assert record.getMessage() == "The __error__ endpoint was called"
+    assert record.levelno == logging.ERROR
+
+
 @pytest.mark.django_db()
 def test_redis_check(client, settings):
     settings.DOCKERFLOW_CHECKS = ["dockerflow.django.checks.check_redis_connected"]

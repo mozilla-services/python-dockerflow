@@ -262,3 +262,14 @@ def test_heartbeat_custom_name(client):
 
     response = client.get("/__heartbeat__")
     assert response.json()["checks"]["my_check_name"]
+
+
+def test_error_returns_500_and_logs_error(caplog):
+    client = TestClient(app, raise_server_exceptions=False)
+    response = client.get("/__error__")
+    assert response.status_code == 500
+    assert len(caplog.records) == 1
+    record = caplog.records[0]
+    assert record.name == "dockerflow.fastapi.views"
+    assert record.getMessage() == "The __error__ endpoint was called"
+    assert record.levelno == logging.ERROR

@@ -136,6 +136,16 @@ def test_lbheartbeat(dockerflow, test_client):
     assert response.body == b""
 
 
+def test_error_returns_500_and_logs_error(dockerflow, test_client, caplog):
+    with caplog.at_level(logging.INFO, logger="dockerflow.sanic"):
+        _, response = test_client.get("/__error__")
+    assert response.status_code == 500
+    assert len(caplog.records) >= 1
+    record = caplog.records[0]
+    assert record.getMessage() == "The __error__ endpoint was called"
+    assert record.levelno == logging.ERROR
+
+
 def test_heartbeat(dockerflow, test_client):
     _, response = test_client.get("/__heartbeat__")
     assert response.status == 200
@@ -214,7 +224,7 @@ def test_redis_check(dockerflow_redis, mocker, test_client):
     [
         (
             "connection",
-            {health.ERROR_CANNOT_CONNECT_REDIS: "Could not connect to " "redis: fake"},
+            {health.ERROR_CANNOT_CONNECT_REDIS: "Could not connect to redis: fake"},
         ),
         ("redis", {health.ERROR_REDIS_EXCEPTION: 'Redis error: "fake"'}),
         ("malformed", {health.ERROR_REDIS_PING_FAILED: "Redis ping failed"}),

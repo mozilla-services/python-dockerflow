@@ -75,3 +75,11 @@ def heartbeat(request):
         payload["checks"] = check_results.statuses
         payload["details"] = check_results.details
     return JsonResponse(payload, status=status_code)
+
+
+def error(request):
+    """
+    A view that raises an exception, used to test error handling.
+    """
+    logger.error("The __error__ endpoint was called")
+    raise Exception("This is a test exception from the /__error__ endpoint.")
