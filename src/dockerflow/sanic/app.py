@@ -130,6 +130,7 @@ class Dockerflow(object):
             ("/__version__", "version", self._version_view),
             ("/__heartbeat__", "heartbeat", self._heartbeat_view),
             ("/__lbheartbeat__", "lbheartbeat", self._lbheartbeat_view),
+            ("/__error__", "error", self._error_view),
         ):
             app.add_route(handler, uri, name="dockerflow." + name)
         app.middleware("request")(extract_request_id)
@@ -199,6 +200,13 @@ class Dockerflow(object):
             return response.raw(b"version.json not found", 404)
         else:
             return response.json(version_json)
+
+    async def _error_view(self, request):
+        """
+        A view that raises an exception, used to test error handling.
+        """
+        self.logger.error("The __error__ endpoint was called")
+        raise Exception("This is a test exception from the /__error__ endpoint.")
 
     async def _lbheartbeat_view(self, request):
         """

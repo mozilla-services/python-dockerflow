@@ -198,6 +198,17 @@ def test_lbheartbeat_makes_no_db_queries(dockerflow, app):
         assert len(get_recorded_queries()) == 0
 
 
+def test_error_returns_500_and_logs_error(dockerflow, app, caplog):
+    with app.app_context():
+        with caplog.at_level(logging.INFO, logger="dockerflow.flask"):
+            response = app.test_client().get("/__error__")
+    assert response.status_code == 500
+    assert len(caplog.records) >= 1
+    record = caplog.records[0]
+    assert record.getMessage() == "The __error__ endpoint was called"
+    assert record.levelno == logging.ERROR
+
+
 def test_full_redis_check(mocker):
     app = Flask("redis-check")
     app.debug = True

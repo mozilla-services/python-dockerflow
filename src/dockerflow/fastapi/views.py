@@ -1,3 +1,4 @@
+import logging
 import os
 
 from fastapi import Request, Response
@@ -5,6 +6,8 @@ from fastapi import Request, Response
 from dockerflow import checks
 
 from ..version import get_version
+
+logger = logging.getLogger(__name__)
 
 
 def lbheartbeat():
@@ -42,3 +45,11 @@ def version(request: Request):
     else:
         root = "/app"
     return get_version(root)
+
+
+def error(request: Request):
+    """
+    A view that raises an exception, used to test error handling.
+    """
+    logger.error("The __error__ endpoint was called")
+    raise Exception("This is a test exception from the /__error__ endpoint.")

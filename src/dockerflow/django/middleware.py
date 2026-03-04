@@ -32,6 +32,7 @@ class DockerflowMiddleware(MiddlewareMixin):
         (re.compile(r"/__version__/?$"), views.version),
         (re.compile(r"/__heartbeat__/?$"), views.heartbeat),
         (re.compile(r"/__lbheartbeat__/?$"), views.lbheartbeat),
+        (re.compile(r"/__error__/?$"), views.error),
     ]
 
     def __init__(self, get_response=None, *args, **kwargs):

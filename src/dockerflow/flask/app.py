@@ -177,6 +177,7 @@ class Dockerflow(object):
             ("/__version__", "version", self._version_view),
             ("/__heartbeat__", "heartbeat", self._heartbeat_view),
             ("/__lbheartbeat__", "lbheartbeat", self._lbheartbeat_view),
+            ("/__error__", "error", self._error_view),
         ):
             self._blueprint.add_url_rule(*view)
         self._blueprint.before_app_request(self._before_request)
@@ -345,6 +346,13 @@ class Dockerflow(object):
             status_code = FAILED_STATUS_CODE
             heartbeat_failed.send(self, level=check_results.level)
             raise HeartbeatFailure(response=render(status_code))
+
+    def _error_view(self):
+        """
+        A view that raises an exception, used to test error handling.
+        """
+        self.logger.error("The __error__ endpoint was called")
+        raise Exception("This is a test exception from the /__error__ endpoint.")
 
     def version_callback(self, func):
         """
